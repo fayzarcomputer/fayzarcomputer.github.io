@@ -126,7 +126,12 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
       - NEVER wrap units like cm, mm, m, km, kg, sec, V in quotation marks! Write $2262\text{ cm}^3$ (NEVER "cm" 3 or "cm"^3).
       - NEVER put Bengali words or quotes inside LaTeX blocks.
 
-15. ACCURATE BENGALI TYPOGRAPHY:
+15. DOTTED & BLANK LINES IN OFFICIAL LETTERS & FORMS (ডট ডট বা ফাঁকা স্থান হ্যান্ডলিং):
+    - CRITICAL MANDATE: Never generate long or infinite chains of dots (...).
+    - If there are dotted blank lines (e.g. সূত্র নং- ....., তারিখঃ ....., স্মারক নং, শূন্যস্থান বা স্বাক্ষরের স্থান), output at most 3 to 6 dots (......) or a short dash line, and immediately proceed to the next line or word!
+    - DO NOT get trapped in repetitive dot loops. Continue transcribing the rest of the letter/form (বরাবর, বিষয়, জনাব, বিবরণ, আবেদনকারী, স্বাক্ষর ইত্যাদি) completely and faithfully!
+
+16. ACCURATE BENGALI TYPOGRAPHY:
     - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output) clean in English.`;
 
   const GEMINI_VERIFY_PROMPT = `You are the Chief Examination Paper Auditor, Proofreader, and Senior Bengali Question Typist.
@@ -164,6 +169,7 @@ SPECIFIC DEFECTS YOU MUST AUDIT AND FIX:
    - For diagrams/images, simply write: [ছবি আছে-পৃ:০১].
    - No markdown bold asterisks (**). No asterisks on roman numerals (*i.* -> i.).
    - No empty blank lines or double Enters between consecutive questions or lines.
+   - Never output long chains of dots. Keep dotted lines to at most 3 to 6 dots (......) and preserve the rest of the letter/form.
 
 5. MANDATORY DETAILED AUDIT NOTE (বাধ্যতামূলক অডিট নোট):
    - At the VERY END of the verified document, you MUST include a detailed audit note block listing every single correction made, so the user can easily review them:
@@ -862,7 +868,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       },
       contents: [{ parts: contentParts }],
       generationConfig: {
-        temperature: 0.05,
+        temperature: 0.2,
         maxOutputTokens: 65536
       },
       safetySettings: [
@@ -873,24 +879,21 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       ]
     };
 
-    // Active Google Gemini Models ordered by OCR capability and speed:
+    // Active Google Gemini Models ordered by OCR capability, speed & quota availability:
     const allActiveModels = [
-      // 1. Intelligent Flash (Primary OCR: Highest speed & multimodal quality)
-      'gemini-2.5-flash',
+      // 1. Primary Ultra-Fast Multimodal Models (Active Quota, Highest Speed & Stroke Accuracy)
+      'gemini-3.6-flash',
       'gemini-3.8-flash',
       'gemini-3.7-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash',
-      'gemini-3-flash-preview',
-
-      // 2. Ultra-Fast Flash-Lite (Instant Quota Failover)
       'gemini-2.5-flash-lite',
       'gemini-3.5-flash-lite',
       'gemini-3.1-flash-lite',
+      'gemini-2.5-flash',
+      'gemini-3-flash-preview',
 
-      // 3. Pro Models (Complex math & deep reasoning fallback)
-      'gemini-2.5-pro',
-      'gemini-3.1-pro-preview'
+      // 2. Pro Models (Complex math & deep reasoning fallback)
+      'gemini-3.1-pro-preview',
+      'gemini-2.5-pro'
     ];
 
     let candidateModels = allActiveModels.slice();
@@ -937,7 +940,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             payload = {
               contents: [{ parts: [{ text: activePrompt }, ...contentParts] }],
               generationConfig: {
-                temperature: 0.05,
+                temperature: 0.2,
                 maxOutputTokens: 8192
               },
               safetySettings: payload.safetySettings
@@ -946,13 +949,13 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             continue;
           }
 
-          if (res.status === 429) {
+          if (res.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('Quota')) {
             isRateLimited = true;
-            modelCooldowns.set(model, Date.now() + 60000); // 60-second cooldown
+            modelCooldowns.set(model, Date.now() + 180000); // 3-minute cooldown
             const nextModel = modelsToTry[i + 1] || 'বিকল্প মডেল';
-            setLoading(true, `[${model} কোটা ব্যস্ত] পরবর্তী মডেল (${nextModel})-এ তাৎক্ষণিক স্থানান্তর হচ্ছে...`, 50 + (i * 4));
-            lastError = new Error(`${model} রেট লিমিট অতিক্রম করেছে।`);
-            continue;
+            setLoading(true, `[${model} কোটা ব্যস্ত] অবিলম্বে পরবর্তী মডেল (${nextModel})-এ রূপান্তর শুরু হচ্ছে...`, 50 + (i * 4));
+            lastError = new Error(`${model} কোটা ব্যস্ত বা রেট লিমিট অতিক্রম করেছে।`);
+            continue; // Zero delay! Jump straight to next model immediately
           }
 
           lastError = new Error(errMsg);
@@ -991,6 +994,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                   const chunkPart = candidate?.content?.parts?.[0]?.text || '';
                   if (chunkPart) {
                     fullStreamedText += chunkPart;
+                    // Anti-repetition stream guard: clamp any runaway dot repetition immediately
+                    if (fullStreamedText.includes('.......')) {
+                      fullStreamedText = fullStreamedText.replace(/\.{8,}/g, '......');
+                    }
                     const cTime = Date.now();
                     // 60ms UI stream throttle for silky smooth 60fps rendering
                     if (cTime - lastChunkTime > 60 || fullStreamedText.length < 80) {
@@ -1496,6 +1503,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     // CRITICAL: Strip any markdown bold asterisks (**)
     text = text.replace(/\*\*/g, '');
+
+    // CRITICAL: Clamp runaway dot repetitions (e.g. ............. -> ......)
+    text = text.replace(/\.{8,}/g, '......');
 
     // 1. Clean asterisks around Roman numerals: *i.* -> i., *ii.* -> ii., *iii.* -> iii.
     text = text.replace(/\*+\s*(i{1,4}|iv|v|vi{0,3}|ix|x)\s*\.\s*\*+/gi, '$1.');

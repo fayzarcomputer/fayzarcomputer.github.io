@@ -1,6 +1,13 @@
 {
+  "super_admin_pins": [
+    "101919",
+    "fayzar",
+    "1234",
+    "admin"
+  ],
   "institution": {
     "id": "dreamland-school",
+    "master_pin": "1234",
     "name_bn": "ড্রিমল্যান্ড রেসিডেন্সিয়াল মডেল স্কুল",
     "name_en": "Dreamland Residential Model School",
     "address_bn": "বারাই, ফুলবাড়ী, দিনাজপুর",
@@ -153,6 +160,51 @@
   "institutions": [
     {
       "id": "dreamland-school",
+      "master_pin": "1234",
+      "teachers": [
+        {
+          "id": "t_bangla",
+          "name": "মো: রফিকুল ইসলাম (বাংলা)",
+          "pin": "1101",
+          "assigned_subjects": ["বাংলা ১ম পত্র", "বাংলা ২য় পত্র", "বাংলা", "Bangla"],
+          "classes": ["all"]
+        },
+        {
+          "id": "t_english",
+          "name": "মোছা: নাসরিন আক্তার (ইংরেজি)",
+          "pin": "1102",
+          "assigned_subjects": ["ইংরেজি ১ম পত্র", "ইংরেজি ২য় পত্র", "ইংরেজি", "English"],
+          "classes": ["all"]
+        },
+        {
+          "id": "t_math",
+          "name": "মো: মাহমুদুল হাসান (গণিত)",
+          "pin": "1103",
+          "assigned_subjects": ["গণিত", "Mathematics", "উচ্চতর গণিত (৪র্থ বিষয়)"],
+          "classes": ["all"]
+        },
+        {
+          "id": "t_agri",
+          "name": "মো: আবদুর রশিদ (কৃষি শিক্ষা)",
+          "pin": "1104",
+          "assigned_subjects": ["কৃষি শিক্ষা (৪র্থ বিষয়)"],
+          "classes": ["all"]
+        },
+        {
+          "id": "t_islam",
+          "name": "মাওলানা আব্দুল করিম (ইসলাম ধর্ম)",
+          "pin": "1105",
+          "assigned_subjects": ["ইসলাম ও নৈতিক শিক্ষা", "ধর্ম"],
+          "classes": ["all"]
+        },
+        {
+          "id": "t_hindu",
+          "name": "শ্রী বিনয় কুমার রায় (হিন্দুধর্ম)",
+          "pin": "1106",
+          "assigned_subjects": ["হিন্দুধর্ম ও নৈতিক শিক্ষা"],
+          "classes": ["all"]
+        }
+      ],
       "name_bn": "ড্রিমল্যান্ড রেসিডেন্সিয়াল মডেল স্কুল",
       "name_en": "Dreamland Residential Model School",
       "address_bn": "বারাই, ফুলবাড়ী, দিনাজপুর",
@@ -241,6 +293,23 @@
     },
     {
       "id": "amdungi-madrasah",
+      "master_pin": "5678",
+      "teachers": [
+        {
+          "id": "tm_quran",
+          "name": "মাওলানা আব্দুল্লাহ (কোরআন মাজিদ)",
+          "pin": "2101",
+          "assigned_subjects": ["কোরআন মাজিদ ও তাজবীদ", "হাদিস শরীফ"],
+          "classes": ["all"]
+        },
+        {
+          "id": "tm_arabic",
+          "name": "মাওলানা হাবিবুর রহমান (আরবি)",
+          "pin": "2102",
+          "assigned_subjects": ["আরবি ১ম পত্র", "আরবি ২য় পত্র"],
+          "classes": ["all"]
+        }
+      ],
       "name_bn": "আমডুঙ্গীহাট ঈমান উদ্দিন চৌধুরী আলিম মাদ্রাসা",
       "name_en": "Amdungi Hat Iman Uddin Chowdhury Alim Madrasah",
       "address_bn": "ডাকঘর: রাজারামপুর, উপজেলা: ফুলবাড়ী, জেলা: দিনাজপুর (স্থাপিত: ১৯৮৮)",

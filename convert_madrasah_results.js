@@ -137,11 +137,36 @@ const madrasahStudents = [];
     const mathTotal = numVal(r.AL); // 100 marks
     const agriTotal = numVal(r.AR); // 100 marks (optional / agriculture)
 
+    const b1Marks = (numVal(r.S) + numVal(r.T)) || Math.round(banglaTotal / 2);
+    const b2Marks = (numVal(r.U) + numVal(r.V)) || (banglaTotal - b1Marks);
+    const e1Marks = numVal(r.Z) || Math.round(englishTotal / 2);
+    const e2Marks = numVal(r.AA) || (englishTotal - e1Marks);
+
     const subjects = [
       { code: '101', name_bn: 'কুরআন মাজিদ ও হাদিস শরিফ', full_marks: 200, marks_obtained: quranHadisTotal, is_optional: false },
       { code: '103', name_bn: 'আরবি ১ম ও ২য় পত্র', full_marks: 200, marks_obtained: arabicTotal, is_optional: false },
-      { code: '134', name_bn: 'বাংলা ১ম ও ২য় পত্র', full_marks: 200, marks_obtained: banglaTotal, is_optional: false },
-      { code: '107', name_bn: 'ইংরেজি ১ম ও ২য় পত্র', full_marks: 200, marks_obtained: englishTotal, is_optional: false },
+      {
+        code: '134',
+        name_bn: 'বাংলা',
+        full_marks: 200,
+        marks_obtained: banglaTotal,
+        is_optional: false,
+        papers: [
+          { code: '134-1', name_bn: 'বাংলা ১ম পত্র', full_marks: 100, marks_obtained: b1Marks },
+          { code: '134-2', name_bn: 'বাংলা ২য় পত্র', full_marks: 100, marks_obtained: b2Marks }
+        ]
+      },
+      {
+        code: '107',
+        name_bn: 'ইংরেজি',
+        full_marks: 200,
+        marks_obtained: englishTotal,
+        is_optional: false,
+        papers: [
+          { code: '107-1', name_bn: 'ইংরেজি ১ম পত্র', full_marks: 100, marks_obtained: e1Marks },
+          { code: '107-2', name_bn: 'ইংরেজি ২য় পত্র', full_marks: 100, marks_obtained: e2Marks }
+        ]
+      },
       { code: '102', name_bn: 'আকাঈদ ও ফিকহ', full_marks: 100, marks_obtained: akaidTotal, is_optional: false },
       { code: '109', name_bn: 'গণিত', full_marks: 100, marks_obtained: mathTotal, is_optional: false }
     ];

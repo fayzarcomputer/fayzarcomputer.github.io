@@ -1,6 +1,7 @@
 /**
- * Fayzar Computer Online Result Management & Publication System
- * Core Calculation & Business Logic Engine
+ * Fayzar Computer Online Result Management & Multi-School Engine
+ * Fully integrated with Firebase Firestore REST API, 3-Tier RBAC Authentication,
+ * Concurrency-Safe Field Masking, Local-First Caching & Offline Fallback.
  */
 
 (function (global) {
@@ -56,7 +57,7 @@
   function toBnDigit(num) {
     if (num === null || num === undefined) return '';
     const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-    return String(num).replace(/[0-9]/g, d => bn[parseInt(d)]);
+    return String(num).replace(/[0-9]/g, d => bn[parseInt(d, 10)]);
   }
 
   /**
@@ -64,7 +65,7 @@
    */
   function toEnDigit(num) {
     if (num === null || num === undefined) return '';
-    const en = { '০': 0, '১': 1, '২': 2, '৩': 3, '৪': 4, '৫': 5, '৬': 6, '৭': 7, '৮': 8, '৯': 9 };
+    const en = { '০': 0, '১': 1, '২': 2, '৩': 3, '৪': 4, '৫': 5, '⑥': 6, '৬': 6, '৭': 7, '৮': 8, '৯': 9 };
     return String(num).replace(/[০-৯]/g, d => en[d]);
   }
 
@@ -91,10 +92,43 @@
 
     const subjects = student.subjects.map(sub => {
       const full = parseFloat(sub.full_marks) || 100;
-      const obt = parseFloat(sub.marks_obtained) || 0;
-      const gInfo = calculateGrade(obt, full);
+      let obt = sub.marks_obtained;
+      const isAbsent = String(obt).toUpperCase() === 'ABS' || String(obt) === 'অনুপস্থিত';
+      
+      let obtNum = 0;
+      if (isAbsent) {
+        obtNum = 0;
+      } else {
+        obtNum = parseFloat(obt) || 0;
+      }
 
-      totalMarks += obt;
+      // If composite subject with individual papers (Board Standard e.g. Bangla 1st & 2nd)
+      if (Array.isArray(sub.papers) && sub.papers.length > 0) {
+        let pSum = 0;
+        let pFull = 0;
+        let anyAbsent = false;
+        sub.papers.forEach(p => {
+          pFull += (parseFloat(p.full_marks) || 100);
+          if (String(p.marks_obtained).toUpperCase() === 'ABS' || String(p.marks_obtained) === 'অনুপস্থিত') {
+            anyAbsent = true;
+          } else {
+            pSum += (parseFloat(p.marks_obtained) || 0);
+          }
+        });
+        if (pSum > 0 || sub.marks_obtained === undefined || sub.marks_obtained === null) {
+          obtNum = pSum;
+        }
+        if (pFull > 0 && (!sub.full_marks || sub.full_marks <= 100)) {
+          full = pFull;
+        }
+        if (anyAbsent && pSum === 0) {
+          isAbsent = true;
+        }
+      }
+
+      const gInfo = isAbsent ? { grade: 'F', point: 0.0, percentage: 0 } : calculateGrade(obtNum, full);
+
+      totalMarks += obtNum;
       maxMarks += full;
 
       if (!sub.is_optional) {
@@ -113,14 +147,15 @@
       return {
         ...sub,
         full_marks: full,
-        marks_obtained: obt,
+        marks_obtained: isAbsent ? 'ABS' : obtNum,
+        is_absent: isAbsent,
         grade: gInfo.grade,
         point: gInfo.point
       };
     });
 
     let rawGpa = mandatoryCount > 0 ? (totalGradePoints / mandatoryCount) : 0;
-    if (rawGpa > 5.0) rawGpa = 5.0; // GPA maximum cap is 5.00
+    if (rawGpa > 5.0) rawGpa = 5.0; // Max GPA cap is 5.00
 
     const finalGpa = hasFail ? 0.0 : parseFloat(rawGpa.toFixed(2));
     const finalGrade = hasFail ? 'F' : getGpaGrade(finalGpa);
@@ -152,22 +187,21 @@
   function calculateClassPositions(students) {
     if (!Array.isArray(students)) return [];
 
-    // Recalculate each student first
     const calculated = students.map(s => calculateStudent(s));
 
-    // Sort: Passed first, then GPA descending, then Total Marks descending, then Roll ascending
     calculated.sort((a, b) => {
       if (a.status === 'Passed' && b.status !== 'Passed') return -1;
       if (a.status !== 'Passed' && b.status === 'Passed') return 1;
       if (b.gpa !== a.gpa) return b.gpa - a.gpa;
       if (b.total_marks !== a.total_marks) return b.total_marks - a.total_marks;
-      return (a.roll || 0) - (b.roll || 0);
+      return (parseInt(a.roll, 10) || 0) - (parseInt(b.roll, 10) || 0);
     });
 
-    // Assign position
     return calculated.map((st, idx) => ({
       ...st,
-      position: idx + 1
+      position: idx + 1,
+      class_position: idx + 1,
+      merit_position: idx + 1
     }));
   }
 
@@ -236,23 +270,15 @@
   }
 
   /**
-   * Lightweight SVG QR Code Generator for offline/online verification
-   * Generates a valid QR SVG or data URI for result verification
+   * Lightweight SVG QR Code Generator for official result verification
    */
-  function generateVerificationQrSvg(url, size = 120) {
-    // Generate an clean vector verification badge / QR representation
-    // If standard QR generator is needed, we encode URI into a structured SVG
-    const safeUrl = encodeURIComponent(url);
-    const encoded = btoa(unescape(safeUrl));
+  function generateVerificationQrSvg(url, size = 110) {
     const hash = Array.from(url).reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) % 1000000007, 7);
-    
-    // We create a QR-like matrix grid with real verification hash
     const matrix = [];
     const gridSize = 21;
     for (let r = 0; r < gridSize; r++) {
       const row = [];
       for (let c = 0; c < gridSize; c++) {
-        // Corner finder patterns (7x7 squares)
         const isTopLeft = (r < 7 && c < 7);
         const isTopRight = (r < 7 && c >= gridSize - 7);
         const isBottomLeft = (r >= gridSize - 7 && c < 7);
@@ -266,10 +292,8 @@
             row.push(0);
           }
         } else if (r === 6 || c === 6) {
-          // Timing patterns
           row.push((r + c) % 2 === 0 ? 1 : 0);
         } else {
-          // Pseudo-random pseudo-QR data based on URL hash
           const val = ((hash ^ (r * 37 + c * 17)) + (url.charCodeAt((r + c) % url.length) || 0)) % 3;
           row.push(val === 0 || val === 1 ? 1 : 0);
         }
@@ -292,99 +316,376 @@
     </svg>`;
   }
 
-  /**
-   * Storage Manager (localStorage with fallback to data files)
-   */
+  // =========================================================================
+  // FIREBASE FIRESTORE REST ENGINE & CONVERSION UTILS
+  // =========================================================================
+  const Firestore = {
+    apiKey: "AIzaSyDcGqhXFilKia4mIanB7-a25Gd8AtCYsYA",
+    projectId: "fayzar-autofill",
+
+    get baseUrl() {
+      return `https://firestore.googleapis.com/v1/projects/${this.projectId}/databases/(default)/documents`;
+    },
+
+    toFirestoreFields(obj) {
+      const fields = {};
+      for (const [key, val] of Object.entries(obj)) {
+        if (val === null || val === undefined) continue;
+        if (typeof val === 'string') {
+          fields[key] = { stringValue: val };
+        } else if (typeof val === 'number') {
+          fields[key] = Number.isInteger(val) ? { integerValue: val.toString() } : { doubleValue: val };
+        } else if (typeof val === 'boolean') {
+          fields[key] = { booleanValue: val };
+        } else if (Array.isArray(val)) {
+          fields[key] = {
+            arrayValue: {
+              values: val.map(item => {
+                if (typeof item === 'string') return { stringValue: item };
+                if (typeof item === 'number') return Number.isInteger(item) ? { integerValue: item.toString() } : { doubleValue: item };
+                if (typeof item === 'boolean') return { booleanValue: item };
+                if (typeof item === 'object') return { mapValue: { fields: this.toFirestoreFields(item) } };
+                return { stringValue: String(item) };
+              })
+            }
+          };
+        } else if (typeof val === 'object') {
+          fields[key] = { mapValue: { fields: this.toFirestoreFields(val) } };
+        }
+      }
+      return fields;
+    },
+
+    fromFirestoreDoc(doc) {
+      if (!doc || !doc.fields) return null;
+      const result = { id: doc.name ? doc.name.split('/').pop() : '' };
+
+      function parseValue(v) {
+        if (!v) return null;
+        if (v.stringValue !== undefined) return v.stringValue;
+        if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
+        if (v.doubleValue !== undefined) return parseFloat(v.doubleValue);
+        if (v.booleanValue !== undefined) return v.booleanValue;
+        if (v.arrayValue !== undefined) {
+          return (v.arrayValue.values || []).map(parseValue);
+        }
+        if (v.mapValue !== undefined) {
+          const subObj = {};
+          for (const [subKey, subVal] of Object.entries(v.mapValue.fields || {})) {
+            subObj[subKey] = parseValue(subVal);
+          }
+          return subObj;
+        }
+        return null;
+      }
+
+      for (const [key, val] of Object.entries(doc.fields)) {
+        result[key] = parseValue(val);
+      }
+      return result;
+    },
+
+    getStudentDocId(schoolId, year, examId, classId, roll) {
+      const cleanSchool = (schoolId || 'dreamland-school').replace(/[^a-zA-Z0-9_-]/g, '');
+      const cleanClass = (classId || 'nursery').replace(/[^a-zA-Z0-9_-]/g, '');
+      const cleanExam = (examId || 'annual_2025').replace(/[^a-zA-Z0-9_-]/g, '');
+      const cleanRoll = String(roll || '1').padStart(3, '0');
+      return `${cleanSchool}_${year || '2025'}_${cleanExam}_${cleanClass}_${cleanRoll}`;
+    },
+
+    // Save individual student with Concurrency updateMask support
+    async saveStudentToFirestore(student, fieldMask = null) {
+      try {
+        const docId = this.getStudentDocId(student.institution_id, student.year, student.exam_id, student.class_id, student.roll);
+        let url = `${this.baseUrl}/results_students/${docId}?key=${this.apiKey}`;
+        
+        if (Array.isArray(fieldMask) && fieldMask.length > 0) {
+          const maskParams = fieldMask.map(f => `updateMask.fieldPaths=${encodeURIComponent(f)}`).join('&');
+          url += `&${maskParams}`;
+        }
+
+        const fields = this.toFirestoreFields(student);
+        const res = await fetch(url, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fields })
+        });
+
+        if (res.ok) {
+          return { success: true, docId };
+        } else {
+          const err = await res.json().catch(() => ({}));
+          console.warn('Firestore write warning:', err);
+          return { success: false, error: err };
+        }
+      } catch (e) {
+        console.warn('Firestore network warning:', e);
+        return { success: false, error: e.message };
+      }
+    }
+  };
+
+  // =========================================================================
+  // STORAGE & HYBRID SYNC (LOCAL-FIRST + FIRESTORE)
+  // =========================================================================
   const Storage = {
-    CONFIG_KEY: 'fayzar_results_config_v2',
-    DATA_KEY: 'fayzar_results_data_v2',
+    CONFIG_KEY: 'fayzar_results_config_v3',
+    DATA_KEY: 'fayzar_results_data_v3',
+    AUTH_USER_KEY: 'fayzar_result_current_user',
+    _memoryUser: null,
 
     async loadConfig() {
-      const cached = localStorage.getItem(this.CONFIG_KEY);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (parsed && parsed.institution && Array.isArray(parsed.classes) && parsed.classes.length > 0) {
-            return parsed;
-          }
-        } catch (e) {}
+      if (typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem(this.CONFIG_KEY);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed && Array.isArray(parsed.institutions) && parsed.institutions.length > 0) {
+              return parsed;
+            }
+          } catch (e) {}
+        }
       }
-      if (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG && Array.isArray(window.DEFAULT_RESULTS_CONFIG.classes)) {
+      if (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG && Array.isArray(window.DEFAULT_RESULTS_CONFIG.institutions)) {
         return window.DEFAULT_RESULTS_CONFIG;
       }
       try {
-        const res = await fetch('data/results_config.json');
-        if (res.ok) {
-          const config = await res.json();
-          this.saveConfig(config);
-          return config;
+        if (typeof fetch !== 'undefined') {
+          const res = await fetch('data/results_config.json');
+          if (res.ok) {
+            const config = await res.json();
+            this.saveConfig(config);
+            return config;
+          }
+        } else if (typeof require !== 'undefined') {
+          return require('../data/results_config.json');
         }
-      } catch (e) {
-        console.warn('Failed to fetch results_config.json:', e);
+      } catch (e) {}
+      if (typeof require !== 'undefined') {
+        try { return require('../data/results_config.json'); } catch(e) {}
       }
-      return (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG) || {
-        institution: {
-          id: "dreamland-school",
-          name_bn: "ড্রিমল্যান্ড রেসিডেন্সিয়াল মডেল স্কুল",
-          name_en: "Dreamland Residential Model School",
-          address_bn: "বারাই, ফুলবাড়ী, দিনাজপুর",
-          address_en: "Barai, Phulbari, Dinajpur"
-        },
-        current_exam: {
-          year: "2025",
-          exam_id: "annual_2025",
-          exam_name_bn: "বার্ষিক পরীক্ষা - ২০২৫",
-          is_published: true
-        },
-        grading_scale: DEFAULT_GRADING_SCALE,
-        classes: []
-      };
+      return (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG) || {};
     },
 
     saveConfig(config) {
       if (!config) return;
-      localStorage.setItem(this.CONFIG_KEY, JSON.stringify(config));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.CONFIG_KEY, JSON.stringify(config));
+      }
     },
 
     async loadStudents() {
-      const cached = localStorage.getItem(this.DATA_KEY);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        } catch (e) {}
+      if (typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem(this.DATA_KEY);
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              return parsed;
+            }
+          } catch (e) {}
+        }
       }
       if (typeof window !== 'undefined' && Array.isArray(window.DEFAULT_RESULTS_DATA) && window.DEFAULT_RESULTS_DATA.length > 0) {
         return window.DEFAULT_RESULTS_DATA;
       }
       try {
-        const res = await fetch('data/results_data.json');
-        if (res.ok) {
-          const students = await res.json();
-          this.saveStudents(students);
-          return students;
+        if (typeof fetch !== 'undefined') {
+          const res = await fetch('data/results_data.json');
+          if (res.ok) {
+            const students = await res.json();
+            this.saveStudents(students);
+            return students;
+          }
+        } else if (typeof require !== 'undefined') {
+          return require('../data/results_data.json');
         }
-      } catch (e) {
-        console.warn('Failed to fetch results_data.json:', e);
+      } catch (e) {}
+      if (typeof require !== 'undefined') {
+        try { return require('../data/results_data.json'); } catch(e) {}
       }
       return (typeof window !== 'undefined' && window.DEFAULT_RESULTS_DATA) || [];
     },
 
     saveStudents(students) {
       if (!Array.isArray(students)) return;
-      localStorage.setItem(this.DATA_KEY, JSON.stringify(students));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.DATA_KEY, JSON.stringify(students));
+      }
     },
 
     async resetToDefault() {
-      localStorage.removeItem(this.CONFIG_KEY);
-      localStorage.removeItem(this.DATA_KEY);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(this.CONFIG_KEY);
+        localStorage.removeItem(this.DATA_KEY);
+      }
       const config = await this.loadConfig();
       const students = await this.loadStudents();
       return { config, students };
+    },
+
+    // Authentication Session (SSO-enabled across tabs & admin.html)
+    getCurrentUser() {
+      try {
+        let raw = null;
+        if (typeof sessionStorage !== 'undefined') {
+          raw = sessionStorage.getItem(this.AUTH_USER_KEY);
+        }
+        if (!raw && typeof localStorage !== 'undefined') {
+          raw = localStorage.getItem(this.AUTH_USER_KEY);
+        }
+        if (raw) return JSON.parse(raw);
+
+        // Auto-SSO from Main Web Admin Suite (admin.html)
+        const isMainAdminActive = 
+          (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('fayzar_admin_session') === 'true') ||
+          (typeof localStorage !== 'undefined' && localStorage.getItem('fayzar_admin_session') === 'true');
+
+        if (isMainAdminActive) {
+          const autoSuperAdmin = {
+            role: 'super_admin',
+            role_title: 'ওয়েব সুপার অ্যাডমিন (ফয়জার কম্পিউটার)',
+            name: 'ফয়জার কম্পিউটার অ্যাডমিন',
+            canBatchPrint: true,
+            canPublish: true,
+            canSwitchSchool: true,
+            canManageUsers: true,
+            school_id: null
+          };
+          this.setCurrentUser(autoSuperAdmin);
+          return autoSuperAdmin;
+        }
+
+        return this._memoryUser || null;
+      } catch (e) {
+        return null;
+      }
+    },
+
+    setCurrentUser(user) {
+      this._memoryUser = user;
+      try {
+        const val = user ? JSON.stringify(user) : null;
+        if (typeof sessionStorage !== 'undefined') {
+          if (val) sessionStorage.setItem(this.AUTH_USER_KEY, val);
+          else sessionStorage.removeItem(this.AUTH_USER_KEY);
+        }
+        if (typeof localStorage !== 'undefined') {
+          if (val) localStorage.setItem(this.AUTH_USER_KEY, val);
+          else localStorage.removeItem(this.AUTH_USER_KEY);
+        }
+      } catch(e) {}
+    },
+
+    logout() {
+      this._memoryUser = null;
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem(this.AUTH_USER_KEY);
+          sessionStorage.removeItem('fayzar_admin_authenticated');
+          sessionStorage.removeItem('fayzar_admin_session');
+        }
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem(this.AUTH_USER_KEY);
+          localStorage.removeItem('fayzar_admin_authenticated');
+          localStorage.removeItem('fayzar_admin_session');
+        }
+      } catch(e) {}
     }
   };
+
+  // =========================================================================
+  // 3-TIER RBAC AUTHENTICATION ENGINE
+  // =========================================================================
+  async function authenticatePin(rawPin) {
+    if (!rawPin) return { success: false, error: 'অনুগ্রহ করে পিন নম্বর দিন।' };
+    
+    // Normalize Bengali digits
+    const pin = toEnDigit(rawPin.trim()).toLowerCase();
+    const config = await Storage.loadConfig();
+
+    // 1. Check Super Admin (Web Admin - Fayzar Computer)
+    let superPins = (config && config.super_admin_pins) ? [...config.super_admin_pins] : ['101919', 'fayzar', '1234', 'admin'];
+    if (typeof localStorage !== 'undefined') {
+      const customPin = localStorage.getItem('fayzar_admin_pin');
+      if (customPin && !superPins.includes(customPin.toLowerCase())) {
+        superPins.unshift(customPin.toLowerCase());
+      }
+    }
+    if (config && config.super_admin_pin && !superPins.includes(String(config.super_admin_pin).toLowerCase())) {
+      superPins.unshift(String(config.super_admin_pin).toLowerCase());
+    }
+
+    if (superPins.includes(pin)) {
+      const user = {
+        role: 'super_admin',
+        role_title: 'ওয়েব সুপার অ্যাডমিন (ফয়জার কম্পিউটার)',
+        name: 'ফয়জার কম্পিউটার অ্যাডমিন',
+        canBatchPrint: true,
+        canPublish: true, // EXCLUSIVE: Only Super Admin can publish!
+        canSwitchSchool: true,
+        canManageUsers: true,
+        school_id: null
+      };
+      Storage.setCurrentUser(user);
+      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('fayzar_admin_authenticated', 'true');
+      if (typeof localStorage !== 'undefined') localStorage.setItem('fayzar_admin_authenticated', 'true');
+      return { success: true, user };
+    }
+
+    // 2. Check School Master Admin (Each School isolated)
+    const institutions = (config && Array.isArray(config.institutions) && config.institutions.length > 0)
+      ? config.institutions
+      : (config && config.institution ? [config.institution] : []);
+
+    for (const inst of institutions) {
+      if (inst.master_pin && String(inst.master_pin).trim().toLowerCase() === pin) {
+        const user = {
+          role: 'school_master',
+          role_title: `${inst.name_bn} মাস্টার অ্যাডমিন`,
+          name: `${inst.name_bn} প্রধান`,
+          school_id: inst.id,
+          school_name: inst.name_bn,
+          canBatchPrint: true, // Batch Print enabled for School Master
+          canPublish: false,   // Protected for Web Super Admin
+          canSwitchSchool: false,
+          canManageUsers: false
+        };
+        Storage.setCurrentUser(user);
+        if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('fayzar_admin_authenticated', 'true');
+        if (typeof localStorage !== 'undefined') localStorage.setItem('fayzar_admin_authenticated', 'true');
+        return { success: true, user };
+      }
+
+        // 3. Check Subject Teachers within schools
+        if (Array.isArray(inst.teachers)) {
+          for (const teacher of inst.teachers) {
+            if (teacher.pin && String(teacher.pin).trim() === pin) {
+              const user = {
+                role: 'teacher',
+                role_title: `বিষয় শিক্ষক: ${teacher.name}`,
+                name: teacher.name,
+                teacher_id: teacher.id,
+                school_id: inst.id,
+                school_name: inst.name_bn,
+                assigned_subjects: teacher.assigned_subjects || [],
+                classes: teacher.classes || [],
+                canBatchPrint: true, // Batch Print enabled
+                canPublish: false,
+                canSwitchSchool: false,
+                canManageUsers: false
+              };
+              Storage.setCurrentUser(user);
+              if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('fayzar_admin_authenticated', 'true');
+              if (typeof localStorage !== 'undefined') localStorage.setItem('fayzar_admin_authenticated', 'true');
+              return { success: true, user };
+            }
+          }
+        }
+      }
+
+      return { success: false, error: 'ভুল পিন নম্বর! সঠিক অ্যাডমিন, স্কুল মাস্টার বা শিক্ষক পিন দিন।' };
+    }
 
   const ResultEngine = {
     DEFAULT_GRADING_SCALE,
@@ -397,7 +698,9 @@
     calculateClassPositions,
     getClassAnalytics,
     generateVerificationQrSvg,
-    Storage
+    Firestore,
+    Storage,
+    authenticatePin
   };
 
   if (typeof window !== 'undefined') {

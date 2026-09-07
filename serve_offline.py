@@ -114,6 +114,14 @@ class FayzarOfflineHandler(SimpleHTTPRequestHandler):
                 candidates = safe_read_json(os.path.join(DATA_DIR, 'candidates.json'), [])
                 return self.send_json_response(200, candidates)
 
+            if req_path == '/api/results/config':
+                res_cfg = safe_read_json(os.path.join(DATA_DIR, 'results_config.json'), {})
+                return self.send_json_response(200, res_cfg)
+
+            if req_path == '/api/results/data':
+                res_data = safe_read_json(os.path.join(DATA_DIR, 'results_data.json'), [])
+                return self.send_json_response(200, res_data)
+
             if req_path == '/api/export-backup':
                 backup = {
                     'version': '2.0-offline',
@@ -122,7 +130,9 @@ class FayzarOfflineHandler(SimpleHTTPRequestHandler):
                     'services': safe_read_json(os.path.join(DATA_DIR, 'services.json'), []),
                     'config': safe_read_json(os.path.join(DATA_DIR, 'site_config.json'), {}),
                     'feedbacks': safe_read_json(os.path.join(DATA_DIR, 'feedbacks.json'), []),
-                    'dictionary': safe_read_json(os.path.join(DATA_DIR, 'converter_dict.json'), [])
+                    'dictionary': safe_read_json(os.path.join(DATA_DIR, 'converter_dict.json'), []),
+                    'results_config': safe_read_json(os.path.join(DATA_DIR, 'results_config.json'), {}),
+                    'results_data': safe_read_json(os.path.join(DATA_DIR, 'results_data.json'), [])
                 }
                 return self.send_json_response(200, backup)
 
@@ -139,6 +149,28 @@ class FayzarOfflineHandler(SimpleHTTPRequestHandler):
 
         if req_path.startswith('/api/'):
             payload = self.read_json_body()
+
+            if req_path in ('/api/results/save-config', '/api/save-results-config'):
+                safe_write_json(os.path.join(DATA_DIR, 'results_config.json'), payload)
+                # Also synchronize js/results-data.js so offline static fallback stays up to date
+                try:
+                    js_file_path = os.path.join(PUBLIC_DIR, 'js', 'results-data.js')
+                    if os.path.exists(js_file_path):
+                        with open(js_file_path, 'r', encoding='utf-8') as jf:
+                            js_content = jf.read()
+                        import re
+                        cfg_json = json.dumps(payload, ensure_ascii=False, indent=2)
+                        new_js = re.sub(r'window\.RESULTS_CONFIG\s*=\s*\{[\s\S]*?\};\n\n', f'window.RESULTS_CONFIG = {cfg_json};\n\n', js_content, count=1)
+                        if new_js != js_content:
+                            with open(js_file_path, 'w', encoding='utf-8') as jf:
+                                jf.write(new_js)
+                except Exception as sync_err:
+                    print(f"Sync js/results-data.js warning: {sync_err}")
+                return self.send_json_response(200, {'success': True, 'message': 'Results configuration saved successfully'})
+
+            if req_path in ('/api/results/save-data', '/api/save-results-data'):
+                safe_write_json(os.path.join(DATA_DIR, 'results_data.json'), payload)
+                return self.send_json_response(200, {'success': True, 'message': 'Results data saved successfully', 'count': len(payload) if isinstance(payload, list) else 0})
 
             if req_path == '/api/save-notices':
                 safe_write_json(os.path.join(DATA_DIR, 'notices.json'), payload)
@@ -187,6 +219,8 @@ class FayzarOfflineHandler(SimpleHTTPRequestHandler):
                 if 'config' in payload: safe_write_json(os.path.join(DATA_DIR, 'site_config.json'), payload['config'])
                 if 'feedbacks' in payload: safe_write_json(os.path.join(DATA_DIR, 'feedbacks.json'), payload['feedbacks'])
                 if 'dictionary' in payload: safe_write_json(os.path.join(DATA_DIR, 'converter_dict.json'), payload['dictionary'])
+                if 'results_config' in payload: safe_write_json(os.path.join(DATA_DIR, 'results_config.json'), payload['results_config'])
+                if 'results_data' in payload: safe_write_json(os.path.join(DATA_DIR, 'results_data.json'), payload['results_data'])
                 return self.send_json_response(200, {'success': True, 'message': 'Backup restored successfully'})
 
             return self.send_json_response(404, {'error': 'Unknown API endpoint'})

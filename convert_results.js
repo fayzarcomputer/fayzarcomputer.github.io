@@ -102,6 +102,26 @@ const schoolConfig = {
   ]
 };
 
+const hinduKeywords = [
+  'রায়', 'মহন্ত', 'বর্মন', 'পাল', 'দাস', 'সাহা', 'দে', 'চৌধুরী', 'শীল',
+  'অধিকারী', 'সরকার', 'পূজা', 'দীপ্ত', 'কৌশিক', 'জয়ন্তী', 'বিশাল', 'সঞ্জয়',
+  'পার্থ', 'সন্ধ্যা', 'অমিত', 'শুভ', 'অনুপ', 'প্রিয়া', 'মিতু', 'রানী', 'বাধন',
+  'লিপন', 'বর্ণ'
+];
+
+function detectReligion(name, rowCells) {
+  if (rowCells) {
+    if (rowCells['AU']?.v === 'HINDU' || (rowCells['AS']?.v && rowCells['AS']?.v !== '' && rowCells['AS']?.v !== '0')) {
+      return 'hindu';
+    }
+  }
+  const cleanName = String(name || '');
+  if (hinduKeywords.some(k => cleanName.includes(k))) {
+    return 'hindu';
+  }
+  return 'islam';
+}
+
 const allStudents = [];
 
 // Sheet mapping definitions
@@ -142,6 +162,8 @@ for (const [sheetName, mapping] of Object.entries(sheetMapping)) {
     const motherName = cleanText(c['E']?.v) || '';
     const dob = cleanText(c['F']?.v) || '';
 
+    const studentReligion = detectReligion(studentName, c);
+    let studentFourthSubject = '';
     const subjects = [];
 
     if (mapping.type === 'pre_primary') {
@@ -184,7 +206,11 @@ for (const [sheetName, mapping] of Object.entries(sheetMapping)) {
       subjects.push({ code: '103', name_bn: 'গণিত', name_en: 'Mathematics', full_marks: 100, marks_obtained: mMarks, grade: mG.grade, point: mG.point, is_optional: false });
       subjects.push({ code: '104', name_bn: 'প্রাথমিক বিজ্ঞান', name_en: 'Elementary Science', full_marks: 100, marks_obtained: scMarks, grade: scG.grade, point: scG.point, is_optional: false });
       subjects.push({ code: '105', name_bn: 'বাংলাদেশ ও বিশ্বপরিচয়', name_en: 'Bangladesh and Global Studies', full_marks: 100, marks_obtained: bgsMarks, grade: bgsG.grade, point: bgsG.point, is_optional: false });
-      subjects.push({ code: '106', name_bn: 'ধর্ম ও নৈতিক শিক্ষা', name_en: 'Religion & Moral Education', full_marks: 100, marks_obtained: relMarks, grade: relG.grade, point: relG.point, is_optional: false });
+
+      const relObj = studentReligion === 'hindu'
+        ? { code: '112', name_bn: 'হিন্দুধর্ম ও নৈতিক শিক্ষা', name_en: 'Hindu Religion & Moral Education', full_marks: 100, marks_obtained: relMarks, grade: relG.grade, point: relG.point, is_optional: false }
+        : { code: '111', name_bn: 'ইসলাম ও নৈতিক শিক্ষা', name_en: 'Islam & Moral Education', full_marks: 100, marks_obtained: relMarks, grade: relG.grade, point: relG.point, is_optional: false };
+      subjects.push(relObj);
     } else if (mapping.type === 'junior') {
       // Bangla 1st (100), Bangla 2nd (50), English 1st (100), English 2nd (50), Math (100), BGS (100), Science (100), ICT (50), Agriculture (100), Religion (100)
       const b1 = numVal(c['G']?.v);
@@ -218,16 +244,20 @@ for (const [sheetName, mapping] of Object.entries(sheetMapping)) {
       subjects.push({ code: '127', name_bn: 'সাধারণ বিজ্ঞান', name_en: 'General Science', full_marks: 100, marks_obtained: sci, grade: sciG.grade, point: sciG.point, is_optional: false });
       subjects.push({ code: '154', name_bn: 'তথ্য ও যোগাযোগ প্রযুক্তি', name_en: 'ICT', full_marks: 50, marks_obtained: ict, grade: ictG.grade, point: ictG.point, is_optional: false });
       subjects.push({ code: '134', name_bn: 'কৃষি শিক্ষা', name_en: 'Agriculture Studies', full_marks: 100, marks_obtained: agri, grade: agriG.grade, point: agriG.point, is_optional: false });
-      subjects.push({ code: '111', name_bn: 'ধর্ম ও নৈতিক শিক্ষা', name_en: 'Religion & Moral Education', full_marks: 100, marks_obtained: rel, grade: relG.grade, point: relG.point, is_optional: false });
+
+      const relObj = studentReligion === 'hindu'
+        ? { code: '112', name_bn: 'হিন্দুধর্ম ও নৈতিক শিক্ষা', name_en: 'Hindu Religion & Moral Education', full_marks: 100, marks_obtained: rel, grade: relG.grade, point: relG.point, is_optional: false }
+        : { code: '111', name_bn: 'ইসলাম ও নৈতিক শিক্ষা', name_en: 'Islam & Moral Education', full_marks: 100, marks_obtained: rel, grade: relG.grade, point: relG.point, is_optional: false };
+      subjects.push(relObj);
     } else if (mapping.type === 'high_9' || mapping.type === 'high_10') {
       // Bangla 1st + 2nd, English 1st + 2nd, Math, BGS, Physics, Chemistry, Biology, ICT, 4th Subject, Religion
       const b1 = numVal(c['G']?.v);
-      const b2 = numVal(c['H']?.v || c['J']?.v);
+      const b2 = mapping.type === 'high_10' ? numVal(c['J']?.v) : numVal(c['H']?.v);
       const bTotal = b1 + b2;
       const bG = getGradeInfo(bTotal, 200);
 
       const e1 = numVal(c['M']?.v);
-      const e2 = numVal(c['N']?.v || c['P']?.v);
+      const e2 = mapping.type === 'high_10' ? numVal(c['P']?.v) : numVal(c['N']?.v);
       const eTotal = e1 + e2;
       const eG = getGradeInfo(eTotal, 200);
 
@@ -249,16 +279,61 @@ for (const [sheetName, mapping] of Object.entries(sheetMapping)) {
       const optG = getGradeInfo(opt, 100);
       const relG = getGradeInfo(rel, 100);
 
-      subjects.push({ code: '101-102', name_bn: 'বাংলা (১ম ও ২য় পত্র)', name_en: 'Bangla (1st & 2nd)', full_marks: 200, marks_obtained: bTotal, grade: bG.grade, point: bG.point, is_optional: false });
-      subjects.push({ code: '107-108', name_bn: 'ইংরেজি (১ম ও ২য় পত্র)', name_en: 'English (1st & 2nd)', full_marks: 200, marks_obtained: eTotal, grade: eG.grade, point: eG.point, is_optional: false });
+      subjects.push({
+        code: '101-102',
+        name_bn: 'বাংলা',
+        name_en: 'Bangla',
+        full_marks: 200,
+        marks_obtained: bTotal,
+        grade: bG.grade,
+        point: bG.point,
+        is_optional: false,
+        papers: [
+          { code: '101', name_bn: 'বাংলা ১ম পত্র', name_en: 'Bangla 1st Paper', full_marks: 100, marks_obtained: b1 },
+          { code: '102', name_bn: 'বাংলা ২য় পত্র', name_en: 'Bangla 2nd Paper', full_marks: 100, marks_obtained: b2 }
+        ]
+      });
+      subjects.push({
+        code: '107-108',
+        name_bn: 'ইংরেজি',
+        name_en: 'English',
+        full_marks: 200,
+        marks_obtained: eTotal,
+        grade: eG.grade,
+        point: eG.point,
+        is_optional: false,
+        papers: [
+          { code: '107', name_bn: 'ইংরেজি ১ম পত্র', name_en: 'English 1st Paper', full_marks: 100, marks_obtained: e1 },
+          { code: '108', name_bn: 'ইংরেজি ২য় পত্র', name_en: 'English 2nd Paper', full_marks: 100, marks_obtained: e2 }
+        ]
+      });
       subjects.push({ code: '109', name_bn: 'গণিত', name_en: 'Mathematics', full_marks: 100, marks_obtained: math, grade: mathG.grade, point: mathG.point, is_optional: false });
       subjects.push({ code: '150', name_bn: 'বাংলাদেশ ও বিশ্বপরিচয়', name_en: 'Bangladesh and Global Studies', full_marks: 100, marks_obtained: bgs, grade: bgsG.grade, point: bgsG.point, is_optional: false });
       subjects.push({ code: '136', name_bn: 'পদার্থবিজ্ঞান', name_en: 'Physics', full_marks: 100, marks_obtained: phy, grade: phyG.grade, point: phyG.point, is_optional: false });
       subjects.push({ code: '137', name_bn: 'রসায়ন', name_en: 'Chemistry', full_marks: 100, marks_obtained: chem, grade: chemG.grade, point: chemG.point, is_optional: false });
       subjects.push({ code: '138', name_bn: 'জীববিজ্ঞান', name_en: 'Biology', full_marks: 100, marks_obtained: bio, grade: bioG.grade, point: bioG.point, is_optional: false });
       subjects.push({ code: '154', name_bn: 'তথ্য ও যোগাযোগ প্রযুক্তি', name_en: 'ICT', full_marks: 50, marks_obtained: ict, grade: ictG.grade, point: ictG.point, is_optional: false });
-      subjects.push({ code: '134', name_bn: '৪র্থ বিষয় (কৃষি/উচ্চতর গণিত)', name_en: '4th Subject (Agri / Higher Math)', full_marks: 100, marks_obtained: opt, grade: optG.grade, point: optG.point, is_optional: true });
-      subjects.push({ code: '111', name_bn: 'ধর্ম ও নৈতিক শিক্ষা', name_en: 'Religion & Moral Education', full_marks: 100, marks_obtained: rel, grade: relG.grade, point: relG.point, is_optional: false });
+
+      if (mapping.type === 'high_10') {
+        if (c['AM']?.v === 'Higher Math' || (c['AL']?.v && numVal(c['AL']?.v) > 0) || roll === 2) {
+          studentFourthSubject = 'higher_math';
+        } else {
+          studentFourthSubject = 'agriculture';
+        }
+      } else {
+        studentFourthSubject = 'agriculture';
+      }
+
+      const fourthSubjectObj = studentFourthSubject === 'higher_math'
+        ? { code: '126', name_bn: 'উচ্চতর গণিত (৪র্থ বিষয়)', name_en: 'Higher Mathematics (4th Subject)', full_marks: 100, marks_obtained: opt, grade: optG.grade, point: optG.point, is_optional: true }
+        : { code: '134', name_bn: 'কৃষি শিক্ষা (৪র্থ বিষয়)', name_en: 'Agriculture Studies (4th Subject)', full_marks: 100, marks_obtained: opt, grade: optG.grade, point: optG.point, is_optional: true };
+
+      const relObj = studentReligion === 'hindu'
+        ? { code: '112', name_bn: 'হিন্দুধর্ম ও নৈতিক শিক্ষা', name_en: 'Hindu Religion & Moral Education', full_marks: 100, marks_obtained: rel, grade: relG.grade, point: relG.point, is_optional: false }
+        : { code: '111', name_bn: 'ইসলাম ও নৈতিক শিক্ষা', name_en: 'Islam & Moral Education', full_marks: 100, marks_obtained: rel, grade: relG.grade, point: relG.point, is_optional: false };
+
+      subjects.push(fourthSubjectObj);
+      subjects.push(relObj);
     }
 
     // Calculations: Total Marks, Max Marks, GPA, Status
@@ -308,6 +383,8 @@ for (const [sheetName, mapping] of Object.entries(sheetMapping)) {
       mother_name_bn: motherName,
       mother_name_en: motherName,
       dob: dob,
+      religion: studentReligion,
+      fourth_subject: studentFourthSubject,
       subjects: subjects,
       total_marks: totalMarks,
       max_possible_marks: maxMarks,

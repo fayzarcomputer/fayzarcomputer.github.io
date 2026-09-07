@@ -73,7 +73,7 @@
         <div>
           <label for="admin-pin-input" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
             <span>সিকিউরিটি পিন (PIN)</span>
-            <span class="text-[11px] text-slate-400 font-normal">ডিফল্ট: <strong class="text-emerald-400 font-mono">101919</strong></span>
+            <span class="text-[11px] text-slate-400 font-normal"><i class="fas fa-shield-halved text-emerald-400 mr-1"></i>সিকিউরিটি ভেরিফিকেশন</span>
           </label>
           <div class="relative">
             <input 
@@ -147,7 +147,7 @@
             <span class="hidden sm:inline">গিটহাবে আপডেট</span>
           </button>
 
-          <a href="result-admin.html" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 px-3 py-2 rounded-xl transition border border-emerald-700 shadow-sm">
+          <a href="result-admin.html?auth=super&tab=spreadsheet" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 px-3 py-2 rounded-xl transition border border-emerald-700 shadow-sm" title="সরাসরি লাইভ রেজাল্ট এডিটর খুলুন (লগইন ছাড়াই)">
             <i class="fas fa-graduation-cap text-amber-400 text-[11px]"></i> 
             <span class="hidden md:inline">রেজাল্ট অ্যাডমিন</span>
           </a>
@@ -173,8 +173,8 @@
     <!-- Main Admin Container with Sidebar & Content -->
     <main class="container mx-auto max-w-7xl px-4 py-5 flex-1 space-y-5">
       
-      <!-- ৮টি স্মার্ট নেভিগেশন ট্যাব বার (Modern Tab Navigation) -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 bg-[#0c1425] p-2 rounded-2xl border border-slate-800 shadow-lg">
+      <!-- ১০টি স্মার্ট নেভিগেশন ট্যাব বার (Modern Tab Navigation) -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 bg-[#0c1425] p-2 rounded-2xl border border-slate-800 shadow-lg">
         
         <!-- ট্যাব ১: ড্যাশবোর্ড -->
         <button id="tab-btn-dashboard" onclick="switchAdminTab('dashboard')" class="active-nav-tab p-2.5 rounded-xl transition flex flex-col items-center justify-center gap-1 text-center font-bold text-xs">
@@ -230,7 +230,14 @@
           <span id="tab-badge-candidates" class="text-[9px] px-1.5 py-0.2 rounded-full bg-slate-800 text-lime-300 border border-lime-500/30">0</span>
         </button>
 
-        <!-- ট্যাব ৮: ব্যাকআপ ও রিস্টোর -->
+        <!-- ট্যাব ৯: স্কুল ও রেজাল্ট কন্ট্রোল -->
+        <button id="tab-btn-schools" onclick="switchAdminTab('schools')" class="p-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition flex flex-col items-center justify-center gap-1 text-center font-bold text-xs relative">
+          <i class="fas fa-graduation-cap text-sm text-emerald-400"></i>
+          <span>স্কুল ও রেজাল্ট</span>
+          <span id="tab-badge-schools" class="text-[9px] px-1.5 py-0.2 rounded-full bg-slate-800 text-emerald-300 border border-emerald-500/30">0</span>
+        </button>
+
+        <!-- ট্যাব ১০: ব্যাকআপ ও রিস্টোর -->
         <button id="tab-btn-backup" onclick="switchAdminTab('backup')" class="p-2.5 rounded-xl text-slate-300 hover:bg-slate-800 transition flex flex-col items-center justify-center gap-1 text-center font-bold text-xs">
           <i class="fas fa-database text-sm text-purple-400"></i>
           <span>ব্যাকআপ ডেটা</span>
@@ -798,6 +805,101 @@
 
       </div>
 
+      <!-- =====================================================================
+           প্যানেল ৯: স্কুল ও রেজাল্ট কন্ট্রোল সেন্টার (Web Admin Multi-School & PIN Suite)
+           ===================================================================== -->
+      <div id="panel-schools" class="hidden space-y-6">
+        <!-- Top Banner & Quick Controls -->
+        <div class="glass-card rounded-3xl p-6 sm:p-7 relative overflow-hidden border border-emerald-500/30">
+          <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 relative z-10">
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-[11px] font-extrabold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <i class="fas fa-shield-halved mr-1"></i> সেন্ট্রাল ওয়েব অ্যাডমিন অথরিটি
+                </span>
+                <span class="text-[11px] font-extrabold px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  মাল্টি-স্কুল রেজাল্ট ইঞ্জিন
+                </span>
+              </div>
+              <h2 class="text-2xl sm:text-3xl font-black text-white">স্কুল ও রেজাল্ট ম্যানেজমেন্ট কন্ট্রোল</h2>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                প্রতিটি স্কুলের মাস্টার অ্যাডমিন পিন, বিষয়ভিত্তিক শিক্ষক পিন, ওয়াটারমার্ক, থিম কালার এবং মার্কশীট কনফিগারেশন নিয়ন্ত্রণ করুন।
+              </p>
+            </div>
+
+            <!-- Header Action Buttons -->
+            <div class="flex flex-wrap items-center gap-2.5">
+              <a href="result-admin.html?auth=super&tab=spreadsheet" target="_blank" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2 border border-emerald-400/30">
+                <i class="fas fa-table-columns text-sm"></i> <span>রেজাল্ট লাইভ এডিটর</span>
+              </a>
+              <a href="results.html" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 border border-slate-700">
+                <i class="fas fa-arrow-up-right-from-square text-amber-400 text-xs"></i> <span>রেজাল্ট পেজ</span>
+              </a>
+              <button type="button" onclick="openSchoolModal()" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2 border border-blue-400/30">
+                <i class="fas fa-plus-circle"></i> <span>নতুন স্কুল যুক্ত করুন</span>
+              </button>
+              <button type="button" onclick="saveResultsConfigToServer()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 font-extrabold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 border border-emerald-600/40">
+                <i class="fas fa-save"></i> <span>কনফিগ সেভ</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Super Admin Publish Authority Alert Box -->
+        <div class="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-purple-950/40 border border-emerald-500/40 flex items-start gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl shrink-0 mt-0.5">
+            <i class="fas fa-bullhorn"></i>
+          </div>
+          <div class="space-y-1 text-xs">
+            <h4 class="text-sm font-black text-white flex items-center gap-2">
+              <span>রেজাল্ট পাবলিশ করার একচ্ছত্র কর্তৃত্ব: শুধুমাত্র ওয়েব এডমিন (ফয়জার কম্পিউটার)</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">RBAC Tier-1</span>
+            </h4>
+            <p class="text-slate-300 leading-relaxed">
+              স্কুলের প্রধান শিক্ষক বা মাস্টার এডমিন এবং সহকারী শিক্ষকরা শুধুমাত্র ড্রাফট (Draft) হিসেবে নম্বর এন্ট্রি ও নিরীক্ষণ করতে পারবেন। জনসাধারণের জন্য ফলাফল উন্মুক্ত/পাবলিশ করার ক্ষমতা শুধুমাত্র ওয়েব অ্যাডমিনের কাছে সংরক্ষিত। কোনো ক্লাসের রেজাল্ট পাবলিশ করতে <a href="result-admin.html?auth=super&tab=spreadsheet" target="_blank" class="text-emerald-400 underline font-bold">রেজাল্ট অ্যাডমিন</a> এ গিয়ে 'পাবলিশ করুন' বাটনে ক্লিক করুন।
+            </p>
+          </div>
+        </div>
+
+        <!-- Global Shop Footer Credit Settings Card -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-700/80 space-y-3">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-certificate text-amber-400 text-sm"></i>
+              <h4 class="text-sm font-black text-white">মার্কশীটের বাধ্যতামূলক শপ ফুটার ক্রেডিট ও হেল্পলাইন</h4>
+            </div>
+            <span class="text-[10px] text-slate-400">প্রতিটি মার্কশীটের নিচে স্বয়ংক্রিয়ভাবে প্রদর্শিত হবে</span>
+          </div>
+          <div class="flex flex-col sm:flex-row items-center gap-3">
+            <input type="text" id="cfg-global-footer-credit" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" placeholder="কম্পিউটারাইজড রেজাল্ট প্রস্তুত ও প্রক্রিয়াকরণে: ফয়জার কম্পিউটার এন্ড ফটোস্ট্যাট...">
+            <button type="button" onclick="updateFooterCredit()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition whitespace-nowrap">
+              <i class="fas fa-check"></i> ক্রেডিট আপডেট
+            </button>
+          </div>
+        </div>
+
+        <!-- Schools Summary & Search/Filter Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <h3 class="text-base font-black text-white flex items-center gap-2">
+              <i class="fas fa-school text-emerald-400"></i>
+              <span>নিবন্ধিত শিক্ষা প্রতিষ্ঠানসমূহ</span>
+            </h3>
+            <span id="school-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">০ টি প্রতিষ্ঠান</span>
+          </div>
+          <div class="relative w-full sm:w-64">
+            <input type="text" id="admin-school-search" oninput="renderAdminSchools(this.value)" placeholder="স্কুলের নাম বা আইডি দিয়ে খুঁজুন..." class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500">
+            <i class="fas fa-search absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+          </div>
+        </div>
+
+        <!-- Schools Grid -->
+        <div id="admin-schools-container" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Dynamically populated via js/admin.js -->
+        </div>
+      </div>
+
     </main>
 
     <!-- Footer -->
@@ -1169,6 +1271,173 @@
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
           <button type="button" onclick="closeDictModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition">বাতিল</button>
           <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-extrabold shadow-lg transition">সংযোজন করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- স্কুল অ্যাড / এডিট মোডাল -->
+  <div id="school-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full glass-card rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-700 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="school-modal-title" class="text-base font-black text-white flex items-center gap-2">
+          <i class="fas fa-school text-emerald-400"></i> শিক্ষা প্রতিষ্ঠান তথ্য সম্পাদন
+        </h3>
+        <button type="button" onclick="closeSchoolModal()" class="text-slate-400 hover:text-white transition text-lg"><i class="fas fa-times"></i></button>
+      </div>
+
+      <form id="school-form" onsubmit="handleSchoolSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="sch-edit-mode" value="create">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">স্কুল আইডি (Unique Slug) *</label>
+            <input type="text" id="sch-id" required placeholder="যেমন: dreamland-school" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-mono focus:border-emerald-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">মাস্টার অ্যাডমিন পিন (Master PIN) *</label>
+            <input type="text" id="sch-master-pin" required placeholder="যেমন: 1234" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-mono tracking-widest text-center focus:border-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">প্রতিষ্ঠানের নাম (বাংলা) *</label>
+            <input type="text" id="sch-name-bn" required placeholder="যেমন: ড্রিমল্যান্ড রেসিডেন্সিয়াল মডেল স্কুল" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">প্রতিষ্ঠানের নাম (English) *</label>
+            <input type="text" id="sch-name-en" required placeholder="Dreamland Residential Model School" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">ঠিকানা (বাংলা) *</label>
+            <input type="text" id="sch-address-bn" required placeholder="যেমন: বারাই, ফুলবাড়ী, দিনাজপুর" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">ঠিকানা (English)</label>
+            <input type="text" id="sch-address-en" placeholder="Barai, Phulbari, Dinajpur" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">মার্কশীট ওয়াটারমার্ক টেক্সট *</label>
+            <input type="text" id="sch-watermark" required placeholder="যেমন: ড্রিমল্যান্ড বা AMDUNGI" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">থিম কালার (Hex)</label>
+            <div class="flex items-center gap-2">
+              <input type="color" id="sch-theme-color-picker" value="#1e3a8a" onchange="document.getElementById('sch-theme-color').value = this.value" class="w-9 h-9 rounded-lg cursor-pointer bg-transparent border-0">
+              <input type="text" id="sch-theme-color" value="#1e3a8a" oninput="document.getElementById('sch-theme-color-picker').value = this.value" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-mono text-center focus:border-emerald-500 focus:outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-300 mb-1">শিক্ষাবর্ষ (কমা দিয়ে পৃথক)</label>
+            <input type="text" id="sch-years" placeholder="2025, 2026" value="2025, 2026" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-mono focus:border-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">স্কুল লোগো URL / পাথ</label>
+          <input type="text" id="sch-logo" placeholder="assets/images/school-logo.png" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none">
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeSchoolModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition">বাতিল</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-lg transition flex items-center gap-1.5">
+            <i class="fas fa-save"></i> <span>সংরক্ষণ করুন</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- শিক্ষক ব্যবস্থাপনা তালিকা মোডাল (Teacher Management Modal) -->
+  <div id="teacher-manager-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-3xl w-full glass-card rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-700 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base font-black text-white flex items-center gap-2">
+            <i class="fas fa-chalkboard-user text-emerald-400"></i> <span id="tm-school-name-display">শিক্ষক ও পিন ব্যবস্থাপনা</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">নির্ধারিত শিক্ষকগণ শুধুমাত্র তাদের বিষয়ভিত্তিক কলাম এন্ট্রি করতে পারবেন</p>
+        </div>
+        <button type="button" onclick="closeTeacherManagerModal()" class="text-slate-400 hover:text-white transition text-lg"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 pt-1">
+        <span id="tm-count-display" class="text-xs font-bold text-slate-300">মোট ০ জন শিক্ষক</span>
+        <button type="button" onclick="openTeacherEditModal(currentSelectedSchoolId)" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-md">
+          <i class="fas fa-user-plus"></i> <span>নতুন শিক্ষক যুক্ত করুন</span>
+        </button>
+      </div>
+
+      <!-- Teachers List Table -->
+      <div class="overflow-x-auto rounded-2xl border border-slate-700/80">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-900/90 text-slate-300 font-bold border-b border-slate-700">
+            <tr>
+              <th class="py-2.5 px-3">শিক্ষকের নাম</th>
+              <th class="py-2.5 px-3 text-center">সিকিউরিটি পিন</th>
+              <th class="py-2.5 px-3">বরাদ্দকৃত বিষয়সমূহ</th>
+              <th class="py-2.5 px-3">শ্রেণি</th>
+              <th class="py-2.5 px-3 text-right">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="tm-teacher-table-body" class="divide-y divide-slate-800 bg-slate-900/40">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-end pt-2 border-t border-slate-800">
+        <button type="button" onclick="closeTeacherManagerModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition">বন্ধ করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- শিক্ষক এডিট / অ্যাড একক মোডাল -->
+  <div id="teacher-edit-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-md w-full glass-card rounded-3xl p-6 shadow-2xl border border-slate-700 space-y-4 text-white">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 id="teacher-edit-modal-title" class="text-sm font-black text-white flex items-center gap-2">
+          <i class="fas fa-user-pen text-emerald-400"></i> শিক্ষক তথ্য সম্পাদনা
+        </h3>
+        <button type="button" onclick="closeTeacherEditModal()" class="text-slate-400 hover:text-white transition text-lg"><i class="fas fa-times"></i></button>
+      </div>
+
+      <form id="teacher-edit-form" onsubmit="handleTeacherSubmit(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="te-school-id">
+        <input type="hidden" id="te-teacher-id">
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">শিক্ষকের নাম ও পরিচয় *</label>
+          <input type="text" id="te-name" required placeholder="যেমন: মো: রফিকুল ইসলাম (বাংলা)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">ব্যক্তিগত লগইন পিন (PIN) *</label>
+          <input type="text" id="te-pin" required placeholder="যেমন: 1101" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-mono tracking-widest text-center focus:border-emerald-500 focus:outline-none">
+          <span class="text-[10px] text-slate-400 mt-1 block">এই পিন দিয়ে শিক্ষক সরাসরি রেজাল্ট পোর্টালে লগইন করতে পারবেন।</span>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">বরাদ্দকৃত বিষয় (কমা দিয়ে পৃথক) *</label>
+          <input type="text" id="te-subjects" required placeholder="যেমন: বাংলা ১ম পত্র, বাংলা ২য় পত্র, Bangla" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:border-emerald-500 focus:outline-none">
+          <span class="text-[10px] text-slate-400 mt-1 block">শিক্ষক শুধুমাত্র এই বিষয়গুলোর কলামের নম্বর এডিট করতে পারবেন।</span>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">বরাদ্দকৃত শ্রেণি (কমা দিয়ে বা all)</label>
+          <input type="text" id="te-classes" placeholder="যেমন: all অথবা nursery, class_1" value="all" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-white font-mono focus:border-emerald-500 focus:outline-none">
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeTeacherEditModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition">বাতিল</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-lg transition">সংরক্ষণ করুন</button>
         </div>
       </form>
     </div>

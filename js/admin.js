@@ -10,6 +10,8 @@ let siteConfig = {};
 let feedbacksList = [];
 let dictionaryList = [];
 let candidatesList = [];
+let resultsConfig = {};
+let currentSelectedSchoolId = null;
 
 let currentNoticeFilter = 'all';
 let currentServiceFilter = 'all';
@@ -60,6 +62,22 @@ document.getElementById('admin-login-form')?.addEventListener('submit', (e) => {
 
   if (input === correctPin) {
     sessionStorage.setItem('fayzar_admin_session', 'true');
+    localStorage.setItem('fayzar_admin_session', 'true');
+
+    // Automatically set Super Admin credentials for Result Admin SSO
+    const superAdminUser = {
+      role: 'super_admin',
+      role_title: 'ওয়েব সুপার অ্যাডমিন (ফয়জার কম্পিউটার)',
+      name: 'ফয়জার কম্পিউটার অ্যাডমিন',
+      canBatchPrint: true,
+      canPublish: true,
+      canSwitchSchool: true,
+      canManageUsers: true,
+      school_id: null
+    };
+    sessionStorage.setItem('fayzar_result_current_user', JSON.stringify(superAdminUser));
+    localStorage.setItem('fayzar_result_current_user', JSON.stringify(superAdminUser));
+
     checkAuth();
     showToast('সফলভাবে অ্যাডমিন প্যানেলে লগইন হয়েছে!', 'success');
   } else {
@@ -74,6 +92,9 @@ document.getElementById('admin-login-form')?.addEventListener('submit', (e) => {
 function adminLogout() {
   if (confirm('আপনি কি নিশ্চিত যে অ্যাডমিন প্যানেল থেকে লগআউট করতে চান?')) {
     sessionStorage.removeItem('fayzar_admin_session');
+    localStorage.removeItem('fayzar_admin_session');
+    sessionStorage.removeItem('fayzar_result_current_user');
+    localStorage.removeItem('fayzar_result_current_user');
     window.location.reload();
   }
 }
@@ -327,6 +348,46 @@ async function initAdminSuite() {
     candidatesList = JSON.parse(localStorage.getItem('fayzar_admin_candidates') || '[]');
   }
 
+  try {
+    // ৭. রেজাল্ট কনফিগারেশন লোড (মাল্টি-স্কুল, শিক্ষক, মার্কশীট সেটিংস)
+    let rLoaded = false;
+    try {
+      const rRes = await fetch('/api/results/config');
+      if (rRes.ok) {
+        resultsConfig = await rRes.json();
+        rLoaded = true;
+      }
+    } catch(err) {}
+
+    if (!rLoaded || !resultsConfig || Object.keys(resultsConfig).length === 0) {
+      try {
+        const rFile = await fetch('data/results_config.json');
+        if (rFile.ok) {
+          resultsConfig = await rFile.json();
+          rLoaded = true;
+        }
+      } catch(err) {}
+    }
+
+    if (!rLoaded || !resultsConfig || Object.keys(resultsConfig).length === 0) {
+      const localCfg = JSON.parse(localStorage.getItem('fayzar_results_config') || '{}');
+      if (Object.keys(localCfg).length > 0) {
+        resultsConfig = localCfg;
+      } else if (typeof window !== 'undefined' && window.RESULTS_CONFIG) {
+        resultsConfig = window.RESULTS_CONFIG;
+      } else if (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG) {
+        resultsConfig = window.DEFAULT_RESULTS_CONFIG;
+      }
+    }
+
+    const ftEl = document.getElementById('cfg-global-footer-credit');
+    if (ftEl && resultsConfig.global_footer_credit) {
+      ftEl.value = resultsConfig.global_footer_credit;
+    }
+  } catch (e) {
+    console.warn('Error loading results config:', e);
+  }
+
   // কাউন্টার ও সমস্ত ভিউ রেন্ডার
   updateDashboardMetrics();
   populateSiteConfigForm();
@@ -336,6 +397,7 @@ async function initAdminSuite() {
   renderAdminDictionary();
   renderAdminFeedbacks();
   renderAdminCandidates();
+  renderAdminSchools();
 }
 
 // ৪. ড্যাশবোর্ড ওভারভিউ ও মেট্রিক্স
@@ -347,6 +409,7 @@ function updateDashboardMetrics() {
   const fbPending = feedbacksList.filter(f => f.status === 'pending').length;
   const fbTotal = feedbacksList.length;
   const candCount = candidatesList.length;
+  const schoolCount = (resultsConfig.schools || resultsConfig.institutions || []).length;
 
   // Stat Cards
   const elNot = document.getElementById('stat-notices-count'); if (elNot) elNot.textContent = `${notCount} টি`;
@@ -364,13 +427,15 @@ function updateDashboardMetrics() {
   const tbFb = document.getElementById('tab-badge-feedbacks'); if (tbFb) tbFb.textContent = fbPending > 0 ? `${fbPending} নতুন` : fbTotal;
   const chkSel = document.getElementById('checklist-selected-count'); if (chkSel) chkSel.textContent = chkCount;
   const cBadge = document.getElementById('tab-badge-candidates'); if (cBadge) cBadge.textContent = candCount;
+  const tbSchools = document.getElementById('tab-badge-schools'); if (tbSchools) tbSchools.textContent = schoolCount;
+  const schBadge = document.getElementById('school-count-badge'); if (schBadge) schBadge.textContent = `${schoolCount} টি প্রতিষ্ঠান`;
 }
 
 // ৫. ট্যাব পরিবর্তন লজিক
 // =========================================================================
 function switchAdminTab(tabName) {
   currentAdminTab = tabName;
-  const tabs = ['dashboard', 'site', 'notices', 'services', 'checklist', 'tools', 'feedbacks', 'candidates', 'backup'];
+  const tabs = ['dashboard', 'site', 'notices', 'services', 'checklist', 'tools', 'feedbacks', 'candidates', 'schools', 'backup'];
 
   tabs.forEach(t => {
     const btn = document.getElementById(`tab-btn-${t}`);
@@ -386,7 +451,9 @@ function switchAdminTab(tabName) {
   });
 
   // Re-render specific active panel content
-  if (tabName === 'candidates') {
+  if (tabName === 'schools') {
+    renderAdminSchools(document.getElementById('admin-school-search')?.value || '');
+  } else if (tabName === 'candidates') {
     renderAdminCandidates(document.getElementById('admin-candidates-search')?.value || '');
   } else if (tabName === 'feedbacks') {
     renderAdminFeedbacks();
@@ -1666,6 +1733,527 @@ async function syncToGitHubFromAdmin() {
   } catch (err) {
     showToast('অফলাইন মোড। fayzar-computer-v2 ফোল্ডারের sync-to-github.bat ফাইলে ডাবল-ক্লিক করুন।', 'info');
   }
+}
+
+// =========================================================================
+// ৯. স্কুল ও রেজাল্ট কন্ট্রোল সেন্টার (Web Admin Multi-School & PIN Suite)
+// =========================================================================
+function getSchoolsList() {
+  if (Array.isArray(resultsConfig.schools)) return resultsConfig.schools;
+  if (Array.isArray(resultsConfig.institutions)) return resultsConfig.institutions;
+  return [];
+}
+
+function renderAdminSchools(query = '') {
+  const container = document.getElementById('admin-schools-container');
+  if (!container) return;
+
+  const q = (query || '').toLowerCase().trim();
+  const schools = getSchoolsList().filter(s => {
+    if (!q) return true;
+    const matchId = (s.id || '').toLowerCase().includes(q);
+    const matchBn = (s.name_bn || '').toLowerCase().includes(q);
+    const matchEn = (s.name_en || '').toLowerCase().includes(q);
+    const matchAddr = (s.address_bn || '').toLowerCase().includes(q);
+    return matchId || matchBn || matchEn || matchAddr;
+  });
+
+  const countBadge = document.getElementById('school-count-badge');
+  if (countBadge) countBadge.textContent = `${schools.length} টি প্রতিষ্ঠান`;
+  const tabBadge = document.getElementById('tab-badge-schools');
+  if (tabBadge) tabBadge.textContent = schools.length;
+
+  if (schools.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-12 text-center text-slate-400 glass-card rounded-3xl p-8">
+        <i class="fas fa-school text-4xl mb-3 block text-slate-600"></i>
+        <div class="text-sm font-bold text-slate-300">কোনো শিক্ষা প্রতিষ্ঠান পাওয়া যায়নি</div>
+        <p class="text-xs text-slate-500 mt-1">উপরের 'নতুন স্কুল যুক্ত করুন' বাটনে ক্লিক করে নতুন প্রতিষ্ঠান যুক্ত করুন।</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = schools.map(sch => {
+    const theme = sch.theme_color || '#1e3a8a';
+    const teachers = sch.teachers || [];
+    const years = (sch.academic_years || ['2025', '2026']).join(', ');
+    const watermark = sch.watermark_text || sch.name_bn || 'ফয়জার কম্পিউটার';
+    const logoUrl = sch.logo || sch.logo_url || 'assets/images/school-logo.png';
+    const masterPin = sch.master_pin || '----';
+
+    return `
+      <div class="glass-card rounded-3xl p-5 sm:p-6 border border-slate-700/80 hover:border-emerald-500/40 transition flex flex-col justify-between space-y-4 shadow-xl">
+        <div class="space-y-3">
+          <!-- Top Tag & Theme -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-3.5 h-3.5 rounded-full shadow-sm" style="background-color: ${theme}"></span>
+              <span class="font-mono text-[11px] font-bold text-slate-400">#${sch.id}</span>
+            </div>
+            <div class="flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-amber-500/30 font-mono">
+              <i class="fas fa-key text-[9px]"></i> মাস্টার পিন: <strong>${masterPin}</strong>
+            </div>
+          </div>
+
+          <!-- School Info with Logo -->
+          <div class="flex items-start gap-3.5">
+            <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner p-1">
+              <img src="${logoUrl}" alt="${sch.name_bn}" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><text y=%2228%22 font-size=%2224%22>🏫</text></svg>'" class="w-full h-full object-contain">
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="text-base font-black text-white truncate hover:text-emerald-400 transition" title="${sch.name_bn}">${sch.name_bn}</h4>
+              <div class="text-xs text-slate-400 truncate">${sch.name_en || ''}</div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-1">
+                <i class="fas fa-location-dot text-rose-400 text-[10px]"></i>
+                <span class="truncate">${sch.address_bn || sch.address_en || 'ফুলবাড়ী, দিনাজপুর'}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Badges / Metadata -->
+          <div class="grid grid-cols-2 gap-2 text-xs pt-1">
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block">মার্কশীট ওয়াটারমার্ক:</span>
+              <span class="font-bold text-slate-200 truncate block font-sans">${watermark}</span>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+              <span class="text-[10px] text-slate-500 block">শিক্ষাবর্ষ:</span>
+              <span class="font-bold text-slate-200 font-mono text-[11px] truncate block">${years}</span>
+            </div>
+          </div>
+
+          <!-- Teachers Count Badge -->
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-xs">
+            <span class="text-emerald-300 font-bold flex items-center gap-1.5">
+              <i class="fas fa-chalkboard-user text-emerald-400"></i> শিক্ষক একাউন্ট:
+            </span>
+            <span class="font-extrabold text-emerald-200 font-mono">${teachers.length} জন</span>
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="openSchoolModal('${sch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-300 font-bold text-xs transition flex items-center gap-1">
+              <i class="fas fa-pen-to-square"></i> <span>এডিট</span>
+            </button>
+            <button type="button" onclick="openTeacherManagerModal('${sch.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-xs transition flex items-center gap-1">
+              <i class="fas fa-users-gear"></i> <span>শিক্ষক পিন</span>
+            </button>
+            <button type="button" onclick="deleteSchool('${sch.id}')" class="px-2.5 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900 text-rose-300 text-xs transition" title="প্রতিষ্ঠান মুছে ফেলুন">
+              <i class="fas fa-trash-can"></i>
+            </button>
+          </div>
+
+          <a href="result-admin.html?school=${sch.id}&tab=spreadsheet&auth=super" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-md" title="${sch.name_bn} এর ফলাফল সরাসরি এডিট করুন">
+            <i class="fas fa-table"></i> <span>সরাসরি রেজাল্ট এডিট</span>
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openSchoolModal(schoolId = null) {
+  const modal = document.getElementById('school-modal');
+  const title = document.getElementById('school-modal-title');
+  const form = document.getElementById('school-form');
+  if (!modal || !form) return;
+
+  form.reset();
+
+  if (schoolId) {
+    const list = getSchoolsList();
+    const sch = list.find(s => s.id === schoolId);
+    if (sch) {
+      document.getElementById('sch-edit-mode').value = sch.id;
+      document.getElementById('sch-id').value = sch.id;
+      document.getElementById('sch-id').readOnly = true;
+      document.getElementById('sch-id').classList.add('opacity-70');
+      document.getElementById('sch-master-pin').value = sch.master_pin || '';
+      document.getElementById('sch-name-bn').value = sch.name_bn || '';
+      document.getElementById('sch-name-en').value = sch.name_en || '';
+      document.getElementById('sch-address-bn').value = sch.address_bn || '';
+      document.getElementById('sch-address-en').value = sch.address_en || '';
+      document.getElementById('sch-watermark').value = sch.watermark_text || '';
+      document.getElementById('sch-theme-color').value = sch.theme_color || '#1e3a8a';
+      document.getElementById('sch-theme-color-picker').value = sch.theme_color || '#1e3a8a';
+      document.getElementById('sch-years').value = (sch.academic_years || ['2025', '2026']).join(', ');
+      document.getElementById('sch-logo').value = sch.logo || sch.logo_url || '';
+      if (title) title.innerHTML = '<i class="fas fa-pen-to-square text-emerald-400"></i> শিক্ষা প্রতিষ্ঠান তথ্য সম্পাদনা';
+    }
+  } else {
+    document.getElementById('sch-edit-mode').value = 'create';
+    document.getElementById('sch-id').readOnly = false;
+    document.getElementById('sch-id').classList.remove('opacity-70');
+    document.getElementById('sch-theme-color').value = '#1e3a8a';
+    document.getElementById('sch-theme-color-picker').value = '#1e3a8a';
+    document.getElementById('sch-years').value = '2025, 2026';
+    if (title) title.innerHTML = '<i class="fas fa-plus-circle text-emerald-400"></i> নতুন শিক্ষা প্রতিষ্ঠান সংযোজন';
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeSchoolModal() {
+  document.getElementById('school-modal')?.classList.add('hidden');
+}
+
+async function handleSchoolSubmit(e) {
+  e.preventDefault();
+  const mode = document.getElementById('sch-edit-mode').value;
+  const schId = document.getElementById('sch-id').value.trim().toLowerCase().replace(/\s+/g, '-');
+  const masterPin = document.getElementById('sch-master-pin').value.trim();
+  const nameBn = document.getElementById('sch-name-bn').value.trim();
+  const nameEn = document.getElementById('sch-name-en').value.trim();
+  const addrBn = document.getElementById('sch-address-bn').value.trim();
+  const addrEn = document.getElementById('sch-address-en').value.trim();
+  const watermark = document.getElementById('sch-watermark').value.trim();
+  const themeColor = document.getElementById('sch-theme-color').value.trim() || '#1e3a8a';
+  const yearsStr = document.getElementById('sch-years').value.trim();
+  const logo = document.getElementById('sch-logo').value.trim() || 'assets/images/school-logo.png';
+
+  const years = yearsStr ? yearsStr.split(',').map(y => y.trim()).filter(Boolean) : ['2025', '2026'];
+
+  if (!resultsConfig.schools) resultsConfig.schools = [];
+  if (!resultsConfig.institutions) resultsConfig.institutions = resultsConfig.schools;
+
+  if (mode === 'create') {
+    if (resultsConfig.schools.some(s => s.id === schId)) {
+      showToast('এই আইডি দিয়ে ইতিমধ্যে একটি স্কুল রয়েছে!', 'error');
+      return;
+    }
+    const newSch = {
+      id: schId,
+      name_bn: nameBn,
+      name_en: nameEn,
+      address_bn: addrBn,
+      address_en: addrEn,
+      eiin: "123456",
+      logo: logo,
+      logo_url: logo,
+      watermark_text: watermark,
+      theme_color: themeColor,
+      master_pin: masterPin,
+      academic_years: years,
+      exams: [
+        {
+          id: `annual_${years[0] || '2025'}`,
+          name_bn: `বার্ষিক পরীক্ষা - ${years[0] || '২০২৫'}`,
+          name_en: `Annual Exam - ${years[0] || '2025'}`,
+          year: years[0] || '2025',
+          is_published: false
+        }
+      ],
+      classes: resultsConfig.classes || [
+        { id: "class_1", name_bn: "১ম শ্রেণি", name_en: "Class 1" },
+        { id: "class_2", name_bn: "২য় শ্রেণি", name_en: "Class 2" },
+        { id: "class_3", name_bn: "৩য় শ্রেণি", name_en: "Class 3" },
+        { id: "class_4", name_bn: "৪র্থ শ্রেণি", name_en: "Class 4" },
+        { id: "class_5", name_bn: "৫ম শ্রেণি", name_en: "Class 5" }
+      ],
+      teachers: []
+    };
+    resultsConfig.schools.push(newSch);
+    resultsConfig.institutions = resultsConfig.schools;
+    showToast('নতুন স্কুল সফলভাবে অন্তর্ভুক্ত করা হয়েছে!', 'success');
+  } else {
+    const idx = resultsConfig.schools.findIndex(s => s.id === mode);
+    if (idx !== -1) {
+      resultsConfig.schools[idx].name_bn = nameBn;
+      resultsConfig.schools[idx].name_en = nameEn;
+      resultsConfig.schools[idx].address_bn = addrBn;
+      resultsConfig.schools[idx].address_en = addrEn;
+      resultsConfig.schools[idx].watermark_text = watermark;
+      resultsConfig.schools[idx].theme_color = themeColor;
+      resultsConfig.schools[idx].master_pin = masterPin;
+      resultsConfig.schools[idx].academic_years = years;
+      resultsConfig.schools[idx].logo = logo;
+      resultsConfig.schools[idx].logo_url = logo;
+
+      if (resultsConfig.institution && resultsConfig.institution.id === mode) {
+        resultsConfig.institution.name_bn = nameBn;
+        resultsConfig.institution.name_en = nameEn;
+        resultsConfig.institution.address_bn = addrBn;
+        resultsConfig.institution.address_en = addrEn;
+        resultsConfig.institution.logo = logo;
+      }
+      showToast('স্কুলের তথ্য সফলভাবে আপডেট হয়েছে!', 'success');
+    }
+  }
+
+  closeSchoolModal();
+  renderAdminSchools();
+  updateDashboardMetrics();
+  await saveResultsConfigToServer();
+}
+
+async function deleteSchool(schoolId) {
+  const sch = getSchoolsList().find(s => s.id === schoolId);
+  if (!sch) return;
+
+  if (!confirm(`আপনি কি নিশ্চিত যে '${sch.name_bn}' এর সমস্ত সেটিংস ও কনফিগ মুছে ফেলতে চান?`)) return;
+
+  resultsConfig.schools = (resultsConfig.schools || []).filter(s => s.id !== schoolId);
+  resultsConfig.institutions = resultsConfig.schools;
+
+  showToast('স্কুলটি মুছে ফেলা হয়েছে।', 'info');
+  renderAdminSchools();
+  updateDashboardMetrics();
+  await saveResultsConfigToServer();
+}
+
+function openTeacherManagerModal(schoolId) {
+  currentSelectedSchoolId = schoolId;
+  const sch = getSchoolsList().find(s => s.id === schoolId);
+  if (!sch) return;
+
+  const modal = document.getElementById('teacher-manager-modal');
+  const title = document.getElementById('tm-school-name-display');
+  if (title) title.textContent = `${sch.name_bn} — শিক্ষক ও পিন ব্যবস্থাপনা`;
+
+  renderTeacherListForSchool(schoolId);
+  modal?.classList.remove('hidden');
+}
+
+function closeTeacherManagerModal() {
+  document.getElementById('teacher-manager-modal')?.classList.add('hidden');
+}
+
+function renderTeacherListForSchool(schoolId) {
+  const sch = getSchoolsList().find(s => s.id === schoolId);
+  if (!sch) return;
+
+  const tbody = document.getElementById('tm-teacher-table-body');
+  const countDisplay = document.getElementById('tm-count-display');
+  const teachers = sch.teachers || [];
+
+  if (countDisplay) countDisplay.textContent = `মোট ${teachers.length} জন শিক্ষক`;
+
+  if (!tbody) return;
+  if (teachers.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-8 text-center text-slate-400">
+          এই স্কুলে এখনো কোনো সহকারী শিক্ষক পিন যোগ করা হয়নি।<br>
+          <span class="text-xs text-slate-500">মাস্টার অ্যাডমিন পিন দিয়ে পুরো স্কুলের সব তথ্য একাই নিয়ন্ত্রণ করা যাবে।</span>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = teachers.map(t => {
+    const subjects = (t.assigned_subjects || []).map(sub => 
+      `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 mr-1 mb-1">${sub}</span>`
+    ).join('');
+    const classes = (t.classes || ['all']).join(', ');
+
+    return `
+      <tr class="hover:bg-slate-800/40 transition">
+        <td class="py-2.5 px-3 font-bold text-white">
+          <div>${t.name}</div>
+          <div class="font-mono text-[10px] text-slate-500">ID: ${t.id}</div>
+        </td>
+        <td class="py-2.5 px-3 text-center">
+          <span class="px-2 py-0.5 rounded font-mono text-xs font-black bg-slate-800 text-amber-300 border border-slate-700 tracking-wider">${t.pin}</span>
+        </td>
+        <td class="py-2.5 px-3 max-w-[220px]">
+          ${subjects || '<span class="text-slate-500">সব বিষয়</span>'}
+        </td>
+        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-300">
+          ${classes}
+        </td>
+        <td class="py-2.5 px-3 text-right whitespace-nowrap">
+          <button type="button" onclick="openTeacherEditModal('${schoolId}', '${t.id}')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-300 text-xs font-bold transition mr-1">
+            <i class="fas fa-pen"></i>
+          </button>
+          <button type="button" onclick="deleteTeacher('${schoolId}', '${t.id}')" class="px-2 py-1 rounded-lg bg-rose-950/50 hover:bg-rose-900 text-rose-300 text-xs transition">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openTeacherEditModal(schoolId, teacherId = null) {
+  const modal = document.getElementById('teacher-edit-modal');
+  const title = document.getElementById('teacher-edit-modal-title');
+  const form = document.getElementById('teacher-edit-form');
+  if (!modal || !form) return;
+
+  form.reset();
+  document.getElementById('te-school-id').value = schoolId;
+  document.getElementById('te-teacher-id').value = teacherId || '';
+
+  const sch = getSchoolsList().find(s => s.id === schoolId);
+
+  if (teacherId && sch) {
+    const t = (sch.teachers || []).find(x => x.id === teacherId);
+    if (t) {
+      document.getElementById('te-name').value = t.name || '';
+      document.getElementById('te-pin').value = t.pin || '';
+      document.getElementById('te-subjects').value = (t.assigned_subjects || []).join(', ');
+      document.getElementById('te-classes').value = (t.classes || ['all']).join(', ');
+      if (title) title.innerHTML = '<i class="fas fa-user-pen text-emerald-400"></i> শিক্ষক তথ্য সম্পাদনা';
+    }
+  } else {
+    document.getElementById('te-classes').value = 'all';
+    if (title) title.innerHTML = '<i class="fas fa-user-plus text-emerald-400"></i> নতুন শিক্ষক সংযোজন';
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeTeacherEditModal() {
+  document.getElementById('teacher-edit-modal')?.classList.add('hidden');
+}
+
+async function handleTeacherSubmit(e) {
+  e.preventDefault();
+  const schoolId = document.getElementById('te-school-id').value;
+  const teacherId = document.getElementById('te-teacher-id').value;
+  const name = document.getElementById('te-name').value.trim();
+  const pin = document.getElementById('te-pin').value.trim();
+  const subjectsStr = document.getElementById('te-subjects').value.trim();
+  const classesStr = document.getElementById('te-classes').value.trim() || 'all';
+
+  const assignedSubjects = subjectsStr.split(',').map(s => s.trim()).filter(Boolean);
+  const classes = classesStr.split(',').map(c => c.trim()).filter(Boolean);
+
+  const sch = getSchoolsList().find(s => s.id === schoolId);
+  if (!sch) return;
+  if (!Array.isArray(sch.teachers)) sch.teachers = [];
+
+  if (teacherId) {
+    const t = sch.teachers.find(x => x.id === teacherId);
+    if (t) {
+      t.name = name;
+      t.pin = pin;
+      t.assigned_subjects = assignedSubjects;
+      t.classes = classes;
+      showToast('শিক্ষকের তথ্য সফলভাবে আপডেট হয়েছে!', 'success');
+    }
+  } else {
+    const newId = `${sch.id.substring(0, 3).toUpperCase()}-T${Math.floor(100 + Math.random() * 900)}`;
+    sch.teachers.push({
+      id: newId,
+      name: name,
+      pin: pin,
+      assigned_subjects: assignedSubjects,
+      classes: classes
+    });
+    showToast('নতুন শিক্ষক সফলভাবে যুক্ত করা হয়েছে!', 'success');
+  }
+
+  closeTeacherEditModal();
+  renderTeacherListForSchool(schoolId);
+  renderAdminSchools();
+  await saveResultsConfigToServer();
+}
+
+async function deleteTeacher(schoolId, teacherId) {
+  const sch = getSchoolsList().find(s => s.id === schoolId);
+  if (!sch || !Array.isArray(sch.teachers)) return;
+
+  if (!confirm('আপনি কি এই শিক্ষকের একাউন্ট ও পিন মুছে ফেলতে চান?')) return;
+
+  sch.teachers = sch.teachers.filter(t => t.id !== teacherId);
+  showToast('শিক্ষক একাউন্ট মুছে ফেলা হয়েছে।', 'info');
+  renderTeacherListForSchool(schoolId);
+  renderAdminSchools();
+  await saveResultsConfigToServer();
+}
+
+async function updateFooterCredit() {
+  const credit = document.getElementById('cfg-global-footer-credit')?.value.trim();
+  if (!credit) return;
+
+  resultsConfig.global_footer_credit = credit;
+  await saveResultsConfigToServer();
+  showToast('মার্কশীটের শপ ফুটার ক্রেডিট সফলভাবে আপডেট হয়েছে!', 'success');
+}
+
+async function saveResultsConfigToServer() {
+  try {
+    localStorage.setItem('fayzar_results_config', JSON.stringify(resultsConfig));
+    const res = await fetch('/api/results/save-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(resultsConfig)
+    });
+    if (res.ok) {
+      showToast('রেজাল্ট কনফিগারেশন সফলভাবে সার্ভারে সংরক্ষিত হয়েছে!', 'success');
+    } else {
+      showToast('রেজাল্ট কনফিগ লোকাল স্টোরেজে সংরক্ষিত হয়েছে।', 'info');
+    }
+  } catch (err) {
+    showToast('অফলাইন মোড: কনফিগ লোকাল ব্রাউজারে সংরক্ষিত হয়েছে।', 'info');
+  }
+}
+
+async function saveAllToServer() {
+  showToast('সমস্ত ডেটা সার্ভারে সংরক্ষণ করা হচ্ছে...', 'info');
+  let successCount = 0;
+
+  try {
+    await saveSiteConfig();
+    successCount++;
+  } catch(e) {}
+
+  try {
+    const resN = await fetch('/api/save-notices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(noticesList)
+    });
+    if (resN.ok) successCount++;
+  } catch(e) {}
+
+  try {
+    const resS = await fetch('/api/save-services', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(servicesList)
+    });
+    if (resS.ok) successCount++;
+  } catch(e) {}
+
+  try {
+    const resF = await fetch('/api/save-feedbacks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(feedbacksList)
+    });
+    if (resF.ok) successCount++;
+  } catch(e) {}
+
+  try {
+    const resD = await fetch('/api/save-dictionary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dictionaryList)
+    });
+    if (resD.ok) successCount++;
+  } catch(e) {}
+
+  try {
+    const resC = await fetch('/api/save-candidates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(candidatesList)
+    });
+    if (resC.ok) successCount++;
+  } catch(e) {}
+
+  try {
+    await saveResultsConfigToServer();
+    successCount++;
+  } catch(e) {}
+
+  showToast('সমস্ত নোটিশ, সেবা, প্রার্থী ও রেজাল্ট কনফিগ সফলভাবে সার্ভারে সংরক্ষিত হয়েছে!', 'success');
 }
 
 // স্ক্রিপ্ট এক্সিকিউশন

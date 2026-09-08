@@ -53,6 +53,17 @@ def safe_write_json(file_path, data):
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+def sync_results_data_js():
+    try:
+        cfg = safe_read_json(os.path.join(DATA_DIR, 'results_config.json'), {})
+        data = safe_read_json(os.path.join(DATA_DIR, 'results_data.json'), [])
+        js_file_path = os.path.join(PUBLIC_DIR, 'js', 'results-data.js')
+        content = f"window.DEFAULT_RESULTS_CONFIG = {json.dumps(cfg, ensure_ascii=False, indent=2)};\n\nwindow.DEFAULT_RESULTS_DATA = {json.dumps(data, ensure_ascii=False, indent=2)};\n"
+        with open(js_file_path, 'w', encoding='utf-8') as jf:
+            jf.write(content)
+    except Exception as e:
+        print(f"Sync js/results-data.js warning: {e}")
+
 class FayzarOfflineHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=PUBLIC_DIR, **kwargs)
@@ -152,24 +163,16 @@ class FayzarOfflineHandler(SimpleHTTPRequestHandler):
 
             if req_path in ('/api/results/save-config', '/api/save-results-config'):
                 safe_write_json(os.path.join(DATA_DIR, 'results_config.json'), payload)
-                # Also synchronize js/results-data.js so offline static fallback stays up to date
-                try:
-                    js_file_path = os.path.join(PUBLIC_DIR, 'js', 'results-data.js')
-                    if os.path.exists(js_file_path):
-                        with open(js_file_path, 'r', encoding='utf-8') as jf:
-                            js_content = jf.read()
-                        import re
-                        cfg_json = json.dumps(payload, ensure_ascii=False, indent=2)
-                        new_js = re.sub(r'window\.RESULTS_CONFIG\s*=\s*\{[\s\S]*?\};\n\n', f'window.RESULTS_CONFIG = {cfg_json};\n\n', js_content, count=1)
-                        if new_js != js_content:
-                            with open(js_file_path, 'w', encoding='utf-8') as jf:
-                                jf.write(new_js)
-                except Exception as sync_err:
-                    print(f"Sync js/results-data.js warning: {sync_err}")
+                sync_results_data_js()
                 return self.send_json_response(200, {'success': True, 'message': 'Results configuration saved successfully'})
 
             if req_path in ('/api/results/save-data', '/api/save-results-data'):
                 safe_write_json(os.path.join(DATA_DIR, 'results_data.json'), payload)
+                try:
+                    safe_write_json(os.path.join(DATA_DIR, 'results_data_backup.json'), payload)
+                except Exception:
+                    pass
+                sync_results_data_js()
                 return self.send_json_response(200, {'success': True, 'message': 'Results data saved successfully', 'count': len(payload) if isinstance(payload, list) else 0})
 
             if req_path == '/api/save-notices':

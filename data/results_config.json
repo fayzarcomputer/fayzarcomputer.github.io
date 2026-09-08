@@ -2,7 +2,6 @@
   "super_admin_pins": [
     "101919",
     "fayzar",
-    "1234",
     "admin"
   ],
   "institution": {
@@ -166,43 +165,76 @@
           "id": "t_bangla",
           "name": "মো: রফিকুল ইসলাম (বাংলা)",
           "pin": "1101",
-          "assigned_subjects": ["বাংলা ১ম পত্র", "বাংলা ২য় পত্র", "বাংলা", "Bangla"],
-          "classes": ["all"]
+          "assigned_subjects": [
+            "বাংলা ১ম পত্র",
+            "বাংলা ২য় পত্র",
+            "বাংলা",
+            "Bangla"
+          ],
+          "classes": [
+            "all"
+          ]
         },
         {
           "id": "t_english",
           "name": "মোছা: নাসরিন আক্তার (ইংরেজি)",
           "pin": "1102",
-          "assigned_subjects": ["ইংরেজি ১ম পত্র", "ইংরেজি ২য় পত্র", "ইংরেজি", "English"],
-          "classes": ["all"]
+          "assigned_subjects": [
+            "ইংরেজি ১ম পত্র",
+            "ইংরেজি ২য় পত্র",
+            "ইংরেজি",
+            "English"
+          ],
+          "classes": [
+            "all"
+          ]
         },
         {
           "id": "t_math",
           "name": "মো: মাহমুদুল হাসান (গণিত)",
           "pin": "1103",
-          "assigned_subjects": ["গণিত", "Mathematics", "উচ্চতর গণিত (৪র্থ বিষয়)"],
-          "classes": ["all"]
+          "assigned_subjects": [
+            "গণিত",
+            "Mathematics",
+            "উচ্চতর গণিত (৪র্থ বিষয়)"
+          ],
+          "classes": [
+            "all"
+          ]
         },
         {
           "id": "t_agri",
           "name": "মো: আবদুর রশিদ (কৃষি শিক্ষা)",
           "pin": "1104",
-          "assigned_subjects": ["কৃষি শিক্ষা (৪র্থ বিষয়)"],
-          "classes": ["all"]
+          "assigned_subjects": [
+            "কৃষি শিক্ষা (৪র্থ বিষয়)"
+          ],
+          "classes": [
+            "all"
+          ]
         },
         {
           "id": "t_islam",
           "name": "মাওলানা আব্দুল করিম (ইসলাম ধর্ম)",
           "pin": "1105",
-          "assigned_subjects": ["ইসলাম ও নৈতিক শিক্ষা", "ধর্ম"],
-          "classes": ["all"]
+          "assigned_subjects": [
+            "ইসলাম ও নৈতিক শিক্ষা",
+            "ধর্ম"
+          ],
+          "classes": [
+            "all"
+          ]
         },
         {
           "id": "t_hindu",
           "name": "শ্রী বিনয় কুমার রায় (হিন্দুধর্ম)",
           "pin": "1106",
-          "assigned_subjects": ["হিন্দুধর্ম ও নৈতিক শিক্ষা"],
-          "classes": ["all"]
+          "assigned_subjects": [
+            "হিন্দুধর্ম ও নৈতিক শিক্ষা"
+          ],
+          "classes": [
+            "all"
+          ]
         }
       ],
       "name_bn": "ড্রিমল্যান্ড রেসিডেন্সিয়াল মডেল স্কুল",
@@ -289,6 +321,43 @@
           "name_en": "Class 10",
           "section": "বিজ্ঞান (Science)"
         }
+      ],
+      "exams": [
+        {
+          "id": "exam_2026_mtrjbuxd",
+          "name_bn": "বার্ষিক পরিক্ষা",
+          "name_en": "বার্ষিক পরিক্ষা",
+          "year": "2026",
+          "is_published": false
+        },
+        {
+          "id": "annual_2025",
+          "name_bn": "বার্ষিক পরীক্ষা-২০২৫",
+          "name_en": "Annual Examination - 2025",
+          "year": "2025"
+        },
+        {
+          "id": "test_2025",
+          "name_bn": "নির্বাচনী পরীক্ষা-২০২৫ (Test Exam)",
+          "name_en": "Test Examination - 2025",
+          "year": "2025"
+        },
+        {
+          "id": "pre_test_2025",
+          "name_bn": "প্রাক-নির্বাচনী পরীক্ষা-২০২৫ (Pre-Test)",
+          "name_en": "Pre-Test Examination - 2025",
+          "year": "2025"
+        },
+        {
+          "id": "first_term_2026",
+          "name_bn": "১ম সাময়িক পরীক্ষা-২০২৬",
+          "name_en": "1st Term Examination - 2026",
+          "year": "2026"
+        }
+      ],
+      "academic_years": [
+        "2026",
+        "2025"
       ]
     },
     {
@@ -299,15 +368,32 @@
           "id": "tm_quran",
           "name": "মাওলানা আব্দুল্লাহ (কোরআন মাজিদ)",
           "pin": "2101",
-          "assigned_subjects": ["কোরআন মাজিদ ও তাজবীদ", "হাদিস শরীফ"],
-          "classes": ["all"]
+          "assigned_subjects": [
+            "কোরআন মাজিদ ও তাজবীদ",
+            "কুরআন মাজীদ ও তাজবীদ",
+            "হাদিস শরীফ",
+            "হাদিস শরিফ",
+            "কুরআন মাজিদ ও হাদিস শরিফ",
+            "কোরআন মাজিদ ও হাদিস শরিফ"
+          ],
+          "classes": [
+            "all"
+          ]
         },
         {
           "id": "tm_arabic",
           "name": "মাওলানা হাবিবুর রহমান (আরবি)",
           "pin": "2102",
-          "assigned_subjects": ["আরবি ১ম পত্র", "আরবি ২য় পত্র"],
-          "classes": ["all"]
+          "assigned_subjects": [
+            "আরবি ১ম পত্র",
+            "আরবি ২য় পত্র",
+            "আরবি ২য় পত্র",
+            "আরবি ১ম ও ২য় পত্র",
+            "আরবি ১ম ও ২য় পত্র"
+          ],
+          "classes": [
+            "all"
+          ]
         }
       ],
       "name_bn": "আমডুঙ্গীহাট ঈমান উদ্দিন চৌধুরী আলিম মাদ্রাসা",
@@ -350,6 +436,32 @@
           "name_en": "Class 10 (Dakhil)",
           "level": "dakhil",
           "full_marks": 1300
+        }
+      ],
+      "exams": [
+        {
+          "id": "annual_2025",
+          "name_bn": "বার্ষিক পরীক্ষা-২০২৫",
+          "name_en": "Annual Examination - 2025",
+          "year": "2025"
+        },
+        {
+          "id": "dakhil_test_2025",
+          "name_bn": "দাখিল নির্বাচনী পরীক্ষা-২০২৫ (Test Exam)",
+          "name_en": "Dakhil Test Examination - 2025",
+          "year": "2025"
+        },
+        {
+          "id": "pre_test_2025",
+          "name_bn": "প্রাক-নির্বাচনী পরীক্ষা-২০২৫ (Pre-Test)",
+          "name_en": "Pre-Test Examination - 2025",
+          "year": "2025"
+        },
+        {
+          "id": "first_term_2026",
+          "name_bn": "১ম সাময়িক পরীক্ষা-২০২৬",
+          "name_en": "1st Term Examination - 2026",
+          "year": "2026"
         }
       ]
     }

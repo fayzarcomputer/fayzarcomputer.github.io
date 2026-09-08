@@ -35,6 +35,41 @@ function safeReadJson(filePath, defaultValue = []) {
   }
 }
 
+function safeAtomicWriteJson(filePath, data) {
+  const tmpPath = `${filePath}.tmp.${Date.now()}`;
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf8');
+  fs.renameSync(tmpPath, filePath);
+}
+
+function appendAuditLog(entry) {
+  try {
+    const logPath = path.join(DATA_DIR, 'audit_log.json');
+    const logs = safeReadJson(logPath, []);
+    logs.unshift({
+      id: 'audit_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      timestamp: new Date().toISOString(),
+      ...entry
+    });
+    if (logs.length > 1000) logs.length = 1000;
+    safeAtomicWriteJson(logPath, logs);
+  } catch (err) {
+    console.error('Audit log error:', err);
+  }
+}
+
+function syncResultsDataJs() {
+  try {
+    const cfg = safeReadJson(path.join(DATA_DIR, 'results_config.json'), {});
+    const data = safeReadJson(path.join(DATA_DIR, 'results_data.json'), []);
+    const jsPath = path.join(__dirname, 'js', 'results-data.js');
+    const content = `window.DEFAULT_RESULTS_CONFIG = ${JSON.stringify(cfg, null, 2)};\n\n` +
+                    `window.DEFAULT_RESULTS_DATA = ${JSON.stringify(data, null, 2)};\n`;
+    fs.writeFileSync(jsPath, content, 'utf8');
+  } catch (err) {
+    console.error('Error syncing js/results-data.js:', err);
+  }
+}
+
 function readRequestBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -111,6 +146,65 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 200, { success: true, message: 'Candidates saved successfully', count: listToSave.length });
         }
 
+        if (reqPath === '/api/results/save-config' || reqPath === '/api/save-results-config') {
+          fs.writeFileSync(path.join(DATA_DIR, 'results_config.json'), JSON.stringify(payload, null, 2), 'utf8');
+          syncResultsDataJs();
+          return sendJson(res, 200, { success: true, message: 'Results configuration saved successfully' });
+        }
+
+        if (reqPath === '/api/results/save-data' || reqPath === '/api/save-results-data') {
+          const incomingStudents = Array.isArray(payload) ? payload : (payload.students || []);
+          const existingStudents = safeReadJson(path.join(DATA_DIR, 'results_data.json'), []);
+
+          // Concurrency-safe: Merge student records by ID preserving existing subjects/fields
+          const studentMap = new Map();
+          existingStudents.forEach(st => {
+            if (st && st.id) studentMap.set(st.id, st);
+          });
+
+          incomingStudents.forEach(incSt => {
+            if (!incSt || !incSt.id) return;
+            if (!studentMap.has(incSt.id)) {
+              studentMap.set(incSt.id, incSt);
+            } else {
+              const prev = studentMap.get(incSt.id);
+              const subMap = new Map();
+              if (Array.isArray(prev.subjects)) {
+                prev.subjects.forEach(s => subMap.set(s.code || s.name_bn, s));
+              }
+              if (Array.isArray(incSt.subjects)) {
+                incSt.subjects.forEach(s => subMap.set(s.code || s.name_bn, s));
+              }
+              studentMap.set(incSt.id, {
+                ...prev,
+                ...incSt,
+                subjects: Array.from(subMap.values()),
+                updated_at: new Date().toISOString()
+              });
+            }
+          });
+
+          const mergedList = Array.from(studentMap.values());
+          safeAtomicWriteJson(path.join(DATA_DIR, 'results_data.json'), mergedList);
+          try {
+            safeAtomicWriteJson(path.join(DATA_DIR, 'results_data_backup.json'), mergedList);
+          } catch (e) {}
+          syncResultsDataJs();
+
+          appendAuditLog({
+            action: 'save_results_data',
+            incoming_count: incomingStudents.length,
+            total_count: mergedList.length,
+            ip: req.socket.remoteAddress || '127.0.0.1'
+          });
+
+          return sendJson(res, 200, {
+            success: true,
+            message: 'Results data atomically saved and merged successfully',
+            count: mergedList.length
+          });
+        }
+
         if (reqPath === '/api/submit-feedback') {
           const list = safeReadJson(path.join(DATA_DIR, 'feedbacks.json'), []);
           const newEntry = {
@@ -169,6 +263,21 @@ const server = http.createServer(async (req, res) => {
         if (reqPath === '/api/candidates') {
           const list = safeReadJson(path.join(DATA_DIR, 'candidates.json'), []);
           return sendJson(res, 200, list);
+        }
+
+        if (reqPath === '/api/results/config') {
+          const resCfg = safeReadJson(path.join(DATA_DIR, 'results_config.json'), {});
+          return sendJson(res, 200, resCfg);
+        }
+
+        if (reqPath === '/api/results/data') {
+          const resData = safeReadJson(path.join(DATA_DIR, 'results_data.json'), []);
+          return sendJson(res, 200, resData);
+        }
+
+        if (reqPath === '/api/audit-logs') {
+          const logs = safeReadJson(path.join(DATA_DIR, 'audit_log.json'), []);
+          return sendJson(res, 200, logs);
         }
 
         if (reqPath === '/api/export-backup') {

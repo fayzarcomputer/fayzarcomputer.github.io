@@ -59,6 +59,133 @@
       margin: 0 !important;
     }
 
+    /* Disable up/down number spin buttons completely across all browsers */
+    input.mark-input::-webkit-outer-spin-button,
+    input.mark-input::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button {
+      -webkit-appearance: none !important;
+      margin: 0 !important;
+      display: none !important;
+    }
+    input.mark-input,
+    input[type=number] {
+      -moz-appearance: textfield !important;
+      appearance: textfield !important;
+    }
+
+    /* Fullscreen Mode for Live Marksheet Spreadsheet Editor */
+    #spreadsheetCard.spreadsheet-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      z-index: 99999 !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      padding: 0.85rem !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      background: #0f172a !important;
+      box-shadow: none !important;
+    }
+    html:not(.dark) #spreadsheetCard.spreadsheet-fullscreen {
+      background: #f8fafc !important;
+    }
+    #spreadsheetCard.spreadsheet-fullscreen #editorTableWrapper {
+      flex: 1 1 0% !important;
+      max-height: calc(100vh - 170px) !important;
+      height: 100% !important;
+    }
+
+    /* =========================================================================
+       BULLETPROOF MARK INPUT STYLING (Light & Dark Mode)
+       Prevents white-on-white text disappearance under any circumstance
+       ========================================================================= */
+    /* Normal mark input - uses CSS vars, not !important on bg so failing class can override */
+    input.mark-input {
+      background-color: #ffffff;
+      color: #0f172a;
+      border-color: #cbd5e1;
+      font-weight: 700;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .dark input.mark-input {
+      background-color: #1e293b;
+      color: #f8fafc;
+      border-color: #475569;
+    }
+    input.mark-input:focus:not(.failing-mark-cell) {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4) !important;
+      outline: none !important;
+    }
+    .dark input.mark-input:focus:not(.failing-mark-cell) {
+      background-color: #0f172a !important;
+      color: #ffffff !important;
+      border-color: #34d399 !important;
+      box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.5) !important;
+      outline: none !important;
+    }
+
+    /* Failing mark cell styling — higher specificity to WIN over base styles */
+    input.mark-input.failing-mark-cell {
+      background-color: #fef2f2 !important;
+      border-color: #ef4444 !important;
+      color: #b91c1c !important;
+      font-weight: 800 !important;
+      box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.5) !important;
+    }
+    .dark input.mark-input.failing-mark-cell {
+      background-color: #450a0a !important;
+      border-color: #ef4444 !important;
+      color: #fca5a5 !important;
+      font-weight: 800 !important;
+      box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.6) !important;
+    }
+    input.mark-input.failing-mark-cell:focus {
+      background-color: #fee2e2 !important;
+      color: #991b1b !important;
+      border-color: #dc2626 !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.6) !important;
+      outline: none !important;
+    }
+    .dark input.mark-input.failing-mark-cell:focus {
+      background-color: #5c0f16 !important;
+      color: #ffffff !important;
+      border-color: #f87171 !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.7) !important;
+      outline: none !important;
+    }
+
+    /* Toolbar select: ensure readable text on all backgrounds */
+    #editorYearSelect, #editorExamSelect, #editorClassSelect, #editorSectionSelect {
+      background-color: transparent;
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .dark #editorYearSelect, .dark #editorExamSelect,
+    .dark #editorClassSelect, .dark #editorSectionSelect {
+      background-color: #1e293b;
+      color: #f1f5f9;
+    }
+    /* Ensure option elements in select are always readable */
+    #editorYearSelect option, #editorExamSelect option,
+    #editorClassSelect option, #editorSectionSelect option {
+      background-color: #ffffff;
+      color: #0f172a;
+    }
+    .dark #editorYearSelect option, .dark #editorExamSelect option,
+    .dark #editorClassSelect option, .dark #editorSectionSelect option {
+      background-color: #1e293b;
+      color: #f1f5f9;
+    }
+
     @media print {
       html, body {
         background: #ffffff !important;
@@ -166,6 +293,11 @@
       <div>
         <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">রেজাল্ট অ্যাডমিন প্যানেল</h2>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">প্রবেশ করতে আপনার অনুমোদিত অ্যাডমিন পাসকি অথবা পিন নম্বর দিন।</p>
+        <div class="flex flex-wrap items-center justify-center gap-1.5 pt-2 text-[10px] font-extrabold">
+          <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300/40">🛡️ সুপার অ্যাডমিন</span>
+          <span class="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300/40">🏫 স্কুল মাস্টার</span>
+          <span class="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300/40">👨‍🏫 বিষয়ভিত্তিক শিক্ষক</span>
+        </div>
       </div>
 
       <form id="adminPinForm" class="space-y-4">
@@ -225,6 +357,18 @@
           <a href="results.html" target="_blank" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 transition-all flex items-center gap-1.5">
             <i class="fas fa-external-link-alt"></i> লাইভ পোর্টাল
           </a>
+
+          <!-- Switch User Button -->
+          <button type="button" id="adminSwitchUserBtn" onclick="window.switchUserAccount()" class="px-3 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs" title="অন্য রোল বা শিক্ষকের পিন দিয়ে প্রবেশ করুন">
+            <i class="fas fa-users-gear text-amber-600"></i>
+            <span class="hidden sm:inline">ইউজার পরিবর্তন</span>
+          </button>
+
+          <!-- Database Backup Button -->
+          <button type="button" onclick="window.exportFullDatabaseJson()" class="px-3 py-2 rounded-xl text-xs font-bold bg-sky-50 hover:bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-300 dark:border-sky-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs" title="সম্পূর্ণ ফলাফল ডেটাবেজ (.json) ব্যাকআপ ডাউনলোড করুন">
+            <i class="fas fa-database text-sky-600"></i>
+            <span class="hidden md:inline">ব্যাকআপ</span>
+          </button>
 
           <!-- Logout Button -->
           <button type="button" id="adminLogoutBtn" onclick="window.adminLogout()" class="px-3 py-2 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-all flex items-center gap-1 cursor-pointer">
@@ -319,7 +463,7 @@
          ========================================================================= -->
     <section id="spreadsheetTabContent" class="space-y-6 hidden">
       
-      <div class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div id="spreadsheetCard" class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-all duration-150">
         <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
           <div>
             <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -329,74 +473,173 @@
             <p class="text-xs text-slate-500">নম্বর পরিবর্তন করার সাথে সাথেই লাইভ GPA, Grade ও মেধা স্থান স্বয়ংক্রিয়ভাবে হিসাব হবে।</p>
           </div>
 
-          <!-- Web Admin Exclusive: Publish / Draft Toggle -->
-          <div id="publishControlContainer" class="flex flex-wrap items-center gap-2">
-            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold">
-              <span class="text-slate-500">স্ট্যাটাস:</span>
-              <span id="classPublishStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">প্রকাশিত (Published)</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Zoom Controls (জুম ইন / জুম আউট) -->
+            <div class="inline-flex items-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5 shadow-xs" title="স্প্রেডশিটের আকার পরিবর্তন (জুম ইন/আউট)">
+              <button type="button" onclick="window.zoomOutSpreadsheet()" class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors" title="জুম কমান (ছোট করুন)">
+                <i class="fas fa-magnifying-glass-minus"></i>
+              </button>
+              <button type="button" onclick="window.resetSpreadsheetZoom()" id="spreadsheetZoomDisplay" class="px-2.5 py-0.5 text-[11px] font-mono font-black text-slate-700 dark:text-slate-200 hover:text-emerald-600 cursor-pointer" title="স্বাভাবিক জুম (১০০%)">
+                ১০০%
+              </button>
+              <button type="button" onclick="window.zoomInSpreadsheet()" class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors" title="জুম বাড়ান (বড় করুন)">
+                <i class="fas fa-magnifying-glass-plus"></i>
+              </button>
             </div>
-            
-            <button type="button" id="togglePublishBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
-              <i class="fas fa-bullhorn"></i>
-              <span id="togglePublishBtnText">পাবলিশ করুন</span>
+
+            <!-- Fullscreen Mode Button (ফুল স্ক্রিন) -->
+            <button type="button" id="toggleSpreadsheetFullscreenBtn" onclick="window.toggleSpreadsheetFullscreen()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs" title="ফুল স্ক্রিন করুন (বক্সটি সম্পূর্ণ স্ক্রিন জুড়ে দেখতে)">
+              <i class="fas fa-expand text-indigo-600 dark:text-indigo-400"></i>
+              <span id="fullscreenBtnText">ফুল স্ক্রিন</span>
             </button>
+
+            <!-- Web Admin Exclusive: Publish / Draft Toggle -->
+            <div id="publishControlContainer" class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold">
+                <span class="text-slate-500">স্ট্যাটাস:</span>
+                <span id="classPublishStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">প্রকাশিত (Published)</span>
+              </div>
+              
+              <button type="button" id="togglePublishBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                <i class="fas fa-bullhorn"></i>
+                <span id="togglePublishBtnText">পাবলিশ করুন</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Action Bar: Year Select, Exam Select, Class Select, New Exam Button, Add Student, Export Excel, Save -->
-        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/80">
-          <div class="flex flex-wrap items-center gap-2.5">
-            <!-- 1. Academic Year Selector -->
-            <div class="flex items-center gap-1.5">
-              <label class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                <i class="fas fa-calendar-alt text-emerald-600 mr-0.5"></i> সাল:
+        <!-- =========================================================================
+             স্তর ১: সিলেকশন ও সেটিংস বার (Selection & Configuration Toolbar)
+             লজিক্যাল সিকোয়েন্স: সাল -> পরীক্ষা -> শ্রেণি -> শাখা | ডানে: সেটিংস
+             ========================================================================= -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/70 px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/80">
+          <!-- বামপাশে: পর্যায়ক্রমিক ফিল্টার গ্রুপ -->
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <!-- ১. শিক্ষাবর্ষ (Academic Year) -->
+            <div class="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-300 dark:border-slate-600 shadow-2xs">
+              <label for="editorYearSelect" class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap flex items-center gap-1">
+                <i class="fas fa-calendar-days text-emerald-600"></i> সাল:
               </label>
-              <select id="editorYearSelect" class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-extrabold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs">
+              <select id="editorYearSelect" class="text-xs font-extrabold text-slate-900 dark:text-white outline-hidden cursor-pointer bg-transparent dark:bg-slate-800 rounded">
                 <!-- Dynamically populated (e.g. 2026, 2025) -->
               </select>
             </div>
 
-            <!-- 2. Exam Name Selector -->
-            <div class="flex items-center gap-1.5">
-              <label class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                <i class="fas fa-file-signature text-emerald-600 mr-0.5"></i> পরীক্ষা:
+            <!-- ২. পরীক্ষার নাম (Exam Name) -->
+            <div class="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-300 dark:border-slate-600 shadow-2xs">
+              <label for="editorExamSelect" class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap flex items-center gap-1">
+                <i class="fas fa-file-signature text-emerald-600"></i> পরীক্ষা:
               </label>
-              <select id="editorExamSelect" class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs max-w-[200px]">
-                <!-- Dynamically populated (e.g. ১ম সাময়িক পরীক্ষা ২০২৬) -->
-              </select>
-            </div>
-
-            <!-- 3. Class Selector -->
-            <div class="flex items-center gap-1.5">
-              <label class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
-                <i class="fas fa-users text-emerald-600 mr-0.5"></i> শ্রেণি:
-              </label>
-              <select id="editorClassSelect" class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs">
+              <select id="editorExamSelect" class="text-xs font-bold text-slate-900 dark:text-white outline-hidden cursor-pointer max-w-[180px] truncate bg-transparent dark:bg-slate-800 rounded">
                 <!-- Dynamically populated -->
               </select>
             </div>
 
-            <!-- Manage / Edit Exams Button -->
-            <button type="button" onclick="window.openManageExamsModal()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs" title="পরীক্ষার নাম এডিট, মুছুন বা নতুন যোগ করুন">
-              <i class="fas fa-pen-to-square"></i> <span>পরীক্ষা পরিচালনা / এডিট</span>
-            </button>
+            <!-- ৩. শ্রেণি নির্বাচন (Class Selector) -->
+            <div class="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-300 dark:border-slate-600 shadow-2xs">
+              <label for="editorClassSelect" class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap flex items-center gap-1">
+                <i class="fas fa-graduation-cap text-emerald-600"></i> শ্রেণি:
+              </label>
+              <select id="editorClassSelect" class="text-xs font-bold text-slate-900 dark:text-white outline-hidden cursor-pointer bg-transparent dark:bg-slate-800 rounded">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+
+            <!-- ৪. শাখা ফিল্টার (Section Filter) -->
+            <div class="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-300 dark:border-slate-600 shadow-2xs">
+              <label for="editorSectionSelect" class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap flex items-center gap-1">
+                <i class="fas fa-layer-group text-emerald-600"></i> শাখা:
+              </label>
+              <select id="editorSectionSelect" class="text-xs font-bold text-slate-900 dark:text-white outline-hidden cursor-pointer bg-transparent dark:bg-slate-800 rounded">
+                <option value="all">সকল শাখা</option>
+              </select>
+            </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" id="exportExcelBtn" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs">
-              <i class="fas fa-file-excel text-emerald-600"></i> এক্সেল ডাউনলোড
+          <!-- ডানপাশে: প্রয়োজনীয় কনফিগারেশন বাটনসমূহ -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button type="button" onclick="window.openSubjectSettingsModal()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 border border-amber-300/80 dark:border-amber-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="পূর্ণমান পরিবর্তন (যেমন: ১০০ থেকে ৫০)">
+              <i class="fas fa-sliders text-amber-600 dark:text-amber-400"></i>
+              <span>পূর্ণমান ও বিষয়</span>
             </button>
-            <button type="button" id="addNewStudentBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs">
-              <i class="fas fa-user-plus text-emerald-600"></i> নতুন শিক্ষার্থী
+            <button type="button" onclick="window.openManageClassesModal()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/80 text-purple-700 dark:text-purple-300 border border-purple-300/80 dark:border-purple-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="নতুন শ্রেণি যোগ বা এডিট করুন">
+              <i class="fas fa-users-gear text-purple-600 dark:text-purple-400"></i>
+              <span>শ্রেণি সেটিংস</span>
             </button>
-            <button type="button" id="saveEditorChangesBtn" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
-              <i class="fas fa-save"></i> পরিবর্তন সংরক্ষণ
+            <button type="button" onclick="window.openManageExamsModal()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900/80 text-sky-700 dark:text-sky-300 border border-sky-300/80 dark:border-sky-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="পরীক্ষার নাম যোগ বা এডিট করুন">
+              <i class="fas fa-pen-to-square text-sky-600 dark:text-sky-400"></i>
+              <span>পরীক্ষা সেটিংস</span>
             </button>
           </div>
         </div>
 
+        <!-- =========================================================================
+             স্তর ২: ডেটা অ্যাকশন ও সংরক্ষণ টুলবার (Data Entry & Action Toolbar)
+             সরাসরি নম্বর এন্ট্রি, শিক্ষার্থী যোগ, এক্সেল এবং দ্রুত সেভ
+             ========================================================================= -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-100/70 dark:bg-slate-800/40 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+          <!-- বামপাশে: সরাসরি কাজের অ্যাকশন বাটনসমূহ -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- ১. বিষয়ভিত্তিক দ্রুত নম্বর এন্ট্রি (Primary Action) -->
+            <button type="button" id="openSubjectEntryModalBtn" class="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+              <i class="fas fa-list-check"></i>
+              <span>বিষয়ভিত্তিক দ্রুত এন্ট্রি (CQ/MCQ/ব্য)</span>
+            </button>
+
+            <!-- ২. নতুন শিক্ষার্থী যোগ বাটন -->
+            <button type="button" id="addNewStudentBtn" class="px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+              <i class="fas fa-user-plus text-emerald-600"></i>
+              <span>নতুন শিক্ষার্থী</span>
+            </button>
+
+            <!-- ৩. এক্সেল টেমপ্লেট ও ডাউনলোড ড্রপডাউন -->
+            <div class="relative inline-block" id="spreadsheetExcelDropdownWrapper">
+              <button type="button" onclick="window.toggleExcelTemplatesMenu()" id="exportExcelDropdownBtn" class="px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                <i class="fas fa-file-excel text-emerald-600"></i>
+                <span>এক্সেল টেমপ্লেট ও ডাউনলোড</span>
+                <i class="fas fa-chevron-down text-[10px] text-slate-400 ml-0.5"></i>
+              </button>
+              <div id="excelTemplatesMenu" class="hidden absolute left-0 sm:right-0 sm:left-auto mt-1.5 w-72 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl z-30 p-2 space-y-1 text-xs">
+                <button type="button" onclick="window.downloadTemplateStudentsOnly(); window.closeExcelTemplatesMenu();" class="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-start gap-2 cursor-pointer">
+                  <span class="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5"><i class="fas fa-user-group text-xs"></i></span>
+                  <div>
+                    <div class="font-bold text-slate-900 dark:text-white">১. শুধুমাত্র ছাত্র/ছাত্রীর তালিকা</div>
+                    <div class="text-[10px] text-slate-400">রোল, নাম, পিতা, মাতা, শাখা, ধর্ম</div>
+                  </div>
+                </button>
+                <button type="button" onclick="window.downloadTemplateWithMarksBlank(); window.closeExcelTemplatesMenu();" class="w-full text-left p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-start gap-2 cursor-pointer">
+                  <span class="w-6 h-6 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-600 flex items-center justify-center shrink-0 mt-0.5"><i class="fas fa-file-pen text-xs"></i></span>
+                  <div>
+                    <div class="font-bold text-slate-900 dark:text-white">২. নম্বর সহ ব্ল্যাঙ্ক তালিকা</div>
+                    <div class="text-[10px] text-slate-400">সকল বিষয়ের কলাম সহ নমুনা ফরম্যাট</div>
+                  </div>
+                </button>
+                <button type="button" onclick="window.downloadTemplateCurrentClassWithStudents(); window.closeExcelTemplatesMenu();" class="w-full text-left p-2 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition flex items-start gap-2 cursor-pointer bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                  <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5"><i class="fas fa-file-arrow-down text-xs"></i></span>
+                  <div>
+                    <div class="font-bold text-emerald-800 dark:text-emerald-300">৩. বর্তমান ক্লাসের পূর্ণ নম্বর শিট</div>
+                    <div class="text-[10px] text-emerald-600 dark:text-emerald-400">বিদ্যমান রোল ও নাম সহ প্রাক-পূরণকৃত</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ডানপাশে: সেভ বাটন ও লাইভ স্ট্যাটাস -->
+          <div class="flex items-center gap-2">
+            <button type="button" id="saveEditorChangesBtn" class="px-4 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-md hover:shadow-emerald-500/20 transition-all flex items-center gap-2 cursor-pointer">
+              <i class="fas fa-floppy-disk"></i>
+              <span>পরিবর্তন সংরক্ষণ</span>
+            </button>
+            <div id="autoSaveIndicator" class="hidden sm:flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <i class="fas fa-circle-check text-xs"></i>
+              <span>স্বয়ংক্রিয়ভাবে সংরক্ষিত</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Editable Grid Container -->
-        <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 max-h-[600px]">
+        <div id="editorTableWrapper" class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 max-h-[600px] transition-all">
           <table class="w-full text-left text-xs border-collapse">
             <thead id="editorTableHead" class="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 z-10">
               <!-- Dynamically generated based on class subjects -->
@@ -450,11 +693,76 @@
           </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <button type="button" onclick="window.downloadSampleExcelTemplate()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 transition flex items-center gap-2 cursor-pointer shadow-xs">
-            <i class="fas fa-file-arrow-down text-emerald-600"></i> নমুনা এক্সেল ফরম্যাট ডাউনলোড (.xlsx)
-          </button>
-          <span class="text-[11px] text-slate-400">টিপস: নমুনা ফাইলে রোল, নাম ও বিষয়ের নম্বর বসিয়ে আপলোড দিন।</span>
+        <!-- ৩ ধরণের এক্সেল টেমপ্লেট ডাউনলোড প্যানেল (Excel Sample Templates) -->
+        <div class="p-5 rounded-2xl bg-gradient-to-r from-slate-50 to-emerald-50/40 dark:from-slate-800/80 dark:to-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/60 space-y-3 shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fas fa-file-excel text-emerald-600"></i> টেমপ্লেট এক্সেল ফাইল ডাউনলোড ও এক ক্লিকে আপডেট
+              </h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">আপনার প্রয়োজন অনুযায়ী নমুনা ফাইল নামিয়ে নিন, তথ্য পূরণ করে নিচে আপলোড দিন:</p>
+            </div>
+            <span class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 font-bold self-start sm:self-auto">
+              ৩টি অফলাইন ফরম্যাট
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+            <!-- টেমপ্লেট ১: শুধুমাত্র শিক্ষার্থী তালিকা -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 transition-all flex flex-col justify-between space-y-2.5 shadow-xs">
+              <div>
+                <div class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1">
+                  নমুনা ফাইল - ১
+                </div>
+                <div class="font-extrabold text-xs text-slate-800 dark:text-white">
+                  শুধুমাত্র ছাত্র/ছাত্রীর তালিকা
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  রোল, শিক্ষার্থীর নাম, শাখা, পিতা ও মাতার নাম, ধর্ম (এবং শ্রেণি ৯-১০ হলে ৪র্থ বিষয়)।
+                </p>
+              </div>
+              <button type="button" onclick="window.downloadTemplateStudentsOnly()" class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-slate-100 hover:bg-emerald-600 hover:text-white dark:bg-slate-800 dark:hover:bg-emerald-600 text-slate-800 dark:text-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fas fa-download text-emerald-600"></i> শিক্ষার্থী তালিকা (.xlsx)
+              </button>
+            </div>
+
+            <!-- টেমপ্লেট ২: নম্বর সহ ব্ল্যাঙ্ক তালিকা -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500 transition-all flex flex-col justify-between space-y-2.5 shadow-xs">
+              <div>
+                <div class="text-[10px] font-extrabold text-sky-700 dark:text-sky-400 uppercase tracking-wider mb-1">
+                  নমুনা ফাইল - ২
+                </div>
+                <div class="font-extrabold text-xs text-slate-800 dark:text-white">
+                  নম্বর সহ সম্পূর্ণ তালিকা
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  শিক্ষার্থী তথ্যের পাশাপাশি এই ক্লাসের সকল বিষয়ের (বাংলা, ইংরেজি, গণিত ইত্যাদি) কলাম সহ।
+                </p>
+              </div>
+              <button type="button" onclick="window.downloadTemplateWithMarksBlank()" class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-sky-50 hover:bg-sky-600 hover:text-white dark:bg-sky-950/60 dark:hover:bg-sky-600 text-sky-700 dark:text-sky-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fas fa-file-pen text-sky-600"></i> নম্বর সহ তালিকা (.xlsx)
+              </button>
+            </div>
+
+            <!-- টেমপ্লেট ৩: বিদ্যমান ক্লাসের শিক্ষার্থীদের ফুল নম্বর শিট -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-800 hover:border-emerald-600 dark:hover:border-emerald-400 transition-all flex flex-col justify-between space-y-2.5 shadow-xs ring-1 ring-emerald-500/20">
+              <div>
+                <div class="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <span>নমুনা ফাইল - ৩</span>
+                  <span class="px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-900 text-[9px] text-emerald-800 dark:text-emerald-200">স্মার্ট অটো-ফিল</span>
+                </div>
+                <div class="font-extrabold text-xs text-slate-800 dark:text-white">
+                  বর্তমান শিক্ষার্থীদের নম্বর শিট
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  বর্তমানে ক্লাসে থাকা শিক্ষার্থীদের রোল ও নাম অলরেডি বসানো থাকবে; শুধু নতুন পরীক্ষার নম্বর ইনপুট দিন।
+                </p>
+              </div>
+              <button type="button" onclick="window.downloadTemplateCurrentClassWithStudents()" class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fas fa-file-arrow-down"></i> পূর্ণ নম্বর শিট (.xlsx)
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Drag and Drop Dropzone -->
@@ -528,9 +836,14 @@
             </h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">লগইন স্ক্রিনে কোনো ডেমো পাসওয়ার্ড দেখানো হবে না। এখান থেকে সকল পিন নিয়ন্ত্রণ ও পরিবর্তন করুন।</p>
           </div>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto">
-            <i class="fas fa-lock"></i> সুরক্ষিত কন্ট্রোল
-          </span>
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <button type="button" onclick="window.switchUserAccount()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer" title="অন্য রোল বা শিক্ষকের পিন দিয়ে প্রবেশ করুন">
+              <i class="fas fa-users-gear"></i> ইউজার পরিবর্তন / সুইচ
+            </button>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <i class="fas fa-lock"></i> সুরক্ষিত কন্ট্রোল
+            </span>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -640,8 +953,8 @@
             <input type="number" id="newStudentRoll" min="1" required class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">শাখা / বিভাগ</label>
-            <input type="text" id="newStudentSection" placeholder="সাধারণ" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">শাখা (Section)</label>
+            <input type="text" id="newStudentSection" placeholder="যেমন: ক, খ, ডালিয়া" value="ক" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
           </div>
         </div>
 
@@ -661,8 +974,9 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
+        <!-- ধর্ম ও বিভাগ (৯ম-১০ম শ্রেণির জন্য বিভাগ বাধ্যতামূলক) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div id="newStudentReligionWrapper" class="col-span-1">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
               <i class="fas fa-hands-praying text-emerald-600 mr-1"></i> ধর্ম (Religion) *
             </label>
@@ -673,15 +987,33 @@
               <option value="buddhist">বৌদ্ধধর্ম ও নৈতিক শিক্ষা</option>
             </select>
           </div>
-          <div>
+
+          <div id="newStudentGroupWrapper" class="col-span-1 hidden">
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
-              <i class="fas fa-book-bookmark text-emerald-600 mr-1"></i> ৪র্থ বিষয় (ঐচ্ছিক)
+              <i class="fas fa-sitemap text-emerald-600 mr-1"></i> বিভাগ (Group) *
             </label>
-            <select id="newStudentFourthSubject" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
-              <option value="">প্রযোজ্য নয় (সাধারণ শ্রেণি)</option>
-              <option value="agriculture">কৃষি শিক্ষা (৪র্থ বিষয়)</option>
-              <option value="higher_math">উচ্চতর গণিত (৪র্থ বিষয়)</option>
+            <select id="newStudentGroup" onchange="window.updateNewStudentFourthSubjectOptions()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+              <!-- Dynamically populated e.g. বিজ্ঞান / মানবিক / সাধারণ -->
             </select>
+          </div>
+        </div>
+
+        <!-- ৪র্থ বিষয় (ঐচ্ছিক) -->
+        <div id="newStudentFourthSubjectWrapper" class="hidden">
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <span><i class="fas fa-book-bookmark text-emerald-600 mr-1"></i> ৪র্থ বিষয় (ঐচ্ছিক) *</span>
+            <span class="text-[10px] text-amber-600 dark:text-amber-400 font-extrabold">৯ম-১০ম শ্রেণি</span>
+          </label>
+          <select id="newStudentFourthSubject" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+            <!-- Dynamically populated based on Group -->
+          </select>
+        </div>
+
+        <!-- ৯ম ও ১০ম শ্রেণির জন্য ৪র্থ বিষয় যুক্ত করার নোটিফিকেশন প্রম্পট -->
+        <div id="fourthSubjectPromptBox" class="hidden p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 text-xs flex items-center gap-2">
+          <i class="fas fa-circle-info text-amber-600 text-base shrink-0"></i>
+          <div>
+            <span class="font-extrabold">নির্দেশনা:</span> নবম ও দশম শ্রেণির শিক্ষার্থীর ক্ষেত্রে বিভাগ ও ৪র্থ ঐচ্ছিক বিষয় নির্বাচন করা আবশ্যক।
           </div>
         </div>
 
@@ -694,6 +1026,352 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       Modal: শিক্ষার্থী তথ্য সংশোধন (Edit Student Modal)
+       ========================================================================= -->
+  <div id="editStudentModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-lg w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fas fa-user-pen text-emerald-600"></i> শিক্ষার্থী তথ্য সংশোধন
+        </h3>
+        <button type="button" onclick="window.closeEditStudentModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+
+      <form id="editStudentForm" class="space-y-4">
+        <input type="hidden" id="editStudentId">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">রোল নম্বর *</label>
+            <input type="number" id="editStudentRoll" min="1" required class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">শাখা (Section)</label>
+            <input type="text" id="editStudentSection" placeholder="ক, খ, বা সাধারণ" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">শিক্ষার্থীর নাম (বাংলা) *</label>
+          <input type="text" id="editStudentNameBn" required placeholder="শিক্ষার্থীর নাম" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">পিতার নাম</label>
+            <input type="text" id="editStudentFather" placeholder="পিতার নাম" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">মাতার নাম</label>
+            <input type="text" id="editStudentMother" placeholder="মাতার নাম" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+          </div>
+        </div>
+
+        <!-- ধর্ম ও বিভাগ (৯ম-১০ম শ্রেণির জন্য বিভাগ বাধ্যতামূলক) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <i class="fas fa-hands-praying text-emerald-600 mr-1"></i> ধর্ম (Religion) *
+            </label>
+            <select id="editStudentReligion" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+              <option value="islam">ইসলাম ও নৈতিক শিক্ষা</option>
+              <option value="hindu">হিন্দুধর্ম ও নৈতিক শিক্ষা</option>
+              <option value="christian">খ্রিস্টধর্ম ও নৈতিক শিক্ষা</option>
+              <option value="buddhist">বৌদ্ধধর্ম ও নৈতিক শিক্ষা</option>
+            </select>
+          </div>
+          <div id="editStudentGroupWrapper">
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">
+              <i class="fas fa-sitemap text-emerald-600 mr-1"></i> বিভাগ (Group) *
+            </label>
+            <select id="editStudentGroup" onchange="window.updateEditStudentFourthSubjectOptions()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+              <!-- Dynamically populated e.g. বিজ্ঞান / মানবিক / সাধারণ -->
+            </select>
+          </div>
+        </div>
+
+        <!-- ৪র্থ বিষয় (ঐচ্ছিক) -->
+        <div id="editStudentFourthWrapper">
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between">
+            <span><i class="fas fa-book-bookmark text-emerald-600 mr-1"></i> ৪র্থ বিষয় (ঐচ্ছিক) *</span>
+            <span class="text-[10px] text-amber-600 dark:text-amber-400 font-extrabold">৯ম-১০ম শ্রেণি</span>
+          </label>
+          <select id="editStudentFourthSubject" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+            <!-- Dynamically populated based on Group -->
+          </select>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button type="button" onclick="window.deleteStudentFromModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 cursor-pointer">
+            <i class="fas fa-trash mr-1"></i> মুছে ফেলুন
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="window.closeEditStudentModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">
+              বাতিল
+            </button>
+            <button type="submit" class="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md cursor-pointer">
+              <i class="fas fa-save mr-1"></i> তথ্য সংরক্ষণ
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       Modal: বিষয় ও পূর্ণমান ব্যবস্থাপনা (Subject Settings Modal)
+       ========================================================================= -->
+  <div id="subjectSettingsModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fas fa-sliders text-amber-600"></i> বিষয় ও পূর্ণমান ব্যবস্থাপনা
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">বর্তমান শ্রেণির বিষয়সমূহের পূর্ণমান (যেমন ১০০ এর জায়গায় ৫০) পরিবর্তন করুন</p>
+        </div>
+        <button type="button" onclick="window.closeSubjectSettingsModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Quick 1-Click Preset Bar for 50 or 100 Marks -->
+      <div class="flex flex-wrap items-center justify-between gap-2 p-3 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200 dark:border-amber-800/60">
+        <span class="text-xs font-bold text-amber-900 dark:text-amber-200">
+          <i class="fas fa-bolt text-amber-500 mr-1"></i>এক ক্লিকে সকল বিষয়ের পূর্ণমান সেট করুন:
+        </span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.setAllClassSubjectsFullMarks(50)" class="px-3 py-1 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-500 text-white shadow-xs cursor-pointer transition-colors">
+            ⚡ সকল বিষয় ৫০ মার্ক (১ম সাময়িক/টিউটোরিয়াল)
+          </button>
+          <button type="button" onclick="window.setAllClassSubjectsFullMarks(100)" class="px-3 py-1 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs cursor-pointer transition-colors">
+            ⚡ সকল বিষয় ১০০ মার্ক (বার্ষিক/অর্ধ-বার্ষিক)
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-y-auto max-h-[380px] rounded-2xl border border-slate-200 dark:border-slate-800">
+        <table class="w-full text-left text-xs border-collapse">
+
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 sticky top-0">
+            <tr>
+              <th class="p-2.5 w-16 text-center">কোড</th>
+              <th class="p-2.5">বিষয়ের নাম</th>
+              <th class="p-2.5 w-28 text-center">পূর্ণমান (Full Marks)</th>
+              <th class="p-2.5 w-24 text-center">প্রকার</th>
+            </tr>
+          </thead>
+          <tbody id="subjectSettingsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button type="button" onclick="window.closeSubjectSettingsModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">
+          বাতিল
+        </button>
+        <button type="button" onclick="window.saveSubjectSettings()" class="px-5 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-md cursor-pointer">
+          <i class="fas fa-check mr-1"></i> পূর্ণমান সংরক্ষণ ও কার্যকর
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       Modal: Subject-wise Mark Entry (বিষয়ভিত্তিক দ্রুত নম্বর এন্ট্রি - CQ/MCQ/ব্যবহারিক)
+       ========================================================================= -->
+  <div id="subjectEntryModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-4xl w-full bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-200">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+            <i class="fas fa-list-check text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-900 dark:text-white">বিষয়ভিত্তিক দ্রুত নম্বর এন্ট্রি (CQ / MCQ / ব্যবহারিক)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">একটি বিষয় নির্বাচন করে সকল শিক্ষার্থীর নম্বর ক্রমান্বয়ে দ্রুত ইনপুট করুন</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeSubjectEntryModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Controls: Select Subject & Info Badges & Full Marks Config -->
+      <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center gap-3 flex-1 min-w-[240px]">
+          <label class="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+            <i class="fas fa-book-open text-indigo-500 mr-1"></i> বিষয় নির্বাচন:
+          </label>
+          <select id="subjectEntrySubjectSelect" class="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <!-- Inline Full Marks (পূর্ণমান) Quick Edit -->
+        <div class="flex items-center gap-1.5 bg-amber-50/90 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-300 dark:border-amber-700 shadow-xs">
+          <label class="text-xs font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">
+            <i class="fas fa-pen-ruler text-amber-600 mr-0.5"></i> পূর্ণমান:
+          </label>
+          <input type="text" inputmode="numeric" id="modalSubjectFullMarksInput" class="w-14 px-1.5 py-0.5 text-xs font-bold font-mono text-center rounded-lg border border-amber-300 dark:border-amber-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-amber-500" value="100">
+          <button type="button" onclick="window.applyModalSubjectFullMarks()" class="px-2.5 py-0.5 text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-all cursor-pointer shadow-xs whitespace-nowrap" title="পূর্ণমান পরিবর্তন কার্যকর করুন">
+            পরিবর্তন
+          </button>
+          <div class="flex items-center gap-1 border-l border-amber-300 dark:border-amber-700 pl-1.5">
+            <button type="button" onclick="window.setModalFullMarksPreset(50)" class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-amber-200 hover:bg-amber-300 dark:bg-amber-900 dark:hover:bg-amber-800 text-amber-900 dark:text-amber-100 cursor-pointer shadow-2xs" title="৫০ মার্ক নির্ধারণ করুন">৫০</button>
+            <button type="button" onclick="window.setModalFullMarksPreset(100)" class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-950 dark:hover:bg-indigo-900 text-indigo-800 dark:text-indigo-200 cursor-pointer shadow-2xs" title="১০০ মার্ক নির্ধারণ করুন">১০০</button>
+          </div>
+          <button type="button" onclick="window.openSubjectSettingsModal()" class="ml-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition flex items-center gap-1 cursor-pointer" title="সকল বিষয়ের পূর্ণমান একসাথে পরিবর্তন করতে এখানে ক্লিক করুন">
+            <i class="fas fa-sliders text-amber-500"></i> সকল বিষয়
+          </button>
+        </div>
+
+        <div id="subjectEntryLimitsPill" class="flex items-center gap-2 text-xs font-mono">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Students Marks Table -->
+      <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 max-h-[380px]">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead id="subjectEntryTableHead" class="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 z-10">
+            <!-- Populated dynamically based on class & subject component structure -->
+          </thead>
+          <tbody id="subjectEntryTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
+        <div class="text-[11px] text-slate-500 dark:text-slate-400">
+          <i class="fas fa-keyboard mr-1 text-indigo-500"></i> কিবোর্ডের <kbd class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded font-mono text-[10px]">Tab</kbd> বা তীর চেপে সরাসরি পরের ছাত্রছাত্রীর নম্বরে যাওয়া যায়
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.closeSubjectEntryModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">
+            বাতিল
+          </button>
+          <button type="button" onclick="window.saveSubjectEntryModal()" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md cursor-pointer flex items-center gap-1.5">
+            <i class="fas fa-check"></i> নম্বর সংরক্ষণ ও কার্যকর
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       Modal: Cell Breakdown Modal (সেলের CQ/MCQ/ব্যবহারিক বিস্তারিত ইনপুট)
+       ========================================================================= -->
+  <div id="cellBreakdownModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div>
+          <h4 id="cellModalSubjectTitle" class="text-sm font-black text-slate-900 dark:text-white">বিষয়</h4>
+          <p id="cellModalStudentInfo" class="text-xs text-slate-500 dark:text-slate-400">রোল | শিক্ষার্থী</p>
+        </div>
+        <button type="button" onclick="window.closeCellBreakdownModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer">
+          <i class="fas fa-times text-xs"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <span>সৃজনশীল (CQ):</span>
+            <span id="cellModalCqMaxText" class="text-slate-400 font-mono">সর্বোচ্চ ৭০</span>
+          </div>
+          <input type="number" id="cellModalCqInput" min="0" max="70" step="any" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-sm text-slate-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <span>বহুনির্বাচনি (MCQ):</span>
+            <span id="cellModalMcqMaxText" class="text-slate-400 font-mono">সর্বোচ্চ ৩০</span>
+          </div>
+          <input type="number" id="cellModalMcqInput" min="0" max="30" step="any" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-sm text-slate-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div id="cellModalPracWrapper">
+          <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+            <span>ব্যবহারিক (Practical):</span>
+            <span id="cellModalPracMaxText" class="text-slate-400 font-mono">সর্বোচ্চ ২৫</span>
+          </div>
+          <input type="number" id="cellModalPracInput" min="0" max="25" step="any" placeholder="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-sm text-slate-900 dark:text-white font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
+          <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300">মোট প্রাপ্ত নম্বর:</span>
+          <span id="cellModalTotalDisplay" class="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">০</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onclick="window.closeCellBreakdownModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer">
+          বাতিল
+        </button>
+        <button type="button" onclick="window.applyCellBreakdownModal()" class="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md cursor-pointer flex items-center gap-1.5">
+          <i class="fas fa-check"></i> প্রয়োগ ও কার্যকর
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       Modal 0: User Switcher Modal (ইউজার পরিবর্তন ও অ্যাকাউন্ট নির্বাচন)
+       ========================================================================= -->
+  <div id="userSwitcherModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-xl w-full bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+            <i class="fas fa-users-gear text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-slate-900 dark:text-white">ইউজার প্রোফাইল পরিবর্তন</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">যে অ্যাকাউন্টে প্রবেশ করতে চান তা নির্বাচন করুন অথবা পিন লিখুন</p>
+          </div>
+        </div>
+        <button type="button" onclick="window.closeUserSwitcherModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Live Active User Indicator -->
+      <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-xs font-bold text-slate-600 dark:text-slate-300">বর্তমান সক্রিয় ইউজার:</span>
+          <span id="switcherActiveUserName" class="text-xs font-black text-emerald-700 dark:text-emerald-300">লোড হচ্ছে...</span>
+        </div>
+        <span id="switcherActiveUserRole" class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-900 font-bold text-emerald-800 dark:text-emerald-200">-</span>
+      </div>
+
+      <!-- Quick Switch Cards List -->
+      <div id="userSwitcherProfilesList" class="space-y-4 max-h-80 overflow-y-auto pr-1">
+        <!-- Dynamically rendered -->
+      </div>
+
+      <!-- Manual PIN Entry -->
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+          <i class="fas fa-key text-amber-500 mr-1"></i> অথবা যেকোনো পিন দিয়ে সরাসরি লগইন করুন:
+        </label>
+        <form id="switcherManualPinForm" onsubmit="event.preventDefault(); window.submitManualPinFromSwitcher();" class="flex gap-2">
+          <input type="password" id="switcherManualPinInput" placeholder="গোপন পিন লিখুন..." class="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono tracking-widest text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500">
+          <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+            <i class="fas fa-sign-in-alt"></i> প্রবেশ
+          </button>
+        </form>
+      </div>
+
     </div>
   </div>
 
@@ -775,6 +1453,100 @@
     </div>
   </div>
 
+  <!-- =========================================================================
+       Modal: Class Management & Editor (শ্রেণি পরিচালনা ও এডিটর)
+       ========================================================================= -->
+  <div id="manageClassesModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-3xl w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fas fa-graduation-cap text-purple-600"></i> শ্রেণি পরিচালনা ও এডিটর
+          </h3>
+          <p class="text-xs text-slate-500">নতুন শ্রেণি তৈরি করুন, বিদ্যমান শ্রেণির নাম, কোড ও মূল্যায়ন স্তর পরিবর্তন করুন বা মুছে ফেলুন।</p>
+        </div>
+        <button type="button" onclick="window.closeManageClassesModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Add / Edit Form -->
+      <form id="manageClassForm" class="p-4 rounded-2xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/50 space-y-3" onsubmit="window.handleSaveClassForm(event)">
+        <input type="hidden" id="editingClassOriginalId" value="">
+        <div class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+          <span id="manageClassFormTitle" class="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-extrabold">
+            <i class="fas fa-plus-circle"></i> নতুন শ্রেণি যোগ করুন
+          </span>
+          <button type="button" id="cancelEditClassBtn" onclick="window.resetClassForm()" class="hidden text-[11px] text-rose-500 hover:underline cursor-pointer font-bold">
+            <i class="fas fa-rotate-left"></i> এডিট বাতিল (নতুন যোগে ফিরুন)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">শ্রেণির নাম (বাংলা) *</label>
+            <input type="text" id="classFormNameBn" required placeholder="যেমন: ৬ষ্ঠ শ্রেণি বা একাদশ শ্রেণি" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-hidden">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">শ্রেণির কোড / আইডি (English) *</label>
+            <input type="text" id="classFormId" required placeholder="যেমন: class_6 বা class_11" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono font-bold focus:ring-2 focus:ring-purple-500 outline-hidden">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">মূল্যায়ন স্তর (Evaluation Standard) *</label>
+            <select id="classFormLevel" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-hidden cursor-pointer">
+              <option value="primary">১ম-৫ম শ্রেণি (Primary: একক নম্বর কলাম, ব্যবহারিক নেই)</option>
+              <option value="junior">৬ষ্ঠ-৮ম শ্রেণি (Junior Secondary: CQ+MCQ, ব্যবহারিক নেই, ইংরেজি একক)</option>
+              <option value="secondary">৯ম-১০ম শ্রেণি (Secondary/SSC: বিজ্ঞান ব্যবহারিক, আইসিটি, ৪র্থ বিষয়)</option>
+              <option value="general">উচ্চ মাধ্যমিক / অন্যান্য (একাদশ-দ্বাদশ বা সাধারণ)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">শাখা সমূহ (কমা দিয়ে লিখুন)</label>
+            <input type="text" id="classFormSections" placeholder="যেমন: ক, খ বা ডালিয়া, ড্যাফোডিল" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold focus:ring-2 focus:ring-purple-500 outline-hidden">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-[10px] text-slate-400">টিপস: শ্রেণি যোগ বা সম্পাদনা করলে ড্রপডাউন, স্প্রেডশিট ও মার্কশিটে তাৎক্ষণিক আপডেট হবে।</span>
+          <button type="submit" id="classFormSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-xs cursor-pointer flex items-center gap-1.5">
+            <i class="fas fa-check"></i> <span id="classFormSubmitText">শ্রেণি সংরক্ষণ</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Existing Classes List -->
+      <div class="space-y-3">
+        <div class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+          <span><i class="fas fa-list text-slate-500 mr-1"></i> এই প্রতিষ্ঠানের বিদ্যমান শ্রেণির তালিকা:</span>
+          <span id="activeSchoolClassCountBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">০ টি শ্রেণি</span>
+        </div>
+
+        <div class="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="py-2.5 px-3">শ্রেণির নাম ও আইডি</th>
+                <th class="py-2.5 px-3">মূল্যায়ন স্তর</th>
+                <th class="py-2.5 px-3">শাখা</th>
+                <th class="py-2.5 px-3 text-center">শিক্ষার্থী</th>
+                <th class="py-2.5 px-3 text-right w-36">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="manageClassesTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              <!-- Populated dynamically with Edit and Delete buttons -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
+        <button type="button" onclick="window.closeManageClassesModal()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">
+          বন্ধ করুন
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal 2: Publish Schedule with Date & Time (ফলাফল প্রকাশ ও সময় নির্ধারণ)
        ========================================================================= -->
   <div id="publishScheduleModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -841,36 +1613,167 @@
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- =========================================================================
+       ইউজার পরিবর্তন ও প্রোফাইল নির্বাচন মডাল (User Switcher Modal)
+       ========================================================================= -->
+  <div id="userSwitcherModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-lg w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="fas fa-users-gear text-emerald-600"></i> ইউজার একাউন্ট পরিবর্তন
+        </h3>
+        <button type="button" onclick="window.closeUserSwitcherModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Current Active Account Banner -->
+      <div class="p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between gap-3 text-xs">
+        <div>
+          <span class="text-[10px] text-emerald-700 dark:text-emerald-400 font-extrabold uppercase tracking-wider block">বর্তমান সক্রিয় একাউন্ট</span>
+          <strong id="switcherActiveUserName" class="text-sm font-black text-emerald-950 dark:text-emerald-200 block mt-0.5">-</strong>
+          <span id="switcherActiveUserRole" class="text-[11px] text-emerald-800 dark:text-emerald-300">-</span>
+        </div>
+        <button type="button" onclick="window.adminLogout()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-300 text-xs font-bold border border-rose-200 dark:border-rose-800 cursor-pointer">
+          <i class="fas fa-power-off mr-1"></i> লগআউট
+        </button>
+      </div>
+
+      <!-- Switch To Profiles List (Dynamic) -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300">
+          <i class="fas fa-list-check text-emerald-600 mr-1"></i> সরাসরি প্রোফাইল নির্বাচন করে সুইচ করুন:
+        </label>
+        <div id="userSwitcherProfilesList" class="max-h-60 overflow-y-auto pr-1 space-y-2.5">
+          <!-- Dynamically populated by window.openUserSwitcherModal() -->
+        </div>
+      </div>
+
+      <!-- Manual PIN input -->
+      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+        <label class="block text-xs font-bold text-slate-600 dark:text-slate-300">
+          <i class="fas fa-key text-amber-500 mr-1"></i> অথবা অন্য যেকোনো অনুমোদিত পাসকি / পিন লিখুন:
+        </label>
+        <form id="switcherManualPinForm" onsubmit="event.preventDefault(); window.submitManualPinFromSwitcher();" class="flex items-center gap-2">
+          <input type="password" id="switcherManualPinInput" placeholder="পিন লিখুন (যেমন: 101919, 1234, 5678 বা শিক্ষক পিন)" class="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-hidden">
+          <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs cursor-pointer flex items-center gap-1">
+            <span>প্রবেশ</span> <i class="fas fa-arrow-right"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- =========================================================================
        শিক্ষক যোগ/সম্পাদনা মডাল (Teacher Add/Edit Modal for Results Admin)
        ========================================================================= -->
   <div id="cfgTeacherModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-        <h3 id="cfgTeacherModalTitle" class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-          <i class="fas fa-user-pen text-emerald-600"></i> শিক্ষক তথ্য ও পিন
-        </h3>
-        <button type="button" onclick="closeCfgTeacherModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg cursor-pointer"><i class="fas fa-times"></i></button>
+    <div class="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 shrink-0">
+        <div>
+          <h3 id="cfgTeacherModalTitle" class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fas fa-user-pen text-emerald-600"></i> শিক্ষক তথ্য ও শ্রেণিভিত্তিক বিষয় বরাদ্দ
+          </h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">প্রতিটি শ্রেণির জন্য আলাদাভাবে বা সব শ্রেণির জন্য এক ক্লিকে বিষয় নির্বাচন করুন</p>
+        </div>
+        <button type="button" onclick="closeCfgTeacherModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center cursor-pointer transition">
+          <i class="fas fa-times text-sm"></i>
+        </button>
       </div>
 
-      <form id="cfgTeacherForm" class="space-y-3 text-xs">
+      <form id="cfgTeacherForm" class="space-y-3.5 text-xs overflow-y-auto pr-1 flex-1">
         <input type="hidden" id="cfgTeacherEditIndex" value="-1">
-        <div>
-          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">শিক্ষকের নাম ও পদবি *</label>
-          <input type="text" id="cfgTeacherName" required placeholder="যেমন: মো: রফিকুল ইসলাম (বাংলা)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-hidden focus:ring-2 focus:ring-emerald-500">
+        
+        <!-- Teacher Basic Info -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">শিক্ষকের নাম ও পদবি *</label>
+            <input type="text" id="cfgTeacherName" required placeholder="যেমন: মো: রফিকুল ইসলাম (বাংলা)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">ব্যক্তিগত লগইন পিন (PIN) *</label>
+            <input type="text" id="cfgTeacherPin" required placeholder="যেমন: 1101" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold tracking-widest text-center text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
         </div>
-        <div>
-          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">ব্যক্তিগত লগইন পিন (PIN) *</label>
-          <input type="text" id="cfgTeacherPin" required placeholder="যেমন: 1101" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono font-bold tracking-widest text-center text-slate-900 dark:text-white outline-hidden focus:ring-2 focus:ring-emerald-500">
+
+        <!-- Mode Segmented Switcher -->
+        <div class="p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 flex items-center gap-1 border border-slate-200 dark:border-slate-700">
+          <button type="button" id="cfgTeacherModeClassBtn" onclick="window.setTeacherAllocationMode('class_specific')" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-400 shadow-xs cursor-pointer">
+            <i class="fas fa-layer-group"></i> <span>শ্রেণি অনুযায়ী বিষয় নির্ধারণ (প্রস্তাবিত)</span>
+          </button>
+          <button type="button" id="cfgTeacherModeAllBtn" onclick="window.setTeacherAllocationMode('all_classes')" class="flex-1 py-1.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 cursor-pointer">
+            <i class="fas fa-school"></i> <span>সকল শ্রেণিতে একই বিষয়</span>
+          </button>
         </div>
-        <div>
-          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">বরাদ্দকৃত বিষয়সমূহ (কমা দিয়ে লিখুন) *</label>
-          <input type="text" id="cfgTeacherSubjects" required placeholder="যেমন: বাংলা ১ম পত্র, বাংলা ২য় পত্র, ইংরেজি ১ম পত্র" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white outline-hidden focus:ring-2 focus:ring-emerald-500">
-          <span class="text-[10px] text-slate-400 mt-1 block">শিক্ষক এই পিন দিয়ে লগইন করলে শুধুমাত্র এই বিষয়গুলোর নম্বর এডিট করতে পারবেন।</span>
+
+        <!-- Class Selection Tabs (shown when mode === 'class_specific') -->
+        <div id="cfgTeacherClassTabsWrapper" class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="block font-bold text-slate-700 dark:text-slate-300">
+              <i class="fas fa-graduation-cap text-emerald-600 mr-1"></i> শ্রেণি নির্বাচন করুন:
+            </label>
+            <span class="text-[11px] text-slate-400">যে শ্রেণিতে শিক্ষক ক্লাস নেন সেটি ক্লিক করুন</span>
+          </div>
+          <div id="cfgTeacherClassTabs" class="flex flex-wrap gap-1.5 p-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 max-h-28 overflow-y-auto">
+            <!-- Populated dynamically -->
+          </div>
         </div>
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+
+        <!-- Subject Selection Area -->
+        <div class="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span id="cfgTeacherCurrentTargetTitle" class="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1">
+                <i class="fas fa-book-open text-indigo-500"></i> বিষয় নির্বাচন করুন (ক্লিক করে নির্বাচন/বাতিল করুন):
+              </span>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">সবুজ রঙের টিকচিহ্নযুক্ত বিষয়গুলো এই শিক্ষকের জন্য বরাদ্দ থাকবে</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="window.selectAllCurrentClassSubjects()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 transition cursor-pointer flex items-center gap-1">
+                <i class="fas fa-check-double"></i> <span>সব সিলেক্ট</span>
+              </button>
+              <button type="button" onclick="window.clearCurrentClassSubjects()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition cursor-pointer flex items-center gap-1">
+                <i class="fas fa-times"></i> <span>খালি করুন</span>
+              </button>
+              <button type="button" id="cfgCopySubjectsBtn" onclick="window.copyCurrentClassSubjectsToAll()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sky-100 hover:bg-sky-200 dark:bg-sky-950 dark:hover:bg-sky-900 text-sky-800 dark:text-sky-300 transition cursor-pointer flex items-center gap-1" title="এই শ্রেণির নির্বাচিত বিষয়গুলো অন্যান্য সকল শ্রেণিতেও বরাদ্দ করুন">
+                <i class="fas fa-copy"></i> <span>সব শ্রেণিতে কপি</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Clickable Subjects Chips Container -->
+          <div id="cfgTeacherSubjectsChips" class="flex flex-wrap gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 min-h-[72px] max-h-48 overflow-y-auto items-center content-start">
+            <!-- Populated dynamically with interactive chips -->
+          </div>
+
+          <!-- Custom subject adder (optional) -->
+          <div class="flex items-center gap-2 pt-1 border-t border-slate-200 dark:border-slate-700/60">
+            <span class="text-[11px] text-slate-500 shrink-0"><i class="fas fa-plus-circle text-slate-400 mr-1"></i>অন্যান্য বিষয়:</span>
+            <input type="text" id="cfgCustomSubjectInput" placeholder="তালিকায় না থাকলে বিষয় লিখে যুক্ত করুন..." class="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500">
+            <button type="button" onclick="window.addCustomTeacherSubject()" class="px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs transition cursor-pointer shrink-0 flex items-center gap-1">
+              <i class="fas fa-plus"></i> <span>যুক্ত</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Allocation Summary -->
+        <div class="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+            <span><i class="fas fa-clipboard-check text-emerald-600 mr-1"></i> নির্বাচিত বরাদ্দের সারাংশ:</span>
+            <span id="cfgTeacherTotalCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono">০ বিষয়</span>
+          </div>
+          <div id="cfgTeacherAllocationSummary" class="max-h-24 overflow-y-auto space-y-1 text-xs pr-1">
+            <!-- Summary rows populated dynamically -->
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800 shrink-0">
           <button type="button" onclick="closeCfgTeacherModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold transition cursor-pointer">বাতিল</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-sm transition cursor-pointer">সংরক্ষণ করুন</button>
+          <button type="submit" class="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black shadow-md transition cursor-pointer flex items-center gap-1.5">
+            <i class="fas fa-check"></i> <span>সংরক্ষণ করুন</span>
+          </button>
         </div>
       </form>
     </div>
@@ -878,9 +1781,9 @@
 
   <!-- Scripts -->
   <script src="js/vendor/xlsx.full.min.js"></script>
-  <script src="js/results-data.js"></script>
-  <script src="js/bangla-converter-engine.js"></script>
-  <script src="js/result-engine.js"></script>
-  <script src="js/results-admin.js"></script>
+  <script src="js/results-data.js?v=2.2"></script>
+  <script src="js/bangla-converter-engine.js?v=2.2"></script>
+  <script src="js/result-engine.js?v=2.2"></script>
+  <script src="js/results-admin.js?v=2.2"></script>
 </body>
 </html>

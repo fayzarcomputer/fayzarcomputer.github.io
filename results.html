@@ -571,30 +571,32 @@
             </div>
           </div>
 
-          <!-- 3. Result Performance 4-Block Bar -->
-          <div class="mb-2.5 print:mb-1.5 grid grid-cols-4 border-2 border-slate-900 rounded-lg overflow-hidden divide-x-2 divide-slate-900 bg-white text-center shadow-xs">
-            <div class="py-1.5 px-1 print:py-1 bg-emerald-50/40">
-              <span class="text-[10px] print:text-[8.5px] font-extrabold text-slate-700 uppercase tracking-wider block">প্রাপ্ত জিপিএ (GPA)</span>
-              <span id="msGpa" class="text-2xl sm:text-3xl print:text-xl font-black text-emerald-800 font-mono leading-none block mt-0.5">5.00</span>
-            </div>
-            <div class="py-1.5 px-1 print:py-1 bg-blue-50/40">
-              <span class="text-[10px] print:text-[8.5px] font-extrabold text-slate-700 uppercase tracking-wider block">লেটার গ্রেড (GRADE)</span>
-              <span id="msGrade" class="text-2xl sm:text-3xl print:text-xl font-black text-blue-800 font-mono leading-none block mt-0.5">A+</span>
-            </div>
-            <div class="py-1.5 px-1 print:py-1 bg-amber-50/40">
-              <span class="text-[10px] print:text-[8.5px] font-extrabold text-slate-700 uppercase tracking-wider block">মেধা স্থান (RANK)</span>
-              <span id="msRank" class="text-2xl sm:text-3xl print:text-xl font-black text-amber-800 leading-none block mt-0.5">১ম</span>
-            </div>
-            <div class="py-1.5 px-1 print:py-1 bg-purple-50/40">
-              <span class="text-[10px] print:text-[8.5px] font-extrabold text-slate-700 uppercase tracking-wider block">মোট নম্বর (TOTAL)</span>
-              <span id="msTotalMarks" class="text-2xl sm:text-3xl print:text-xl font-black text-purple-900 font-mono leading-none block mt-0.5">৫৮৯ / ৬০০</span>
+          <!-- 3. Result Performance Area (SSC 4th Subject Matrix or Standard 4-Block Bar) -->
+          <div id="msPerformanceContainer">
+            <div id="msPerformanceCard" class="mb-2.5 print:mb-1.5 grid grid-cols-4 border-2 border-slate-900 rounded-lg overflow-hidden divide-x-2 divide-slate-900 bg-white text-center shadow-xs">
+              <div class="py-1.5 px-1 print:py-1 bg-emerald-50/40">
+                <span class="text-[10px] print:text-[8.5px] font-extrabold text-slate-700 uppercase tracking-wider block">প্রাপ্ত জিপিএ (GPA)</span>
+                <span id="msGpa" class="text-2xl sm:text-3xl print:text-xl font-black text-emerald-800 font-mono leading-none block mt-0.5">5.00</span>
+              </div>
+              <div class="py-1.5 px-1 print:py-1 bg-blue-50/40">
+                <span class="text-[10px] print:text-[8.5px] font-extrabold text-slate-700 uppercase tracking-wider block">লেটার গ্রেড (GRADE)</span>
+                <span id="msGrade" class="text-2xl sm:text-3xl print:text-xl font-black text-blue-800 font-mono leading-none block mt-0.5">A+</span>
+              </div>
+              <div class="py-1.5 px-1 print:py-1 bg-amber-50/40">
+                <span class="text-[10px] print:text-[8.5px] font-extrabold text-slate-700 uppercase tracking-wider block">মেধা স্থান (RANK)</span>
+                <span id="msRank" class="text-2xl sm:text-3xl print:text-xl font-black text-amber-800 leading-none block mt-0.5">১ম</span>
+              </div>
+              <div class="py-1.5 px-1 print:py-1 bg-purple-50/40">
+                <span class="text-[10px] print:text-[8.5px] font-extrabold text-slate-700 uppercase tracking-wider block">মোট নম্বর (TOTAL)</span>
+                <span id="msTotalMarks" class="text-2xl sm:text-3xl print:text-xl font-black text-purple-900 font-mono leading-none block mt-0.5">৫৮৯ / ৬০০</span>
+              </div>
             </div>
           </div>
 
           <!-- 4. Subject Marks Details Table -->
           <div class="mb-2.5 print:mb-1.5 border-2 border-slate-900 rounded-lg overflow-hidden bg-white/95">
-            <table class="w-full text-left text-xs border-collapse">
-              <thead>
+            <table class="w-full text-left text-xs border-collapse" id="msSubjectsTable">
+              <thead id="msSubjectsTableHead">
                 <tr class="bg-slate-100 text-slate-950 font-black border-b-2 border-slate-900 text-[11px] print:text-[10px]">
                   <th class="py-1.5 px-2 border-r border-slate-900 text-center w-12 print:w-10">ক্র.</th>
                   <th class="py-1.5 px-3 border-r border-slate-900">বিষয়ের নাম (Subject Name)</th>
@@ -607,7 +609,7 @@
               <tbody id="msSubjectsTableBody" class="divide-y divide-slate-300 text-slate-900 font-medium text-[11px] print:text-[10px]">
                 <!-- Populated dynamically -->
               </tbody>
-              <tfoot>
+              <tfoot id="msSubjectsTableFoot">
                 <tr class="bg-slate-100 font-black border-t-2 border-slate-900 text-slate-950 text-[11.5px] print:text-[10.5px]">
                   <td colspan="2" class="py-1.5 px-3 border-r border-slate-900 text-right uppercase tracking-wide">সর্বমোট / চূড়ান্ত ফলাফল :</td>
                   <td id="msTotalFullMarksFoot" class="py-1.5 px-2.5 border-r border-slate-900 text-center font-mono font-bold">৬০০</td>

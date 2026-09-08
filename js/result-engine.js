@@ -57,7 +57,9 @@
   function toBnDigit(num) {
     if (num === null || num === undefined) return '';
     const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-    return String(num).replace(/[0-9]/g, d => bn[parseInt(d, 10)]);
+    // Normalize any comma separator in numeric decimals to standard dot
+    let str = String(num).replace(/(\d),(\d)/g, '$1.$2').replace(/([০-৯]),([০-৯])/g, '$1.$2');
+    return str.replace(/[0-9]/g, d => bn[parseInt(d, 10)]);
   }
 
   /**
@@ -66,82 +68,230 @@
   function toEnDigit(num) {
     if (num === null || num === undefined) return '';
     const en = { '০': 0, '১': 1, '২': 2, '৩': 3, '৪': 4, '৫': 5, '⑥': 6, '৬': 6, '৭': 7, '৮': 8, '৯': 9 };
-    return String(num).replace(/[০-৯]/g, d => en[d]);
+    let str = String(num).replace(/([০-৯]),([০-৯])/g, '$1.$2').replace(/(\d),(\d)/g, '$1.$2');
+    return str.replace(/[০-৯]/g, d => en[d]);
   }
 
   /**
    * Format GPA nicely (e.g. 5.00, 4.75)
    */
   function formatGpa(gpa) {
+    if (gpa === null || gpa === undefined) return '0.00';
+    if (typeof gpa === 'string') {
+      gpa = gpa.replace(/,/g, '.');
+      gpa = toEnDigit(gpa);
+    }
     gpa = parseFloat(gpa);
     if (isNaN(gpa)) return '0.00';
     return gpa.toFixed(2);
   }
 
   /**
+   * Check if a mark value indicates absence
+   */
+  function isAbsentValue(val) {
+    if (val === null || val === undefined) return false;
+    const s = String(val).trim().toUpperCase();
+    return s === 'ABS' || s === 'অনুপস্থিত' || s === 'A';
+  }
+
+  /**
    * Calculate complete student marksheet with subject grades, total marks, GPA & status
    */
-  function calculateStudent(student) {
+  function calculateStudent(student, options = {}) {
     if (!student || !Array.isArray(student.subjects)) return student;
+
+    const requireComponentPass = options.require_component_pass || false;
+    const requireBothPapersAppearance = options.require_both_papers_appearance || false;
+
+    // Determine class level ONCE — primary classes always use marks_obtained only
+    const classId = student.class_id || student.class || '';
+    const isPrimaryClass = !isSecondaryClass(classId) && !isJuniorSecondaryClass(classId);
 
     let totalMarks = 0;
     let maxMarks = 0;
     let mandatoryCount = 0;
-    let totalGradePoints = 0;
+    let mandatoryGradePoints = 0;
+    let fourthSubjectInfo = null;
     let hasFail = false;
+    const failedSubjects = [];
 
     const subjects = student.subjects.map(sub => {
-      const full = parseFloat(sub.full_marks) || 100;
+      let full = parseFloat(sub.full_marks) || 100;
       let obt = sub.marks_obtained;
-      const isAbsent = String(obt).toUpperCase() === 'ABS' || String(obt) === 'অনুপস্থিত';
+      let isAbsent = isAbsentValue(obt);
+      let hasComponentAbs = false;
+      let failedComponent = false;
+      let discrepancyWarning = false;
       
       let obtNum = 0;
-      if (isAbsent) {
-        obtNum = 0;
-      } else {
-        obtNum = parseFloat(obt) || 0;
-      }
 
       // If composite subject with individual papers (Board Standard e.g. Bangla 1st & 2nd)
-      if (Array.isArray(sub.papers) && sub.papers.length > 0) {
+      if (!isPrimaryClass && Array.isArray(sub.papers) && sub.papers.length > 0) {
         let pSum = 0;
         let pFull = 0;
-        let anyAbsent = false;
-        sub.papers.forEach(p => {
-          pFull += (parseFloat(p.full_marks) || 100);
-          if (String(p.marks_obtained).toUpperCase() === 'ABS' || String(p.marks_obtained) === 'অনুপস্থিত') {
-            anyAbsent = true;
+        let pCq = 0;
+        let pMcq = 0;
+        let pPractical = 0;
+        let hasPaperBreakdown = false;
+        let paperAbsCount = 0;
+
+        sub.papers = sub.papers.map(p => {
+          let pSubFull = parseFloat(p.full_marks) || 100;
+          pFull += pSubFull;
+          let pObt = p.marks_obtained;
+          const pIsAbs = isAbsentValue(pObt) || isAbsentValue(p.cq) || isAbsentValue(p.mcq) || isAbsentValue(p.practical);
+          
+          let pObtNum = 0;
+          let pCqVal = 0;
+          let pMcqVal = 0;
+          let pPrVal = 0;
+
+          if (p.cq !== undefined || p.mcq !== undefined || p.practical !== undefined) {
+            hasPaperBreakdown = true;
+            pCqVal = isAbsentValue(p.cq) ? 0 : (parseFloat(p.cq) || 0);
+            pMcqVal = isAbsentValue(p.mcq) ? 0 : (parseFloat(p.mcq) || 0);
+            pPrVal = isAbsentValue(p.practical) ? 0 : (parseFloat(p.practical) || 0);
+            pObtNum = pCqVal + pMcqVal + pPrVal;
           } else {
-            pSum += (parseFloat(p.marks_obtained) || 0);
+            pObtNum = pIsAbs ? 0 : (parseFloat(pObt) || 0);
           }
+
+          if (pIsAbs) {
+            paperAbsCount++;
+          }
+
+          pSum += pObtNum;
+          pCq += pCqVal;
+          pMcq += pMcqVal;
+          pPractical += pPrVal;
+
+          return {
+            ...p,
+            full_marks: pSubFull,
+            marks_obtained: pIsAbs ? 'ABS' : pObtNum,
+            cq: isAbsentValue(p.cq) ? 'ABS' : (p.cq !== undefined ? (parseFloat(p.cq) || 0) : undefined),
+            mcq: isAbsentValue(p.mcq) ? 'ABS' : (p.mcq !== undefined ? (parseFloat(p.mcq) || 0) : undefined),
+            practical: isAbsentValue(p.practical) ? 'ABS' : (p.practical !== undefined ? (parseFloat(p.practical) || 0) : undefined),
+            is_absent: pIsAbs
+          };
         });
+
+        // Detect composite papers extreme discrepancy (e.g. 66 in 1st, 0 in 2nd)
+        if (sub.papers.length >= 2) {
+          const p1 = sub.papers[0];
+          const p2 = sub.papers[1];
+          const m1 = p1.is_absent ? 0 : (parseFloat(p1.marks_obtained) || 0);
+          const m2 = p2.is_absent ? 0 : (parseFloat(p2.marks_obtained) || 0);
+          if ((m1 >= 33 && (m2 <= 10 || p2.is_absent)) || (m2 >= 33 && (m1 <= 10 || p1.is_absent))) {
+            discrepancyWarning = true;
+          }
+          if (requireBothPapersAppearance && paperAbsCount > 0) {
+            hasComponentAbs = true;
+          }
+        }
+
+        if (paperAbsCount === sub.papers.length) {
+          isAbsent = true;
+        }
+
         if (pSum > 0 || sub.marks_obtained === undefined || sub.marks_obtained === null) {
           obtNum = pSum;
         }
         if (pFull > 0 && (!sub.full_marks || sub.full_marks <= 100)) {
           full = pFull;
         }
-        if (anyAbsent && pSum === 0) {
-          isAbsent = true;
+        if (hasPaperBreakdown) {
+          sub.cq = pCq;
+          sub.mcq = pMcq;
+          sub.practical = pPractical;
+        }
+      } else {
+        // Non-composite subject
+        if (isPrimaryClass) {
+          // PRIMARY CLASS (Nursery, KG, Class 1-5): ALWAYS use marks_obtained directly.
+          // Ignore any cq/mcq/practical that may exist as stale legacy data.
+          obtNum = isAbsent ? 0 : (parseFloat(sub.marks_obtained) || 0);
+        } else {
+          // Secondary/Junior-Secondary: check component-level ABS
+          const cqIsAbs = isAbsentValue(sub.cq);
+          const mcqIsAbs = isAbsentValue(sub.mcq);
+          const prIsAbs = isAbsentValue(sub.practical);
+
+          if (cqIsAbs || mcqIsAbs || prIsAbs) {
+            hasComponentAbs = true;
+          }
+
+          if (sub.cq !== undefined || sub.mcq !== undefined || sub.practical !== undefined) {
+            const cqVal = cqIsAbs ? 0 : (parseFloat(sub.cq) || 0);
+            const mcqVal = mcqIsAbs ? 0 : (parseFloat(sub.mcq) || 0);
+            const prVal = prIsAbs ? 0 : (parseFloat(sub.practical) || 0);
+            const cSum = cqVal + mcqVal + prVal;
+            const marksObtNum = parseFloat(sub.marks_obtained);
+            if (cSum > 0) {
+              obtNum = cSum;
+            } else if (!isNaN(marksObtNum) && marksObtNum > 0) {
+              obtNum = marksObtNum;
+            } else {
+              obtNum = parseFloat(sub.marks_obtained) || 0;
+            }
+
+            if (requireComponentPass && !hasComponentAbs) {
+              if (sub.cq !== undefined && cqVal < 23 && full === 100) failedComponent = true;
+              if (sub.mcq !== undefined && mcqVal < 10 && full === 100) failedComponent = true;
+              if (sub.practical !== undefined && prVal < 8 && (full === 100 || full === 50)) failedComponent = true;
+            }
+          } else {
+            obtNum = isAbsent ? 0 : (parseFloat(sub.marks_obtained) || 0);
+          }
         }
       }
 
-      const gInfo = isAbsent ? { grade: 'F', point: 0.0, percentage: 0 } : calculateGrade(obtNum, full);
+      if (obtNum > full) obtNum = full;
+
+      let gInfo = calculateGrade(obtNum, full);
+
+      // If absent in subject or any mandatory component, or failed strict component pass
+      if (isAbsent || hasComponentAbs) {
+        gInfo = { grade: 'F', point: 0.0, percentage: 0 };
+        isAbsent = true;
+      } else if (failedComponent) {
+        gInfo = { grade: 'F', point: 0.0, percentage: gInfo.percentage };
+      }
 
       totalMarks += obtNum;
       maxMarks += full;
 
       if (!sub.is_optional) {
         mandatoryCount++;
-        totalGradePoints += gInfo.point;
+        mandatoryGradePoints += gInfo.point;
         if (gInfo.grade === 'F') {
           hasFail = true;
+          failedSubjects.push({
+            code: sub.code || '',
+            name_bn: sub.name_bn || sub.name || '',
+            name_en: sub.name_en || sub.name_bn || sub.name || '',
+            full_marks: full,
+            marks_obtained: isAbsent ? 'ABS' : obtNum,
+            grade: 'F',
+            point: 0.0,
+            is_absent: isAbsent,
+            failed_component: failedComponent
+          });
         }
       } else {
         // 4th Subject Bonus Rule: if GP > 2, add (GP - 2) to total
-        if (gInfo.point > 2) {
-          totalGradePoints += (gInfo.point - 2);
-        }
+        const bonusPoint = gInfo.point > 2 ? (gInfo.point - 2) : 0;
+        fourthSubjectInfo = {
+          code: sub.code || '',
+          name_bn: sub.name_bn,
+          name_en: sub.name_en || sub.name_bn,
+          full_marks: full,
+          marks_obtained: isAbsent ? 'ABS' : obtNum,
+          grade: gInfo.grade,
+          point: gInfo.point,
+          bonus_point: parseFloat(bonusPoint.toFixed(2))
+        };
       }
 
       return {
@@ -149,17 +299,30 @@
         full_marks: full,
         marks_obtained: isAbsent ? 'ABS' : obtNum,
         is_absent: isAbsent,
+        has_component_abs: hasComponentAbs,
+        discrepancy_warning: discrepancyWarning,
+        failed_component: failedComponent,
         grade: gInfo.grade,
         point: gInfo.point
       };
     });
 
-    let rawGpa = mandatoryCount > 0 ? (totalGradePoints / mandatoryCount) : 0;
-    if (rawGpa > 5.0) rawGpa = 5.0; // Max GPA cap is 5.00
+    // GPA Without 4th Subject
+    const rawMandatoryGpa = mandatoryCount > 0 ? (mandatoryGradePoints / mandatoryCount) : 0;
+    const gpaWithout4th = hasFail ? 0.0 : parseFloat(Math.min(5.0, rawMandatoryGpa).toFixed(2));
 
-    const finalGpa = hasFail ? 0.0 : parseFloat(rawGpa.toFixed(2));
+    // GPA With 4th Subject Bonus (GP above 2.00)
+    const bonus = fourthSubjectInfo ? fourthSubjectInfo.bonus_point : 0;
+    const totalPointsWithBonus = mandatoryGradePoints + bonus;
+    let rawGpaWith4th = mandatoryCount > 0 ? (totalPointsWithBonus / mandatoryCount) : 0;
+    if (rawGpaWith4th > 5.0) rawGpaWith4th = 5.0; // Max GPA cap is 5.00
+
+    const finalGpa = hasFail ? 0.0 : parseFloat(rawGpaWith4th.toFixed(2));
     const finalGrade = hasFail ? 'F' : getGpaGrade(finalGpa);
     const status = hasFail ? 'Failed' : 'Passed';
+    const failCount = failedSubjects.length;
+    const failTextEn = failCount > 0 ? `Fail in ${failCount}` : '';
+    const failTextBn = failCount > 0 ? `${toBnDigit(failCount)} বিষয়ে ফেল` : '';
 
     let remarks = 'উত্তীর্ণ';
     if (finalGrade === 'A+') remarks = 'চমৎকার (Outstanding)';
@@ -167,7 +330,13 @@
     else if (finalGrade === 'A-') remarks = 'উত্তম (Very Good)';
     else if (finalGrade === 'B' || finalGrade === 'C') remarks = 'ভালো (Good)';
     else if (finalGrade === 'D') remarks = 'সন্তোষজনক (Satisfactory)';
-    else if (finalGrade === 'F') remarks = 'অকৃতকার্য (Failed)';
+    else if (finalGrade === 'F') {
+      if (failCount > 0) {
+        remarks = `অকৃতকার্য (${failTextBn} / ${failTextEn})`;
+      } else {
+        remarks = 'অকৃতকার্য (Failed)';
+      }
+    }
 
     return {
       ...student,
@@ -175,8 +344,14 @@
       total_marks: totalMarks,
       max_possible_marks: maxMarks,
       gpa: finalGpa,
+      gpa_without_4th: gpaWithout4th,
+      fourth_subject_info: fourthSubjectInfo,
       grade: finalGrade,
       status: status,
+      fail_count: failCount,
+      failed_subjects: failedSubjects,
+      fail_text_bn: failTextBn,
+      fail_text_en: failTextEn,
       remarks: remarks
     };
   }
@@ -316,6 +491,20 @@
     </svg>`;
   }
 
+  /**
+   * Cryptographic-style verification token for anti-tampering verification
+   */
+  function generateVerificationSignature(student) {
+    if (!student) return '';
+    const raw = `${student.school_id || student.institution_id || ''}_${student.class_id || ''}_${student.roll || ''}_${student.exam_id || ''}_${student.total_marks || 0}_${student.gpa || 0}`;
+    let hash = 5381;
+    for (let i = 0; i < raw.length; i++) {
+      hash = ((hash << 5) + hash) + raw.charCodeAt(i);
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(36).toUpperCase();
+  }
+
   // =========================================================================
   // FIREBASE FIRESTORE REST ENGINE & CONVERSION UTILS
   // =========================================================================
@@ -428,13 +617,121 @@
   // =========================================================================
   // STORAGE & HYBRID SYNC (LOCAL-FIRST + FIRESTORE)
   // =========================================================================
+  // =========================================================================
   const Storage = {
     CONFIG_KEY: 'fayzar_results_config_v3',
     DATA_KEY: 'fayzar_results_data_v3',
     AUTH_USER_KEY: 'fayzar_result_current_user',
+    IDB_NAME: 'FayzarResultsDB',
+    IDB_STORE: 'results_store',
     _memoryUser: null,
 
+    async _getIDB() {
+      if (typeof indexedDB === 'undefined') return null;
+      return new Promise((resolve) => {
+        try {
+          const req = indexedDB.open(this.IDB_NAME, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(this.IDB_STORE)) {
+              db.createObjectStore(this.IDB_STORE);
+            }
+          };
+          req.onsuccess = (e) => resolve(e.target.result);
+          req.onerror = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    },
+
+    async _idbGet(key) {
+      try {
+        const db = await this._getIDB();
+        if (!db) return null;
+        return new Promise((resolve) => {
+          try {
+            const tx = db.transaction(this.IDB_STORE, 'readonly');
+            const getReq = tx.objectStore(this.IDB_STORE).get(key);
+            getReq.onsuccess = () => resolve(getReq.result || null);
+            getReq.onerror = () => resolve(null);
+          } catch (e) {
+            resolve(null);
+          }
+        });
+      } catch (e) {
+        return null;
+      }
+    },
+
+    async _idbSet(key, val) {
+      try {
+        const db = await this._getIDB();
+        if (!db) return false;
+        return new Promise((resolve) => {
+          try {
+            const tx = db.transaction(this.IDB_STORE, 'readwrite');
+            const putReq = tx.objectStore(this.IDB_STORE).put(val, key);
+            putReq.onsuccess = () => resolve(true);
+            putReq.onerror = () => resolve(false);
+          } catch (e) {
+            resolve(false);
+          }
+        });
+      } catch (e) {
+        return false;
+      }
+    },
+
+    _writeLocalConfig(config) {
+      if (!config) return;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(this.CONFIG_KEY, JSON.stringify(config));
+        }
+      } catch (e) {
+        console.warn('Local storage config write warning:', e);
+      }
+      if (typeof window !== 'undefined') {
+        window.DEFAULT_RESULTS_CONFIG = config;
+      }
+    },
+
     async loadConfig() {
+      const isHttp = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'));
+      if (isHttp && typeof fetch !== 'undefined') {
+        try {
+          const res = await fetch('/api/results/config', { cache: 'no-cache' });
+          if (res.ok) {
+            const cfg = await res.json();
+            if (cfg && Array.isArray(cfg.institutions) && cfg.institutions.length > 0) {
+              this._writeLocalConfig(cfg);
+              await this._idbSet(this.CONFIG_KEY, cfg);
+              return cfg;
+            }
+          }
+        } catch (e) {}
+
+        try {
+          const res2 = await fetch('data/results_config.json', { cache: 'no-cache' });
+          if (res2.ok) {
+            const cfg2 = await res2.json();
+            if (cfg2 && Array.isArray(cfg2.institutions) && cfg2.institutions.length > 0) {
+              this._writeLocalConfig(cfg2);
+              await this._idbSet(this.CONFIG_KEY, cfg2);
+              return cfg2;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Check IndexedDB
+      const idbConfig = await this._idbGet(this.CONFIG_KEY);
+      if (idbConfig && Array.isArray(idbConfig.institutions) && idbConfig.institutions.length > 0) {
+        if (typeof window !== 'undefined') window.DEFAULT_RESULTS_CONFIG = idbConfig;
+        return idbConfig;
+      }
+
       if (typeof localStorage !== 'undefined') {
         const cached = localStorage.getItem(this.CONFIG_KEY);
         if (cached) {
@@ -446,71 +743,171 @@
           } catch (e) {}
         }
       }
+
       if (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG && Array.isArray(window.DEFAULT_RESULTS_CONFIG.institutions)) {
         return window.DEFAULT_RESULTS_CONFIG;
-      }
-      try {
-        if (typeof fetch !== 'undefined') {
-          const res = await fetch('data/results_config.json');
-          if (res.ok) {
-            const config = await res.json();
-            this.saveConfig(config);
-            return config;
-          }
-        } else if (typeof require !== 'undefined') {
-          return require('../data/results_config.json');
-        }
-      } catch (e) {}
-      if (typeof require !== 'undefined') {
-        try { return require('../data/results_config.json'); } catch(e) {}
       }
       return (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG) || {};
     },
 
-    saveConfig(config) {
+    async saveConfig(config) {
       if (!config) return;
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(this.CONFIG_KEY, JSON.stringify(config));
+      this._writeLocalConfig(config);
+      await this._idbSet(this.CONFIG_KEY, config);
+
+      if (typeof fetch !== 'undefined') {
+        try {
+          await fetch('/api/results/save-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+          });
+        } catch (e) {
+          try {
+            await fetch('/api/save-results-config', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(config)
+            });
+          } catch (err) {}
+        }
+      }
+    },
+
+    _writeLocalStudents(students) {
+      if (!Array.isArray(students)) return;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(this.DATA_KEY, JSON.stringify(students));
+        }
+      } catch (e) {
+        console.warn('Local storage students write warning (possible quota):', e);
+      }
+      if (typeof window !== 'undefined') {
+        window.DEFAULT_RESULTS_DATA = students;
       }
     },
 
     async loadStudents() {
-      if (typeof localStorage !== 'undefined') {
-        const cached = localStorage.getItem(this.DATA_KEY);
-        if (cached) {
-          try {
+      // 1. First get local cached students from IndexedDB or localStorage
+      let localStudents = [];
+      try {
+        const idbData = await this._idbGet(this.DATA_KEY);
+        if (Array.isArray(idbData) && idbData.length > 0) {
+          localStudents = idbData;
+        } else if (typeof localStorage !== 'undefined') {
+          const cached = localStorage.getItem(this.DATA_KEY);
+          if (cached) {
             const parsed = JSON.parse(cached);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              return parsed;
+              localStudents = parsed;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 2. Fetch server data if HTTP
+      let serverStudents = null;
+      const isHttp = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'));
+      if (isHttp && typeof fetch !== 'undefined') {
+        try {
+          const res = await fetch('/api/results/data', { cache: 'no-cache' });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) serverStudents = data;
+          }
+        } catch (e) {}
+
+        if (!serverStudents) {
+          try {
+            const res2 = await fetch('data/results_data.json', { cache: 'no-cache' });
+            if (res2.ok) {
+              const data2 = await res2.json();
+              if (Array.isArray(data2) && data2.length > 0) serverStudents = data2;
             }
           } catch (e) {}
         }
       }
-      if (typeof window !== 'undefined' && Array.isArray(window.DEFAULT_RESULTS_DATA) && window.DEFAULT_RESULTS_DATA.length > 0) {
-        return window.DEFAULT_RESULTS_DATA;
+
+      if (!serverStudents && typeof window !== 'undefined' && Array.isArray(window.DEFAULT_RESULTS_DATA) && window.DEFAULT_RESULTS_DATA.length > 0) {
+        serverStudents = window.DEFAULT_RESULTS_DATA;
       }
-      try {
-        if (typeof fetch !== 'undefined') {
-          const res = await fetch('data/results_data.json');
-          if (res.ok) {
-            const students = await res.json();
-            this.saveStudents(students);
-            return students;
+
+      // 3. SMART MERGE:
+      // Never delete locally added students or newer offline edits!
+      let finalStudents = [];
+      if (serverStudents && Array.isArray(serverStudents) && localStudents.length > 0) {
+        const serverMap = new Map(serverStudents.map(s => [s.id, s]));
+        const localMap = new Map(localStudents.map(s => [s.id, s]));
+
+        // Merge existing students
+        serverStudents.forEach(s => {
+          const localMatch = localMap.get(s.id);
+          if (localMatch) {
+            const localUp = localMatch.updated_at || 0;
+            const serverUp = s.updated_at || 0;
+            if (localUp >= serverUp) {
+              finalStudents.push(localMatch);
+            } else {
+              finalStudents.push(s);
+            }
+          } else {
+            finalStudents.push(s);
           }
-        } else if (typeof require !== 'undefined') {
-          return require('../data/results_data.json');
+        });
+
+        // Retain any local-created students not present on server
+        let newlyAddedCount = 0;
+        localStudents.forEach(ls => {
+          if (!serverMap.has(ls.id)) {
+            finalStudents.push(ls);
+            newlyAddedCount++;
+          }
+        });
+
+        // If local had new students or offline updates, sync back to server in background
+        if (newlyAddedCount > 0) {
+          this.saveStudents(finalStudents);
         }
-      } catch (e) {}
-      if (typeof require !== 'undefined') {
-        try { return require('../data/results_data.json'); } catch(e) {}
+      } else if (serverStudents && Array.isArray(serverStudents) && serverStudents.length > 0) {
+        finalStudents = serverStudents;
+      } else if (localStudents.length > 0) {
+        finalStudents = localStudents;
       }
-      return (typeof window !== 'undefined' && window.DEFAULT_RESULTS_DATA) || [];
+
+      if (finalStudents.length > 0) {
+        this._writeLocalStudents(finalStudents);
+        await this._idbSet(this.DATA_KEY, finalStudents);
+        return finalStudents;
+      }
+      return [];
     },
 
-    saveStudents(students) {
+    async saveStudents(students) {
       if (!Array.isArray(students)) return;
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(this.DATA_KEY, JSON.stringify(students));
+      const now = Date.now();
+      students.forEach(s => {
+        if (!s.updated_at) s.updated_at = now;
+      });
+      this._writeLocalStudents(students);
+      await this._idbSet(this.DATA_KEY, students);
+
+      if (typeof fetch !== 'undefined') {
+        try {
+          await fetch('/api/results/save-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(students)
+          });
+        } catch (e) {
+          try {
+            await fetch('/api/save-results-data', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(students)
+            });
+          } catch (err) {}
+        }
       }
     },
 
@@ -519,6 +916,8 @@
         localStorage.removeItem(this.CONFIG_KEY);
         localStorage.removeItem(this.DATA_KEY);
       }
+      await this._idbSet(this.CONFIG_KEY, null);
+      await this._idbSet(this.DATA_KEY, null);
       const config = await this.loadConfig();
       const students = await this.loadStudents();
       return { config, students };
@@ -535,6 +934,12 @@
           raw = localStorage.getItem(this.AUTH_USER_KEY);
         }
         if (raw) return JSON.parse(raw);
+
+        // If user explicitly switched out / logged out from results admin, don't auto SSO
+        const isSwitchedOut = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('fayzar_result_switched_out') === 'true');
+        if (isSwitchedOut) {
+          return this._memoryUser || null;
+        }
 
         // Auto-SSO from Main Web Admin Suite (admin.html)
         const isMainAdminActive = 
@@ -565,6 +970,9 @@
     setCurrentUser(user) {
       this._memoryUser = user;
       try {
+        if (user && typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('fayzar_result_switched_out');
+        }
         const val = user ? JSON.stringify(user) : null;
         if (typeof sessionStorage !== 'undefined') {
           if (val) sessionStorage.setItem(this.AUTH_USER_KEY, val);
@@ -584,11 +992,13 @@
           sessionStorage.removeItem(this.AUTH_USER_KEY);
           sessionStorage.removeItem('fayzar_admin_authenticated');
           sessionStorage.removeItem('fayzar_admin_session');
+          sessionStorage.setItem('fayzar_result_switched_out', 'true');
         }
         if (typeof localStorage !== 'undefined') {
           localStorage.removeItem(this.AUTH_USER_KEY);
           localStorage.removeItem('fayzar_admin_authenticated');
           localStorage.removeItem('fayzar_admin_session');
+          localStorage.removeItem('fayzar_admin_pin');
         }
       } catch(e) {}
     }
@@ -605,14 +1015,17 @@
     const config = await Storage.loadConfig();
 
     // 1. Check Super Admin (Web Admin - Fayzar Computer)
-    let superPins = (config && config.super_admin_pins) ? [...config.super_admin_pins] : ['101919', 'fayzar', '1234', 'admin'];
+    let superPins = (config && Array.isArray(config.super_admin_pins)) ? [...config.super_admin_pins] : ['101919', 'fayzar', 'admin'];
+    // Never allow Dreamland master PIN (1234) to match as Super Admin
+    superPins = superPins.filter(p => String(p).trim().toLowerCase() !== '1234');
+
     if (typeof localStorage !== 'undefined') {
       const customPin = localStorage.getItem('fayzar_admin_pin');
-      if (customPin && !superPins.includes(customPin.toLowerCase())) {
+      if (customPin && customPin.toLowerCase() !== '1234' && !superPins.includes(customPin.toLowerCase())) {
         superPins.unshift(customPin.toLowerCase());
       }
     }
-    if (config && config.super_admin_pin && !superPins.includes(String(config.super_admin_pin).toLowerCase())) {
+    if (config && config.super_admin_pin && String(config.super_admin_pin).toLowerCase() !== '1234' && !superPins.includes(String(config.super_admin_pin).toLowerCase())) {
       superPins.unshift(String(config.super_admin_pin).toLowerCase());
     }
 
@@ -670,6 +1083,7 @@
                 school_name: inst.name_bn,
                 assigned_subjects: teacher.assigned_subjects || [],
                 classes: teacher.classes || [],
+                class_assignments: teacher.class_assignments || null,
                 canBatchPrint: true, // Batch Print enabled
                 canPublish: false,
                 canSwitchSchool: false,
@@ -687,6 +1101,27 @@
       return { success: false, error: 'ভুল পিন নম্বর! সঠিক অ্যাডমিন, স্কুল মাস্টার বা শিক্ষক পিন দিন।' };
     }
 
+  function isSecondaryClass(classId) {
+    if (!classId) return false;
+    const cid = String(classId).toLowerCase();
+    return cid.includes('class_9') || cid.includes('class_10') || 
+           cid.includes('class9') || cid.includes('class10') || 
+           cid.includes('৯ম') || cid.includes('১০ম') || 
+           cid.includes('নবম') || cid.includes('দশম') ||
+           cid.includes('madrasah_class_9') || cid.includes('madrasah_class_10') ||
+           cid.includes('dakhil_9') || cid.includes('dakhil_10');
+  }
+
+  function isJuniorSecondaryClass(classId) {
+    if (!classId) return false;
+    const cid = String(classId).toLowerCase();
+    return cid.includes('class_6') || cid.includes('class_7') || cid.includes('class_8') ||
+           cid.includes('class6') || cid.includes('class7') || cid.includes('class8') ||
+           cid.includes('৬ষ্ঠ') || cid.includes('৭ম') || cid.includes('৮ম') ||
+           cid.includes('class_6_daiya') || cid.includes('class_6_defodil') ||
+           cid.includes('madrasah_class_6') || cid.includes('madrasah_class_7') || cid.includes('madrasah_class_8');
+  }
+
   const ResultEngine = {
     DEFAULT_GRADING_SCALE,
     calculateGrade,
@@ -698,6 +1133,9 @@
     calculateClassPositions,
     getClassAnalytics,
     generateVerificationQrSvg,
+    generateVerificationSignature,
+    isSecondaryClass,
+    isJuniorSecondaryClass,
     Firestore,
     Storage,
     authenticatePin

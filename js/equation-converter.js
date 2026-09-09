@@ -1164,11 +1164,11 @@
           .replace(/>/g, '&gt;');
       }
 
-      function findMatchingBrace(str, startIdx) {
+      function findMatchingBrace(str, startIdx, openChar = '{', closeChar = '}') {
         let depth = 0;
         for (let idx = startIdx; idx < str.length; idx++) {
-          if (str[idx] === '{') depth++;
-          else if (str[idx] === '}') {
+          if (str[idx] === openChar) depth++;
+          else if (str[idx] === closeChar) {
             depth--;
             if (depth === 0) return idx;
           }
@@ -1240,36 +1240,98 @@
       function parseScripts(tStr) {
         let res = '';
         let j = 0;
+
+        function parseScriptArg(startIdx) {
+          let k = startIdx;
+          let val = '';
+          if (tStr[k] === '{') {
+            const matchEnd = findMatchingBrace(tStr, k, '{', '}');
+            if (matchEnd !== -1) {
+              val = tStr.slice(k + 1, matchEnd);
+              k = matchEnd + 1;
+            } else {
+              val = tStr[k] || '';
+              k++;
+            }
+          } else if (k < tStr.length) {
+            val = tStr[k];
+            k++;
+          }
+          return { val, nextIdx: k };
+        }
+
         while (j < tStr.length) {
           if (tStr[j] === '^' || tStr[j] === '_') {
             const isSup = (tStr[j] === '^');
             j++;
-            let scriptVal = '';
-            if (tStr[j] === '{') {
-              const matchEnd = findMatchingBrace(tStr, j);
-              if (matchEnd !== -1) {
-                scriptVal = tStr.slice(j + 1, matchEnd);
-                j = matchEnd + 1;
-              } else {
-                scriptVal = tStr[j] || '';
-                j++;
+            const { val, nextIdx } = parseScriptArg(j);
+            j = nextIdx;
+            const tag = isSup ? 'sSup' : 'sSub';
+            const child = isSup ? 'sup' : 'sub';
+            res += `<m:${tag}><m:e><m:r><m:t></m:t></m:r></m:e><m:${child}>${parseChunk(val)}</m:${child}></m:${tag}>`;
+            continue;
+          }
+
+          let plain = '';
+          while (j < tStr.length && tStr[j] !== '^' && tStr[j] !== '_') {
+            if (tStr[j] === '(' && tStr.indexOf(')', j) !== -1) {
+              const endParen = findMatchingBrace(tStr, j, '(', ')');
+              if (endParen !== -1 && (tStr[endParen + 1] === '^' || tStr[endParen + 1] === '_')) {
+                plain += tStr.slice(j, endParen + 1);
+                j = endParen + 1;
+                break;
               }
-            } else if (j < tStr.length) {
-              scriptVal = tStr[j];
-              j++;
+            } else if (tStr[j] === '{' && tStr.indexOf('}', j) !== -1) {
+              const endBrace = findMatchingBrace(tStr, j, '{', '}');
+              if (endBrace !== -1 && (tStr[endBrace + 1] === '^' || tStr[endBrace + 1] === '_')) {
+                plain += tStr.slice(j + 1, endBrace);
+                j = endBrace + 1;
+                break;
+              }
+            }
+            plain += tStr[j];
+            j++;
+            if (j < tStr.length && (tStr[j] === '^' || tStr[j] === '_')) {
+              break;
+            }
+          }
+
+          if (j < tStr.length && (tStr[j] === '^' || tStr[j] === '_')) {
+            let prefix = '';
+            let base = plain;
+
+            const match = plain.match(/^([\s\S]*?)([a-zA-Z0-9\u0980-\u09FF]+|\([^)]+\))$/);
+            if (match && match[1] !== undefined && match[2] !== undefined) {
+              prefix = match[1];
+              base = match[2];
             }
 
-            if (isSup) {
-              res += '<m:sSup><m:e></m:e><m:sup>' + parseChunk(scriptVal) + '</m:sup></m:sSup>';
-            } else {
-              res += '<m:sSub><m:e></m:e><m:sub>' + parseChunk(scriptVal) + '</m:sub></m:sSub>';
+            if (prefix) {
+              res += '<m:r><m:t xml:space="preserve">' + escapeXml(prefix) + '</m:t></m:r>';
+            }
+
+            let supVal = null;
+            let subVal = null;
+
+            while (j < tStr.length && (tStr[j] === '^' || tStr[j] === '_')) {
+              const isSup = (tStr[j] === '^');
+              j++;
+              const { val, nextIdx } = parseScriptArg(j);
+              j = nextIdx;
+              if (isSup) supVal = val;
+              else subVal = val;
+            }
+
+            const baseXml = '<m:e>' + (base.startsWith('(') && base.endsWith(')') ? '<m:r><m:t xml:space="preserve">' + escapeXml(base) + '</m:t></m:r>' : parseChunk(base)) + '</m:e>';
+
+            if (supVal !== null && subVal !== null) {
+              res += `<m:sSubSup>${baseXml}<m:sub>${parseChunk(subVal)}</m:sub><m:sup>${parseChunk(supVal)}</m:sup></m:sSubSup>`;
+            } else if (supVal !== null) {
+              res += `<m:sSup>${baseXml}<m:sup>${parseChunk(supVal)}</m:sup></m:sSup>`;
+            } else if (subVal !== null) {
+              res += `<m:sSub>${baseXml}<m:sub>${parseChunk(subVal)}</m:sub></m:sSub>`;
             }
           } else {
-            let plain = '';
-            while (j < tStr.length && tStr[j] !== '^' && tStr[j] !== '_') {
-              plain += tStr[j];
-              j++;
-            }
             if (plain) {
               res += '<m:r><m:t xml:space="preserve">' + escapeXml(plain) + '</m:t></m:r>';
             }

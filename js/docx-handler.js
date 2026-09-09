@@ -714,7 +714,15 @@
     /**
      * Generate an Office 2003 .doc Blob from raw text with 100% font & math preservation
      */
-    static createDocFromText(text, fontName = 'SutonnyMJ', isBijoy = true, baseFontSizePt = 12) {
+    static createDocFromText(text, fontName = 'SutonnyMJ', isBijoy = true, baseFontSizePt = 12, pageSize = 'a4', margin = 'normal') {
+      if (typeof fontName === 'object' && fontName !== null) {
+        const opts = fontName;
+        pageSize = opts.pageSize || pageSize || 'a4';
+        margin = opts.margin || margin || 'normal';
+        baseFontSizePt = opts.fontSize || opts.baseFontSizePt || baseFontSizePt || 12;
+        isBijoy = opts.isBijoy !== undefined ? opts.isBijoy : true;
+        fontName = opts.fontName || (isBijoy ? 'SutonnyMJ' : 'Kalpurush');
+      }
       let sanitizedText = (text || '').replace(/\*\*/g, '').replace(/\r/g, '');
 
       // 0. Extract ALL Bengali text out of math mode so words like 'এবং', 'অথবা' are NEVER inside equations
@@ -981,11 +989,25 @@
       }
       const paragraphsHtml = htmlBlocks.join('\n');
 
+      const docPageSizes = {
+        'a4': '595.35pt 841.95pt',
+        'legal': '612.0pt 1008.0pt',
+        'letter': '612.0pt 792.0pt'
+      };
+      const docMargins = {
+        'normal': '72pt 72pt 72pt 72pt',
+        'narrow': '36pt 36pt 36pt 36pt',
+        'moderate': '54pt 54pt 54pt 54pt',
+        'wide': '90pt 90pt 90pt 90pt'
+      };
+      const cssPageSize = docPageSizes[String(pageSize || '').toLowerCase()] || docPageSizes['a4'];
+      const cssMargin = docMargins[String(margin || '').toLowerCase()] || docMargins['normal'];
+
       const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <style>
-@page Section1 { size: 595.35pt 841.95pt; margin: 72pt 72pt 72pt 72pt; mso-header-margin: 36pt; mso-footer-margin: 36pt; }
+@page Section1 { size: ${cssPageSize}; margin: ${cssMargin}; mso-header-margin: 36pt; mso-footer-margin: 36pt; }
 div.Section1 { page: Section1; }
 p.MsoNormal, li.MsoNormal, div.MsoNormal {
   margin: 0cm;

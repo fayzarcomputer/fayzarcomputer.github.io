@@ -291,9 +291,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
       copyBtn: document.getElementById('wizardCopyTextBtn') || document.getElementById('ai-ocr-copy-btn'),
       sendToConverterBtn: document.getElementById('ai-ocr-send-to-converter-btn'),
-      downloadDocBtn: document.getElementById('wizardDlDocBtn') || document.getElementById('ai-ocr-download-doc-btn'),
+      downloadDocBtn: document.getElementById('ai-ocr-download-doc-btn'),
       downloadBijoyDocxBtn: document.getElementById('ai-ocr-download-bijoy-docx-btn'),
-      downloadDocxBtn: document.getElementById('wizardDlDocxBtn') || document.getElementById('ai-ocr-download-docx-btn'),
+      downloadDocxBtn: document.getElementById('ai-ocr-download-docx-btn'),
 
       pageSizeSelect: document.getElementById('ai-target-page-size') || document.getElementById('ai-ocr-page-size'),
       pageMarginSelect: document.getElementById('ai-target-page-margin') || document.getElementById('ai-ocr-page-margin'),
@@ -720,7 +720,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   }
 
   // Unified Smart Wizard Conversion Bridge
-  async function startUnifiedOcr(targetFormat = 'doc', onProgress = null, onStream = null) {
+  async function startUnifiedOcr(targetFormat = 'doc', onProgress = null, onStream = null, customOptions = {}) {
     if (!state.imageBase64 && state.filesQueue.length === 0) {
       throw new Error('অনুগ্রহ করে প্রথমে ছবি বা PDF ফাইল নির্বাচন করুন');
     }
@@ -775,7 +775,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     }
 
     // Auto-generate and download the requested target document
-    await downloadWordDocument(targetFormat);
+    await downloadWordDocument(targetFormat, customOptions);
 
     if (onProgress) onProgress('রূপান্তর সফলভাবে সম্পন্ন হয়েছে!', 100);
 
@@ -1849,7 +1849,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     return /\$\$[\s\S]*?\$\$|\$[^\$]+?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)/.test(text);
   }
 
-  function renderRunsForOoxml(text, isBijoy, fontSizeHalfPt) {
+  function renderRunsForOoxml(text, isBijoy, fontSizeHalfPt, unicodeFont = 'Kalpurush') {
     if (!text || !text.trim()) return '';
     if (typeof EquationConverter !== 'undefined' && hasLatexMath(text)) {
       const segments = EquationConverter.splitTextAndMath(text);
@@ -1857,7 +1857,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       for (const seg of segments) {
         if (seg.type === 'math') {
           if (/[\u0980-\u09FF]/.test(seg.value)) {
-            runsXml += renderRunsForOoxmlPlain(seg.value, isBijoy, fontSizeHalfPt, false);
+            runsXml += renderRunsForOoxmlPlain(seg.value, isBijoy, fontSizeHalfPt, false, unicodeFont);
           } else if (typeof EquationConverter !== 'undefined' && typeof EquationConverter.latexToOmml === 'function') {
             runsXml += EquationConverter.latexToOmml(seg.value, isBijoy);
           } else {
@@ -1865,12 +1865,12 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             runsXml += renderEquationForOoxml(eqCode, isBijoy, fontSizeHalfPt, false);
           }
         } else if (seg.value) {
-          runsXml += renderRunsForOoxmlPlain(seg.value, isBijoy, fontSizeHalfPt, false);
+          runsXml += renderRunsForOoxmlPlain(seg.value, isBijoy, fontSizeHalfPt, false, unicodeFont);
         }
       }
       return runsXml;
     }
-    return renderRunsForOoxmlPlain(text, isBijoy, fontSizeHalfPt, false);
+    return renderRunsForOoxmlPlain(text, isBijoy, fontSizeHalfPt, false, unicodeFont);
   }
 
   function renderEquationForOoxml(eqCode, isBijoy, fontSizeHalfPt, isBold) {
@@ -1940,7 +1940,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       </w:r>\n`;
   }
 
-  function renderRunsForOoxmlPlain(text, isBijoy, fontSizeHalfPt, isBold) {
+  function renderRunsForOoxmlPlain(text, isBijoy, fontSizeHalfPt, isBold, unicodeFont = 'Kalpurush') {
     if (!text || !text.trim()) return '';
 
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -1967,7 +1967,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
           if (seg.type === 'english') {
             runsXml += `      <w:r>
         <w:rPr>
-          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman" w:hint="default"/>
           <w:sz w:val="${fontSizeHalfPt}"/>
           <w:szCs w:val="${fontSizeHalfPt}"/>
           ${boldTag}
@@ -1976,7 +1976,11 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
         <w:t xml:space="preserve">${escapeXml(seg.text)}</w:t>
       </w:r>\n`;
           } else {
-            const fontName = isBijoy ? 'SutonnyMJ' : 'Kalpurush';
+            const fontName = isBijoy ? 'SutonnyMJ' : (unicodeFont || 'Kalpurush');
+            const rFontsXml = isBijoy
+              ? `<w:rFonts w:ascii="SutonnyMJ" w:hAnsi="SutonnyMJ" w:cs="SutonnyMJ" w:hint="ascii"/>`
+              : `<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="${fontName}" w:hint="cs"/>`;
+
             if (isBijoy && /[\u2013\u2014]/.test(seg.text)) {
               const dashParts = seg.text.split(/([\u2013\u2014]+)/);
               for (const dp of dashParts) {
@@ -1984,7 +1988,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
                 if (/[\u2013\u2014]/.test(dp)) {
                   runsXml += `      <w:r>
         <w:rPr>
-          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman" w:hint="default"/>
           <w:sz w:val="${fontSizeHalfPt}"/>
           <w:szCs w:val="${fontSizeHalfPt}"/>
           ${boldTag}
@@ -1996,7 +2000,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
                   const targetSub = window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(dp) : dp;
                   runsXml += `      <w:r>
         <w:rPr>
-          <w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}"/>
+          ${rFontsXml}
           <w:sz w:val="${fontSizeHalfPt}"/>
           <w:szCs w:val="${fontSizeHalfPt}"/>
           ${boldTag}
@@ -2010,7 +2014,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
               const targetText = isBijoy && window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(seg.text) : seg.text;
               runsXml += `      <w:r>
         <w:rPr>
-          <w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}"/>
+          ${rFontsXml}
           <w:sz w:val="${fontSizeHalfPt}"/>
           <w:szCs w:val="${fontSizeHalfPt}"/>
           ${boldTag}
@@ -2026,17 +2030,18 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     return runsXml;
   }
 
-  async function downloadWordDocument(format) {
+  async function downloadWordDocument(format, customOptions = {}) {
     const text = state.unicodeText;
     if (!text || !text.trim()) {
       showToast('ডাউনলোড করার মতো কোনো টেক্সট নেই', 'warning');
       return;
     }
 
-    const pageSizeVal = elements.pageSizeSelect ? elements.pageSizeSelect.value : 'a4';
-    const marginVal = elements.pageMarginSelect ? elements.pageMarginSelect.value : 'normal';
-    const fontSizeVal = elements.fontSizeSelect ? elements.fontSizeSelect.value : '12';
+    const pageSizeVal = customOptions.pageSize || (elements.pageSizeSelect ? elements.pageSizeSelect.value : 'a4');
+    const marginVal = customOptions.margin || (elements.pageMarginSelect ? elements.pageMarginSelect.value : 'normal');
+    const fontSizeVal = customOptions.fontSize || (elements.fontSizeSelect ? elements.fontSizeSelect.value : '12');
     const fontSizePt = parseInt(fontSizeVal, 10) || 12;
+    const targetFont = customOptions.targetFont || (typeof window !== 'undefined' && window.selectedUnicodeFont ? window.selectedUnicodeFont : 'Kalpurush');
 
     const rawName = state.selectedFile?.name || state.filesQueue?.[0]?.name || 'Question_Paper';
     const baseName = rawName.replace(/\.[^/.]+$/, '');
@@ -2048,9 +2053,9 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       try {
         let docBlob = null;
         if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.createDocFromText === 'function') {
-          docBlob = DocxHandler.createDocFromText(text, 'SutonnyMJ', true, fontSizePt);
+          docBlob = DocxHandler.createDocFromText(text, 'SutonnyMJ', true, fontSizePt, pageSizeVal, marginVal);
         } else if (typeof DocxToDocConverter !== 'undefined') {
-          const docxBlob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
+          const docxBlob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal, targetFont });
           const docxConverter = new DocxToDocConverter();
           const docResult = await docxConverter.convertDocxToDoc(docxBlob, {
             pageSize: pageSizeVal,
@@ -2078,7 +2083,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     if (format === 'bijoy_docx') {
       showToast(`বিজয় .DOCX তৈরি হচ্ছে...`, 'info');
       try {
-        const blob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
+        const blob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal, targetFont });
         triggerDownload(blob, `${baseName}_Bijoy.docx`);
         showToast(`বিজয় .DOCX ডাউনলোড সম্পন্ন!`, 'success');
       } catch (err) {
@@ -2092,7 +2097,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     if (format === 'unicode_docx') {
       showToast(`ইউনিকোড .DOCX তৈরি হচ্ছে...`, 'info');
       try {
-        const blob = await createDocxBlob(text, false, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
+        const blob = await createDocxBlob(text, false, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal, targetFont });
         triggerDownload(blob, `${baseName}_Unicode.docx`);
         showToast(`ইউনিকোড .DOCX ডাউনলোড সম্পন্ন!`, 'success');
       } catch (err) {
@@ -2120,6 +2125,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     const fontSizeVal = customOptions.fontSize || (elements.fontSizeSelect ? elements.fontSizeSelect.value : '12');
     const fontSizePt = parseInt(fontSizeVal, 10) || 12;
     const fontSizeHalfPt = fontSizePt * 2;
+    const unicodeFont = customOptions.targetFont || (typeof window !== 'undefined' && window.selectedUnicodeFont ? window.selectedUnicodeFont : 'Kalpurush');
 
     const PAGE_SIZES = {
       'a4': { w: 11906, h: 16838, name: 'A4' },
@@ -2147,7 +2153,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       if (block.type === 'paragraph') {
         const trimmed = block.text.trim();
         if (!trimmed) continue;
-        const runsXml = renderRunsForOoxml(block.text, isBijoy, fontSizeHalfPt);
+        const runsXml = renderRunsForOoxml(block.text, isBijoy, fontSizeHalfPt, unicodeFont);
         bodyContentXml += `    <w:p>
       <w:pPr>
         <w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/>
@@ -2165,7 +2171,7 @@ ${runsXml}    </w:p>\n`;
           const trPr = isHeader ? '<w:trPr><w:tblHeader/></w:trPr>' : '';
           const cellsXml = Array(maxCols).fill(0).map((_, c) => {
             const cellText = row[c] || '';
-            const cellRuns = renderRunsForOoxml(cellText, isBijoy, fontSizeHalfPt);
+            const cellRuns = renderRunsForOoxml(cellText, isBijoy, fontSizeHalfPt, unicodeFont);
             return `        <w:tc>
           <w:tcPr>
             <w:tcW w:w="${colWidth}" w:type="dxa"/>
@@ -2232,7 +2238,7 @@ ${bodyContentXml}
   <w:docDefaults>
     <w:rPrDefault>
       <w:rPr>
-        <w:rFonts w:ascii="${isBijoy ? 'SutonnyMJ' : 'Times New Roman'}" w:hAnsi="${isBijoy ? 'SutonnyMJ' : 'Times New Roman'}" w:cs="${isBijoy ? 'SutonnyMJ' : 'Kalpurush'}"/>
+        <w:rFonts w:ascii="${isBijoy ? 'SutonnyMJ' : 'Times New Roman'}" w:hAnsi="${isBijoy ? 'SutonnyMJ' : 'Times New Roman'}" w:cs="${isBijoy ? 'SutonnyMJ' : unicodeFont}"/>
         <w:sz w:val="${fontSizeHalfPt}"/>
         <w:szCs w:val="${fontSizeHalfPt}"/>
       </w:rPr>

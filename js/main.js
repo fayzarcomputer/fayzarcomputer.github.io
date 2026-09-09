@@ -2559,6 +2559,16 @@ function initUnifiedConverterEngine() {
       wizardProgressStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-emerald-600 text-lg"></i> <span id="wizardProgressTitle">AI প্রসেসিং শুরু হচ্ছে...</span>';
     }
 
+    const targetPageSize = document.getElementById('ai-target-page-size')?.value || 'a4';
+    const targetPageMargin = document.getElementById('ai-target-page-margin')?.value || 'normal';
+    const targetFontSize = document.getElementById('ai-target-font-size')?.value || '12';
+    const pageSetupOptions = {
+      pageSize: targetPageSize,
+      margin: targetPageMargin,
+      fontSize: targetFontSize,
+      targetFont: selectedUnicodeFont || 'Kalpurush'
+    };
+
     try {
       const res = await window.FayzarAiOcrEngine.startUnifiedOcr(
         selectedAiTargetFormat,
@@ -2597,7 +2607,8 @@ function initUnifiedConverterEngine() {
           if (wizardPreviewContent) {
             wizardPreviewContent.value = liveChunk;
           }
-        }
+        },
+        pageSetupOptions
       );
 
       wizardProgressCard?.classList.add('hidden');
@@ -2612,10 +2623,10 @@ function initUnifiedConverterEngine() {
       if (wizardResultStatsBadge) wizardResultStatsBadge.textContent = `${modeLabel} এ সফলভাবে রূপান্তর হয়েছে`;
 
       if (wizardDlDocBtn) {
-        wizardDlDocBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('doc');
+        wizardDlDocBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('doc', pageSetupOptions);
       }
       if (wizardDlDocxBtn) {
-        wizardDlDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument(selectedAiTargetFormat === 'unicode_docx' ? 'unicode_docx' : 'bijoy_docx');
+        wizardDlDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument(selectedAiTargetFormat === 'unicode_docx' ? 'unicode_docx' : 'bijoy_docx', pageSetupOptions);
       }
       if (wizardVerifyBtn) {
         wizardVerifyBtn.onclick = () => {

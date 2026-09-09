@@ -412,75 +412,21 @@
 
     <!-- Admin Navigation Tabs -->
     <div id="adminTabsNav" class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 overflow-x-auto">
-      <button type="button" data-admin-tab="batchPrintTab" class="admin-tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 text-white shadow-md transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap">
-        <i class="fas fa-print"></i> ব্যাচ প্রিন্ট ইঞ্জিন (সব মার্কশীট)
-      </button>
-      <button type="button" data-admin-tab="spreadsheetTab" class="admin-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap">
+      <button type="button" data-admin-tab="spreadsheetTab" class="admin-tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 text-white shadow-md transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap">
         <i class="fas fa-table"></i> লাইভ মার্ক এডিটর ও স্টুডেন্ট
-      </button>
-      <button type="button" data-admin-tab="excelImportTab" class="admin-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap">
-        <i class="fas fa-file-excel"></i> ১-ক্লিকে এক্সেল ইমপোর্ট
       </button>
       <button type="button" data-admin-tab="settingsTab" class="admin-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap">
         <i class="fas fa-gear"></i> স্কুল ও পরীক্ষা সেটিংস
       </button>
+      <button type="button" data-admin-tab="batchPrintTab" class="admin-tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap">
+        <i class="fas fa-print"></i> ব্যাচ প্রিন্ট ইঞ্জিন (সব মার্কশীট)
+      </button>
     </div>
 
     <!-- =========================================================================
-         ট্যাব ১: ব্যাচ প্রিন্ট ইঞ্জিন (Batch Marksheet Print Engine)
+         ট্যাব ১: লাইভ মার্ক এডিটর ও স্টুডেন্ট ম্যানেজার (Live Mark Entry)
          ========================================================================= -->
-    <section id="batchPrintTabContent" class="space-y-6">
-
-      <div id="batchPrintMainCard" class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <i class="fas fa-copy text-emerald-600"></i> ১-ক্লিকে ক্লাসের সকল মার্কশীট ব্যাচ প্রিন্ট
-            </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">
-              ওয়ার্ড মেইল-মার্জের কোনো প্রয়োজন নেই! শ্রেণি নির্বাচন করে প্রিন্ট বাটনে চাপ দিলেই পুরো ক্লাসের সব শিক্ষার্থীর মার্কশীট ধারাবাহিক A4 পৃষ্ঠায় প্রিন্ট হবে।
-            </p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-            <select id="batchYearSelect" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-extrabold text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs">
-              <!-- Dynamically populated -->
-            </select>
-            <select id="batchExamSelect" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs max-w-[200px]">
-              <!-- Dynamically populated -->
-            </select>
-            <select id="batchClassSelect" class="flex-1 sm:flex-none px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs">
-              <!-- Dynamically populated -->
-            </select>
-            <button type="button" id="executeBatchPrintBtn" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-md transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-              <i class="fas fa-print"></i> ব্যাচ প্রিন্ট (A4)
-            </button>
-          </div>
-        </div>
-
-        <div class="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-200">
-          <div class="flex items-center gap-2">
-            <i class="fas fa-check-circle text-emerald-600 text-base"></i>
-            <span>নির্বাচিত ক্লাসে সর্বমোট <strong id="batchStudentCount">০</strong> জন শিক্ষার্থীর মার্কশীট প্রিন্টের জন্য প্রস্তুত।</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Preview of First Few Marksheets -->
-      <div id="batchPreviewSection" class="space-y-4">
-        <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          ব্যাচ প্রিন্ট প্রিভিউ (Batch Preview):
-        </div>
-        <div id="batchPreviewGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Populated dynamically -->
-        </div>
-      </div>
-
-    </section>
-
-    <!-- =========================================================================
-         ট্যাব ২: লাইভ মার্ক এডিটর ও স্টুডেন্ট ম্যানেজার (Live Mark Entry)
-         ========================================================================= -->
-    <section id="spreadsheetTabContent" class="space-y-6 hidden">
+    <section id="spreadsheetTabContent" class="space-y-6">
       
       <div id="spreadsheetCard" class="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-all duration-150">
         <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -492,8 +438,8 @@
             <p class="text-xs text-slate-500">নম্বর পরিবর্তন করার সাথে সাথেই লাইভ GPA, Grade ও মেধা স্থান স্বয়ংক্রিয়ভাবে হিসাব হবে।</p>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <!-- Zoom Controls (জুম ইন / জুম আউট) -->
+          <div class="flex items-center justify-end gap-2 ml-auto">
+            <!-- Zoom Controls (জুম ইন / জুম আউট) - একেবারে ডানপাশে -->
             <div class="inline-flex items-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-0.5 shadow-xs" title="স্প্রেডশিটের আকার পরিবর্তন (জুম ইন/আউট)">
               <button type="button" onclick="window.zoomOutSpreadsheet()" class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors" title="জুম কমান (ছোট করুন)">
                 <i class="fas fa-magnifying-glass-minus"></i>
@@ -506,30 +452,17 @@
               </button>
             </div>
 
-            <!-- Fullscreen Mode Button (ফুল স্ক্রিন) -->
+            <!-- Fullscreen Mode Button (ফুল স্ক্রিন) - একেবারে ডানপাশে কর্ণারে -->
             <button type="button" id="toggleSpreadsheetFullscreenBtn" onclick="window.toggleSpreadsheetFullscreen()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs" title="ফুল স্ক্রিন করুন (বক্সটি সম্পূর্ণ স্ক্রিন জুড়ে দেখতে)">
               <i class="fas fa-expand text-indigo-600 dark:text-indigo-400"></i>
               <span id="fullscreenBtnText">ফুল স্ক্রিন</span>
             </button>
-
-            <!-- Web Admin Exclusive: Publish / Draft Toggle -->
-            <div id="publishControlContainer" class="flex flex-wrap items-center gap-2">
-              <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold">
-                <span class="text-slate-500">স্ট্যাটাস:</span>
-                <span id="classPublishStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">প্রকাশিত (Published)</span>
-              </div>
-              
-              <button type="button" id="togglePublishBtn" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
-                <i class="fas fa-bullhorn"></i>
-                <span id="togglePublishBtnText">পাবলিশ করুন</span>
-              </button>
-            </div>
           </div>
         </div>
 
         <!-- =========================================================================
              স্তর ১: সিলেকশন ও সেটিংস বার (Selection & Configuration Toolbar)
-             লজিক্যাল সিকোয়েন্স: সাল -> পরীক্ষা -> শ্রেণি -> শাখা | ডানে: সেটিংস
+             লজিক্যাল সিকোয়েন্স: সাল -> পরীক্ষা -> শ্রেণি -> শাখা -> বিভাগ | ডানে: সেটিংস
              ========================================================================= -->
         <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/70 px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/80">
           <!-- বামপাশে: পর্যায়ক্রমিক ফিল্টার গ্রুপ -->
@@ -573,6 +506,18 @@
                 <option value="all">সকল শাখা</option>
               </select>
             </div>
+
+            <!-- ৫. বিভাগ ফিল্টার (Department/Group Filter for Class 9-10) -->
+            <div id="editorGroupFilterWrapper" class="hidden flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-purple-300 dark:border-purple-600 shadow-2xs">
+              <label for="editorGroupSelect" class="text-xs font-bold text-purple-700 dark:text-purple-300 whitespace-nowrap flex items-center gap-1">
+                <i class="fas fa-book-open-reader text-purple-600"></i> বিভাগ:
+              </label>
+              <select id="editorGroupSelect" class="text-xs font-extrabold text-purple-900 dark:text-purple-200 outline-hidden cursor-pointer bg-transparent dark:bg-slate-800 rounded">
+                <option value="all">সকল বিভাগ</option>
+                <option value="science">বিজ্ঞান বিভাগ</option>
+                <option value="humanities">মানবিক বিভাগ</option>
+              </select>
+            </div>
           </div>
 
           <!-- ডানপাশে: প্রয়োজনীয় কনফিগারেশন বাটনসমূহ -->
@@ -584,10 +529,6 @@
             <button type="button" id="openManageClassesBtn" onclick="window.openManageClassesModal()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900/80 text-purple-700 dark:text-purple-300 border border-purple-300/80 dark:border-purple-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="নতুন শ্রেণি যোগ বা এডিট করুন">
               <i class="fas fa-users-gear text-purple-600 dark:text-purple-400"></i>
               <span>শ্রেণি সেটিংস</span>
-            </button>
-            <button type="button" id="openManageExamsBtn" onclick="window.openManageExamsModal()" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/60 dark:hover:bg-sky-900/80 text-sky-700 dark:text-sky-300 border border-sky-300/80 dark:border-sky-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="পরীক্ষার নাম যোগ বা এডিট করুন">
-              <i class="fas fa-pen-to-square text-sky-600 dark:text-sky-400"></i>
-              <span>পরীক্ষা সেটিংস</span>
             </button>
           </div>
         </div>
@@ -642,6 +583,12 @@
                 </button>
               </div>
             </div>
+
+            <!-- ৪. ১-ক্লিকে এক্সেল ইমপোর্ট বাটন -->
+            <button type="button" onclick="window.switchAdminTab('excelImportTab')" class="px-3 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="১-ক্লিকে এক্সেল থেকে নম্বর বা শিক্ষার্থী ইমপোর্ট করুন">
+              <i class="fas fa-file-import text-emerald-600"></i>
+              <span>১-ক্লিকে এক্সেল ইমপোর্ট</span>
+            </button>
           </div>
 
           <!-- ডানপাশে: সেভ বাটন ও লাইভ স্ট্যাটাস -->
@@ -656,6 +603,9 @@
             </div>
           </div>
         </div>
+
+        <!-- Dynamic Publish/Lock Status Notice Banner -->
+        <div id="spreadsheetLockNoticeBanner" class="hidden"></div>
 
         <!-- Editable Grid Container -->
         <div id="editorTableWrapper" class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 max-h-[600px] transition-all">
@@ -674,16 +624,23 @@
     </section>
 
     <!-- =========================================================================
-         ট্যাব ৩: ১-ক্লিকে এক্সেল ইমপোর্ট (Excel / CSV Importer)
+         ট্যাব ২: ১-ক্লিকে এক্সেল ইমপোর্ট (Excel / CSV Importer)
          ========================================================================= -->
     <section id="excelImportTabContent" class="space-y-6 hidden">
       
       <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        <div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <i class="fas fa-file-import text-emerald-600"></i> নতুন এক্সেল (`.xlsx`) ফাইল ইমপোর্ট করুন
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fas fa-file-import text-emerald-600"></i> নতুন এক্সেল (`.xlsx`) ফাইল ইমপোর্ট করুন
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">এক্সেল শীট থেকে সরাসরি শিক্ষার্থী ও তাদের নম্বর রেজাল্ট সিস্টেমে ইমপোর্ট করুন।</p>
+          </div>
+          <button type="button" onclick="window.switchAdminTab('spreadsheetTab')" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto">
+            <i class="fas fa-arrow-left"></i>
+            <span>লাইভ স্প্রেডশিটে ফেরত যান</span>
+          </button>
+        </div>
         <!-- Target Selectors for Import -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
           <div>
@@ -805,14 +762,21 @@
     </section>
 
     <!-- =========================================================================
-         ট্যাব ৪: স্কুল ও পরীক্ষা সেটিংস (Settings & Profile)
+         ট্যাব ৩: স্কুল ও পরীক্ষা সেটিংস (Settings & Profile)
          ========================================================================= -->
     <section id="settingsTabContent" class="space-y-6 hidden">
       
+      <!-- ১. প্রতিষ্ঠান পরিচালনা ও পরীক্ষা পরিচালনা - পাশাপাশি দুটি কার্ড -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
       <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <i class="fas fa-sliders text-emerald-600"></i> প্রতিষ্ঠান ও পরীক্ষা কনফিগারেশন
-        </h2>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fas fa-sliders text-emerald-600"></i> প্রতিষ্ঠান পরিচিতি ও সেটিংস
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">প্রতিষ্ঠান সংক্রান্ত মূল নাম, ঠিকানা ও ডিফল্ট পরীক্ষার নাম এখান থেকে পরিবর্তন করুন।</p>
+          </div>
+        </div>
 
         <form id="settingsForm" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -844,7 +808,30 @@
           </div>
         </form>
 
-      </div>
+        </div><!-- end প্রতিষ্ঠান পরিচিতি কার্ড -->
+
+        <!-- পরীক্ষা পরিচালনা ও ফলাফল প্রকাশ সেটিংস -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 flex flex-col">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fas fa-bullhorn text-sky-600"></i> পরীক্ষা পরিচালনা ও ফলাফল প্রকাশ
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">পরীক্ষার নাম পরিবর্তন, নতুন পরীক্ষা যোগ এবং ফলাফল Publish বা Draft নিয়ন্ত্রণ করুন।</p>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            ফলাফল পাবলিশ করার পর শিক্ষকদের জন্য নম্বর এন্ট্রি লক হয়ে যাবে। সংশোধনের ক্ষমতা শুধুমাত্র ওয়েব সুপার অ্যাডমিনের নিকট থাকবে।
+          </p>
+          <div class="mt-auto pt-4">
+            <button type="button" id="openManageExamsBtn" onclick="window.openManageExamsModal()" class="w-full px-4 py-3 rounded-2xl text-sm font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <i class="fas fa-bullhorn"></i>
+              <span>পরীক্ষা পরিচালনা ও পাবলিশ সেটিংস</span>
+            </button>
+          </div>
+        </div><!-- end পরীক্ষা পরিচালনা কার্ড -->
+
+      </div><!-- end grid -->
+
+
 
       <!-- সিকিউরিটি ও পাসওয়ার্ড ব্যবস্থাপনা (PIN & Password Security Control) -->
       <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
@@ -938,6 +925,57 @@
           </div>
         </div>
 
+      </div>
+
+    </section>
+
+    <!-- =========================================================================
+         ট্যাব ৪: ব্যাচ প্রিন্ট ইঞ্জিন (Batch Marksheet Print Engine)
+         ========================================================================= -->
+    <section id="batchPrintTabContent" class="space-y-6 hidden">
+
+      <div id="batchPrintMainCard" class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fas fa-copy text-emerald-600"></i> ১-ক্লিকে ক্লাসের সকল মার্কশীট ব্যাচ প্রিন্ট
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              ওয়ার্ড মেইল-মার্জের কোনো প্রয়োজন নেই! শ্রেণি নির্বাচন করে প্রিন্ট বাটনে চাপ দিলেই পুরো ক্লাসের সব শিক্ষার্থীর মার্কশীট ধারাবাহিক A4 পৃষ্ঠায় প্রিন্ট হবে।
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <select id="batchYearSelect" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-extrabold text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs">
+              <!-- Dynamically populated -->
+            </select>
+            <select id="batchExamSelect" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs max-w-[200px]">
+              <!-- Dynamically populated -->
+            </select>
+            <select id="batchClassSelect" class="flex-1 sm:flex-none px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-xs focus:ring-2 focus:ring-emerald-500 outline-hidden cursor-pointer shadow-xs">
+              <!-- Dynamically populated -->
+            </select>
+            <button type="button" id="executeBatchPrintBtn" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-md transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+              <i class="fas fa-print"></i> ব্যাচ প্রিন্ট (A4)
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-200">
+          <div class="flex items-center gap-2">
+            <i class="fas fa-check-circle text-emerald-600 text-base"></i>
+            <span>নির্বাচিত ক্লাসে সর্বমোট <strong id="batchStudentCount">০</strong> জন শিক্ষার্থীর মার্কশীট প্রিন্টের জন্য প্রস্তুত।</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview of First Few Marksheets -->
+      <div id="batchPreviewSection" class="space-y-4">
+        <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          ব্যাচ প্রিন্ট প্রিভিউ (Batch Preview):
+        </div>
+        <div id="batchPreviewGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated dynamically -->
+        </div>
       </div>
 
     </section>
@@ -1401,9 +1439,9 @@
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <div>
           <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <i class="fas fa-pen-to-square text-sky-600"></i> পরীক্ষা পরিচালনা ও এডিটর
+            <i class="fas fa-bullhorn text-sky-600"></i> পরীক্ষা পরিচালনা ও ফলাফল পাবলিকেশন সেটিংস
           </h3>
-          <p class="text-xs text-slate-500">পরীক্ষার নাম পরিবর্তন, শিক্ষাবর্ষ পরিবর্তন বা নতুন পরীক্ষা যোগ করুন।</p>
+          <p class="text-xs text-slate-500">পরীক্ষার নাম পরিবর্তন, নতুন পরীক্ষা যোগ এবং সরাসরি অনলাইনে ফলাফল প্রকাশ (Publish) বা ড্রাফট (Draft) নিয়ন্ত্রণ করুন।</p>
         </div>
         <button type="button" onclick="window.closeManageExamsModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center cursor-pointer">
           <i class="fas fa-times text-sm"></i>
@@ -1444,7 +1482,7 @@
       <!-- Existing Exams List -->
       <div class="space-y-3">
         <div class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-          <span><i class="fas fa-list text-slate-500 mr-1"></i> এই প্রতিষ্ঠানের বিদ্যমান পরীক্ষার তালিকা:</span>
+          <span><i class="fas fa-list text-slate-500 mr-1"></i> এই প্রতিষ্ঠানের বিদ্যমান পরীক্ষার তালিকা ও ফলাফল পাবলিশ স্ট্যাটাস:</span>
           <span id="activeSchoolExamCountBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">০ টি পরীক্ষা</span>
         </div>
 
@@ -1452,9 +1490,10 @@
           <table class="w-full text-xs text-left">
             <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th class="py-2.5 px-3 w-20">সাল</th>
+                <th class="py-2.5 px-3 w-16">সাল</th>
                 <th class="py-2.5 px-3">পরীক্ষার নাম</th>
-                <th class="py-2.5 px-3 text-right w-36">অ্যাকশন</th>
+                <th class="py-2.5 px-3 w-32 text-center">অনলাইন স্ট্যাটাস</th>
+                <th class="py-2.5 px-3 text-right w-56">পাবলিশ ও অ্যাকশন</th>
               </tr>
             </thead>
             <tbody id="manageExamsTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">

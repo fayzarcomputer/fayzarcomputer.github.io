@@ -698,6 +698,24 @@
     },
 
     async loadConfig() {
+      // 1. First retrieve any local modified config from IndexedDB or localStorage
+      let localConfig = null;
+      try {
+        const idbConfig = await this._idbGet(this.CONFIG_KEY);
+        if (idbConfig && Array.isArray(idbConfig.institutions) && idbConfig.institutions.length > 0) {
+          localConfig = idbConfig;
+        } else if (typeof localStorage !== 'undefined') {
+          const cached = localStorage.getItem(this.CONFIG_KEY);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && Array.isArray(parsed.institutions) && parsed.institutions.length > 0) {
+              localConfig = parsed;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 2. If running under HTTP server with active API, check server
       const isHttp = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'));
       if (isHttp && typeof fetch !== 'undefined') {
         try {
@@ -705,6 +723,14 @@
           if (res.ok) {
             const cfg = await res.json();
             if (cfg && Array.isArray(cfg.institutions) && cfg.institutions.length > 0) {
+              if (localConfig && Array.isArray(localConfig.deleted_exam_ids)) {
+                cfg.institutions.forEach(inst => {
+                  if (Array.isArray(inst.exams)) {
+                    inst.exams = inst.exams.filter(ex => !localConfig.deleted_exam_ids.includes(ex.id));
+                  }
+                });
+                cfg.deleted_exam_ids = localConfig.deleted_exam_ids;
+              }
               this._writeLocalConfig(cfg);
               await this._idbSet(this.CONFIG_KEY, cfg);
               return cfg;
@@ -712,36 +738,25 @@
           }
         } catch (e) {}
 
-        try {
-          const res2 = await fetch('data/results_config.json', { cache: 'no-cache' });
-          if (res2.ok) {
-            const cfg2 = await res2.json();
-            if (cfg2 && Array.isArray(cfg2.institutions) && cfg2.institutions.length > 0) {
-              this._writeLocalConfig(cfg2);
-              await this._idbSet(this.CONFIG_KEY, cfg2);
-              return cfg2;
-            }
-          }
-        } catch (e) {}
-      }
-
-      // Check IndexedDB
-      const idbConfig = await this._idbGet(this.CONFIG_KEY);
-      if (idbConfig && Array.isArray(idbConfig.institutions) && idbConfig.institutions.length > 0) {
-        if (typeof window !== 'undefined') window.DEFAULT_RESULTS_CONFIG = idbConfig;
-        return idbConfig;
-      }
-
-      if (typeof localStorage !== 'undefined') {
-        const cached = localStorage.getItem(this.CONFIG_KEY);
-        if (cached) {
+        // Fallback to static data/results_config.json ONLY IF NO localConfig exists
+        if (!localConfig) {
           try {
-            const parsed = JSON.parse(cached);
-            if (parsed && Array.isArray(parsed.institutions) && parsed.institutions.length > 0) {
-              return parsed;
+            const res2 = await fetch('data/results_config.json', { cache: 'no-cache' });
+            if (res2.ok) {
+              const cfg2 = await res2.json();
+              if (cfg2 && Array.isArray(cfg2.institutions) && cfg2.institutions.length > 0) {
+                this._writeLocalConfig(cfg2);
+                await this._idbSet(this.CONFIG_KEY, cfg2);
+                return cfg2;
+              }
             }
           } catch (e) {}
         }
+      }
+
+      if (localConfig) {
+        if (typeof window !== 'undefined') window.DEFAULT_RESULTS_CONFIG = localConfig;
+        return localConfig;
       }
 
       if (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG && Array.isArray(window.DEFAULT_RESULTS_CONFIG.institutions)) {

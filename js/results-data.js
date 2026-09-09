@@ -331,24 +331,6 @@ window.DEFAULT_RESULTS_CONFIG = {
           "is_published": false
         },
         {
-          "id": "annual_2025",
-          "name_bn": "বার্ষিক পরীক্ষা-২০২৫",
-          "name_en": "Annual Examination - 2025",
-          "year": "2025"
-        },
-        {
-          "id": "test_2025",
-          "name_bn": "নির্বাচনী পরীক্ষা-২০২৫ (Test Exam)",
-          "name_en": "Test Examination - 2025",
-          "year": "2025"
-        },
-        {
-          "id": "pre_test_2025",
-          "name_bn": "প্রাক-নির্বাচনী পরীক্ষা-২০২৫ (Pre-Test)",
-          "name_en": "Pre-Test Examination - 2025",
-          "year": "2025"
-        },
-        {
           "id": "first_term_2026",
           "name_bn": "১ম সাময়িক পরীক্ষা-২০২৬",
           "name_en": "1st Term Examination - 2026",

@@ -66,6 +66,7 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
 5. STRICT FIDELITY TO SOURCE & MANDATORY AUDIT NOTE (মূল ফাইলের সাথে হুবহু মিল ও অডিট নোট):
    - DO NOT alter, rewrite, rephrase, summarize, or modify the original text, question contents, equations, or numbers on your own.
    - STIMULUS (উদ্দীপক/অনুচ্ছেদ অপরিবর্তিত রাখা): NEVER change, paraphrase, shorten, or rewrite the stimulus. It MUST match the source image word-for-word!
+   - QUOTATION MARKS & PUNCTUATION FIDELITY: Always preserve all single and double quotation marks ('...', "...", ‘...’, “...”) around character names, single letters, placeholders, and terms (যেমন: 'জ', "জ", 'ক', 'খ', 'গ', 'A', 'B', 'পাখি') exactly as written in the source image! NEVER omit, drop, or remove quotes.
    - MANDATORY AUDIT NOTE: If you make any unavoidable correction (fixing an obvious printing typo, restoring blurred text, or resolving misspellings), you MUST explicitly document each and every change at the very end of the document in a dedicated note block:
      [নোট ও পরিবর্তনসমূহ:
      - প্রশ্ন ৩-এর উদ্দীপকে '...' মূল ছবির সাথে মিলানো হয়েছে।
@@ -136,7 +137,8 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
     - DO NOT get trapped in repetitive dot loops. Continue transcribing the rest of the letter/form (বরাবর, বিষয়, জনাব, বিবরণ, আবেদনকারী, স্বাক্ষর ইত্যাদি) completely and faithfully!
 
 16. ACCURATE BENGALI TYPOGRAPHY:
-    - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output) clean in English.`;
+    - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output) clean in English.
+    - DASH & HYPHEN FIDELITY: Preserve all visible dashes and hyphens (-, –, —) between text and questions cleanly without converting or omitting them.`;
 
   const GEMINI_VERIFY_PROMPT = `You are the Chief Examination Paper Auditor, Proofreader, and Senior Bengali Question Typist.
 You are given:
@@ -1460,13 +1462,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     // 1. Unpack any \text{...} that contains Bengali characters so Bengali words are never trapped in equations
     s = s.replace(/\\(?:text|mathrm|textmd|textbf|textit|mbox)\{\s*([^{}]*?[\u0980-\u09FF][^{}]*?)\s*\}/g, ' $1 ');
 
-    // 2. Strip quotes around Bengali words
-    s = s.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
-
-    // 3. Separate multiple adjacent definitions: "} B =" -> "}, B ="
+    // 2. Separate multiple adjacent definitions: "} B =" -> "}, B ="
     s = s.replace(/(\}\s*)([A-Za-z]\s*=)/g, (match, g1, g2) => `${g1.trim()}, ${g2}`);
 
-    // 4. Process all math delimiters and extract ALL Bengali text completely outside
+    // 3. Process all math delimiters and extract ALL Bengali text completely outside
     s = s.replace(/\$\$([\s\S]*?)\$\$|\$([^\$]+?)\$|\\\[([\s\S]*?\\\])|\\\(([\s\S]*?)\\\)/g, (match, d1, s1, b1, p1) => {
       const isDouble = Boolean(d1 || b1);
       const inner = (d1 || s1 || b1 || p1 || '').trim();
@@ -1475,7 +1474,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         return match;
       }
 
-      const parts = inner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
+      // Strip quotes around trapped Bengali words inside math mode only
+      const cleanInner = inner.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
+      const parts = cleanInner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
       let out = [];
       for (let p of parts) {
         p = (p || '').trim();
@@ -1975,9 +1976,39 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
         <w:t xml:space="preserve">${escapeXml(seg.text)}</w:t>
       </w:r>\n`;
           } else {
-            const targetText = isBijoy && window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(seg.text) : seg.text;
             const fontName = isBijoy ? 'SutonnyMJ' : 'Kalpurush';
-            runsXml += `      <w:r>
+            if (isBijoy && /[\u2013\u2014]/.test(seg.text)) {
+              const dashParts = seg.text.split(/([\u2013\u2014]+)/);
+              for (const dp of dashParts) {
+                if (!dp) continue;
+                if (/[\u2013\u2014]/.test(dp)) {
+                  runsXml += `      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
+          <w:sz w:val="${fontSizeHalfPt}"/>
+          <w:szCs w:val="${fontSizeHalfPt}"/>
+          ${boldTag}
+          ${vertAlignTag}
+        </w:rPr>
+        <w:t xml:space="preserve">${escapeXml(dp)}</w:t>
+      </w:r>\n`;
+                } else {
+                  const targetSub = window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(dp) : dp;
+                  runsXml += `      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}"/>
+          <w:sz w:val="${fontSizeHalfPt}"/>
+          <w:szCs w:val="${fontSizeHalfPt}"/>
+          ${boldTag}
+          ${vertAlignTag}
+        </w:rPr>
+        <w:t xml:space="preserve">${escapeXml(targetSub)}</w:t>
+      </w:r>\n`;
+                }
+              }
+            } else {
+              const targetText = isBijoy && window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(seg.text) : seg.text;
+              runsXml += `      <w:r>
         <w:rPr>
           <w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}"/>
           <w:sz w:val="${fontSizeHalfPt}"/>
@@ -1987,6 +2018,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
         </w:rPr>
         <w:t xml:space="preserve">${escapeXml(targetText)}</w:t>
       </w:r>\n`;
+            }
           }
         }
       }

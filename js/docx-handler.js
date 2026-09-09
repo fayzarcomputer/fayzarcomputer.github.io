@@ -640,6 +640,17 @@
           const escaped = (seg.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
           if (seg.type === 'english') {
             runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
+          } else if (isBijoy && /[\u2013\u2014]/.test(seg.text)) {
+            const dashParts = seg.text.split(/([\u2013\u2014]+)/);
+            for (let dp of dashParts) {
+              if (!dp) continue;
+              const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              if (/[\u2013\u2014]/.test(dp)) {
+                runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+              } else {
+                runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+              }
+            }
           } else {
             runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" ${isBijoy ? 'w:hint="ascii"' : 'w:hint="cs"'}/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
           }
@@ -708,13 +719,13 @@
 
       // 0. Extract ALL Bengali text out of math mode so words like 'এবং', 'অথবা' are NEVER inside equations
       sanitizedText = sanitizedText.replace(/\\(?:text|mathrm|textmd|textbf|textit|mbox)\{\s*([^{}]*?[\u0980-\u09FF][^{}]*?)\s*\}/g, ' $1 ');
-      sanitizedText = sanitizedText.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
       sanitizedText = sanitizedText.replace(/(\}\s*)([A-Za-z]\s*=)/g, (match, g1, g2) => `${g1.trim()}, ${g2}`);
       sanitizedText = sanitizedText.replace(/\$\$([\s\S]*?)\$\$|\$([^\$]+?)\$|\\\[([\s\S]*?\\\])|\\\(([\s\S]*?)\\\)/g, (match, d1, s1, b1, p1) => {
         const isDouble = Boolean(d1 || b1);
         const inner = (d1 || s1 || b1 || p1 || '').trim();
         if (!/[\u0980-\u09FF]/.test(inner)) return match;
-        const parts = inner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
+        const cleanInner = inner.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
+        const parts = cleanInner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
         let out = [];
         for (let p of parts) {
           p = (p || '').trim();

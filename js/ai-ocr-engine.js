@@ -98,7 +98,10 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
       ii. CP \perp BC
       iii. AB = AC - BC
       নিচের কোনটি সঠিক?
-      (ক) i ও ii    (খ) i ও iii    (গ) ii ও iii    (ঘ) i, ii ও iii ✅
+      (ক) i ও ii
+      (খ) i ও iii
+      (গ) ii ও iii
+      (ঘ) i, ii ও iii ✅
     - Keep MCQ options aligned side-by-side on the same line with proper spacing.
 
 11. CREATIVE QUESTIONS (সৃজনশীল প্রশ্নপত্র):
@@ -640,9 +643,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         const thumbDiv = document.createElement('div');
         thumbDiv.className = 'w-14 h-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative flex-shrink-0';
         if (item.base64) {
-          thumbDiv.innerHTML = `<img src="${item.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
+          thumbDiv.innerHTML = `<img src="${item.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx + 1}: ${item.name}</span>`;
         } else if (item.isPdf) {
-          thumbDiv.innerHTML = `<i class="fa-solid fa-file-pdf text-rose-500 text-lg"></i><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
+          thumbDiv.innerHTML = `<i class="fa-solid fa-file-pdf text-rose-500 text-lg"></i><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx + 1}: ${item.name}</span>`;
           fastOptimizeImageFile(item.file).then(opt => {
             item.base64 = opt.base64;
             item.mimeType = opt.mimeType;
@@ -651,7 +654,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           fastOptimizeImageFile(item.file).then(opt => {
             item.base64 = opt.base64;
             item.mimeType = opt.mimeType;
-            thumbDiv.innerHTML = `<img src="${opt.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
+            thumbDiv.innerHTML = `<img src="${opt.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx + 1}: ${item.name}</span>`;
           });
         }
         elements.multiThumbs.appendChild(thumbDiv);
@@ -887,20 +890,20 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       ]
     };
 
-    // Active Google Gemini Models ordered by OCR capability, speed & quota availability:
+    // Active Google Gemini Models strictly ordered by OCR capability, accuracy & rating (No weak Lite models):
     const allActiveModels = [
-      // 1. Google's Flagship Production Flash (Tested fastest: 5s, highest multimodal Bengali OCR accuracy)
+      // 1. Google's Flagship Production Flash (Top recommendation: ultra-fast, highest multimodal Bengali OCR accuracy)
+      'gemini-3.8-flash',
+      // 2. Highest Precision Pro Model (99% result for complex math LaTeX, equations & difficult handwriting)
+      'gemini-2.5-pro',
+      // 3. High-Tier Multi-Step Models
       'gemini-3.7-flash',
       'gemini-3.6-flash',
-      'gemini-2.5-flash-lite',
-      'gemini-3.5-flash-lite',
-      'gemini-3.1-flash-lite',
+      'gemini-3.5-flash',
+      // 4. Solid Hybrid Reasoning Flash
       'gemini-2.5-flash',
-      'gemini-3-flash-preview',
-
-      // 2. Pro Models (Complex math & deep reasoning fallback)
-      'gemini-3.1-pro-preview',
-      'gemini-2.5-pro'
+      // 5. Deep Reasoning Pro Fallback
+      'gemini-3.1-pro-preview'
     ];
 
     let candidateModels = allActiveModels.slice();
@@ -1055,11 +1058,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       }
     }
 
-    // Cooldown auto-retry on gemini-2.5-flash-lite
+    // Cooldown auto-retry on gemini-3.8-flash
     if (isRateLimited) {
       try {
-        setLoading(true, 'রেট লিমিট কুলডাউন চলছে (দ্রুততম মডেল gemini-2.5-flash-lite চেষ্টা হচ্ছে)...', 88);
-        const retryModel = 'gemini-2.5-flash-lite';
+        setLoading(true, 'রেট লিমিট কুলডাউন চলছে (ফ্ল্যাগশিপ মডেল gemini-3.8-flash চেষ্টা হচ্ছে)...', 88);
+        const retryModel = 'gemini-3.8-flash';
         const retryEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${retryModel}:generateContent?key=${apiKey}`;
         const retryRes = await fetchWithTimeout(retryEndpoint, {
           method: 'POST',
@@ -1079,7 +1082,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       } catch (retryErr) { /* ignore */ }
     }
 
-    // Dynamic Discovery Fallback
+    // Dynamic Discovery Fallback (Filters out all Lite & 8b models)
     try {
       setLoading(true, 'আপনার API Key-এর জন্য উপলব্ধ মডেল তালিকা খোঁজা হচ্ছে...', 92);
       const listRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {}, 6000);
@@ -1088,7 +1091,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         const available = (listData.models || [])
           .filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && m.name)
           .map(m => m.name.replace('models/', ''))
-          .filter(m => m.includes('flash') || m.includes('pro'));
+          .filter(m => (m.includes('flash') || m.includes('pro')) && !m.includes('lite') && !m.includes('8b'));
 
         for (const dynModel of available) {
           if (modelsToTry.includes(dynModel)) continue;
@@ -1516,7 +1519,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     // 1. Clean asterisks around Roman numerals: *i.* -> i., *ii.* -> ii., *iii.* -> iii.
     text = text.replace(/\*+\s*(i{1,4}|iv|v|vi{0,3}|ix|x)\s*\.\s*\*+/gi, '$1.');
-    
+
     // 2. Clean asterisks around inline Roman numerals: *i*, *ii*, *iii*, *i, ii*, *i ও ii*, *i, ii ও iii*
     text = text.replace(/\*+\s*([iIvVxX0-9]+(?:\s*,\s*[iIvVxX0-9]+)*(?:\s*ও\s*[iIvVxX0-9]+)*)\s*\*+/g, '$1');
     text = text.replace(/\*+([iIvVxX]+)\*+/g, '$1');
@@ -1554,7 +1557,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       // 4. Remove score marks [১], [২], [৩], [৪], [৮], [১০], (১), (২) at the end of creative questions
       l = l.replace(/(\?|।|:|[a-zA-Z\u0980-\u09FF"'”’\$])\s*\[\s*[০-৯0-9\s]+\s*\]\s*$/g, '$1');
       l = l.replace(/(\?|।|:|[a-zA-Z\u0980-\u09FF"'”’\$])\s*[\(（]\s*[০-৯0-9\s]+\s*[\)）]\s*$/g, '$1');
-      
+
       // If line is a CQ subquestion (e.g. ক. ... ১) with trailing mark digit, remove trailing digit
       if (/^[কখগঘabcd]\./i.test(trimmed)) {
         l = l.replace(/(\?|।)\s+[০-৯0-9]\s*$/g, '$1');
@@ -1566,7 +1569,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       l = l.replace(/(\?|।|[a-zA-Z\u0980-\u09FF])\s*মান\s*[:\s]*[০-৯0-9]+\s*$/g, '$1');
 
       // 4b. Format diagram/image tags strictly as [ছবি আছে-পৃ:০১] without any description
-      l = l.replace(/\[\s*(?:চিত্র|ছবি)\s*আছে\s*[:\-]\s*(?:পৃ(?:ষ্ঠা)?[:\s]*([০-৯0-9]+))?[^\]]*\]/gi, function(match, pageNum) {
+      l = l.replace(/\[\s*(?:চিত্র|ছবি)\s*আছে\s*[:\-]\s*(?:পৃ(?:ষ্ঠা)?[:\s]*([০-৯0-9]+))?[^\]]*\]/gi, function (match, pageNum) {
         let p = pageNum ? toBengaliNumber(pageNum.replace(/[^\d০-৯]/g, '').padStart(2, '0')) : '০১';
         return `[ছবি আছে-পৃ:${p}]`;
       });
@@ -1578,7 +1581,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     let finalOutput = cleanedLines.join('\n').trim();
 
     // 5. Clean stray quotes around units e.g. 2262 "cm" 3, "cm"^3, "cm"
-    finalOutput = finalOutput.replace(/(?<=\d|\))\s*["']\s*(cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)\s*["']\s*(\^?\d+)?/gi, function(match, unit, exp) {
+    finalOutput = finalOutput.replace(/(?<=\d|\))\s*["']\s*(cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)\s*["']\s*(\^?\d+)?/gi, function (match, unit, exp) {
       let cleanExp = exp ? exp.replace('^', '') : '';
       return cleanExp ? ` $${unit}^{${cleanExp}}$` : ` ${unit}`;
     });

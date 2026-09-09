@@ -3773,6 +3773,7 @@
 
   // Dropdown UI Helpers
   window.toggleExcelTemplatesMenu = function (e) {
+    if (!e && window.event) e = window.event;
     if (e && e.stopPropagation) e.stopPropagation();
     const menu = document.getElementById('excelTemplatesMenu') || document.getElementById('spreadsheetExcelDropdownMenu');
     if (menu) menu.classList.toggle('hidden');
@@ -5633,6 +5634,13 @@
 
   // Tab switching
   function switchAdminTab(tabName) {
+    if (tabName !== 'spreadsheetTab') {
+      const card = document.getElementById('spreadsheetCard');
+      if (card && card.classList.contains('spreadsheet-fullscreen')) {
+        window.toggleSpreadsheetFullscreen();
+      }
+    }
+
     adminTabButtons.forEach(btn => {
       if (btn.getAttribute('data-admin-tab') === tabName) {
         btn.classList.add('active', 'bg-emerald-600', 'text-white');

@@ -701,8 +701,12 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       return;
     }
 
-    if (state.byokApiKey && state.byokApiKey.trim().length > 0) {
-      await runDirectGeminiOcr(state.byokApiKey.trim());
+    const activeKey = (state.byokApiKey && state.byokApiKey.trim().length > 10)
+      ? state.byokApiKey.trim()
+      : (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getActiveApiKey === 'function' ? FayzarOcrConfig.getActiveApiKey() : '');
+
+    if (activeKey && activeKey.length > 0) {
+      await runDirectGeminiOcr(activeKey);
       return;
     }
 
@@ -745,7 +749,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     if (onProgress) onProgress(total > 1 ? `সবগুলো (${toBengaliNumber(total)}টি) পেজ একসাথে AI-তে পাঠানো হচ্ছে...` : 'Gemini AI দিয়ে রূপান্তর হচ্ছে...', 45);
 
-    const apiKey = state.byokApiKey ? state.byokApiKey.trim() : '';
+    const apiKey = (state.byokApiKey && state.byokApiKey.trim().length > 10)
+      ? state.byokApiKey.trim()
+      : (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getActiveApiKey === 'function' ? FayzarOcrConfig.getActiveApiKey() : '');
 
     let rawText = '';
     if (state.demoMode || !apiKey) {
@@ -802,6 +808,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
   // UNIFIED MULTI-IMAGE / MULTI-PAGE GEMINI OCR (ALL PAGES IN 1 SINGLE API REQUEST)
   async function runDirectGeminiOcr(apiKey) {
+    const activeKey = (apiKey && apiKey.trim().length > 10)
+      ? apiKey.trim()
+      : (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getActiveApiKey === 'function' ? FayzarOcrConfig.getActiveApiKey() : '');
     const queue = state.filesQueue.length > 0
       ? state.filesQueue
       : [{ file: state.selectedFile, mimeType: state.imageMimeType, base64: state.imageBase64, name: 'ফাইল' }];
@@ -892,179 +901,194 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       ]
     };
 
-    // Active Google Gemini Models strictly ordered by OCR capability, accuracy & rating (No weak Lite models):
+    // Active Powerful Gemini Models ordered strictly by Bengali OCR fidelity, speed & capability (Weak Lite models completely purged):
     const allActiveModels = [
-      // 1. Google's Flagship Production Flash (Top recommendation: ultra-fast, highest multimodal Bengali OCR accuracy)
-      'gemini-3.8-flash',
-      // 2. Highest Precision Pro Model (99% result for complex math LaTeX, equations & difficult handwriting)
-      'gemini-2.5-pro',
-      // 3. High-Tier Multi-Step Models
-      'gemini-3.7-flash',
-      'gemini-3.6-flash',
+      // 1. Google's Stable Flagship Flash (Highest multimodal Bengali OCR accuracy & flawless LaTeX math - 2.0s)
       'gemini-3.5-flash',
-      // 4. Solid Hybrid Reasoning Flash
+      // 2. Google's Recommended Balanced Flagship (2.2s latency, official 2.5-flash successor)
+      'gemini-3.6-flash',
+      // 3. Flagship Production Model (3.3s latency on v1beta)
+      'gemini-3.8-flash',
+      // 4. Hybrid Reasoning Flash (3.6s latency on v1)
+      'gemini-3.7-flash',
+      // 5. Legacy High-Speed Flash (Active on legacy keys - 1.2s latency)
       'gemini-2.5-flash',
-      // 5. Deep Reasoning Pro Fallback
+      // 6. Deep Reasoning Pro Model (1M context, activated for paid keys or deep fallback)
       'gemini-3.1-pro-preview'
     ];
+
+    // Build Key Pool (Option 1: Model-First with Multi-Key Pool)
+    let keyPool = [];
+    if (apiKey && apiKey.trim().length > 10) {
+      keyPool.push(apiKey.trim());
+    }
+    if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getAllSystemKeys === 'function') {
+      const systemKeys = FayzarOcrConfig.getAllSystemKeys();
+      for (const sk of systemKeys) {
+        if (!keyPool.includes(sk)) keyPool.push(sk);
+      }
+    }
+    if (keyPool.length === 0) {
+      keyPool = [apiKey || ''];
+    }
 
     let candidateModels = allActiveModels.slice();
     if (state.selectedModel && state.selectedModel !== 'auto') {
       candidateModels = [state.selectedModel, ...candidateModels.filter(m => m !== state.selectedModel)];
     }
 
-    // Filter out models currently in 429 quota cooldown (unless all are in cooldown)
-    const nowTime = Date.now();
-    const readyModels = candidateModels.filter(m => !modelCooldowns.has(m) || nowTime >= modelCooldowns.get(m));
-    const modelsToTry = readyModels.length > 0 ? readyModels : candidateModels;
-
     let lastError = null;
     let isRateLimited = false;
 
-    for (let i = 0; i < modelsToTry.length; i++) {
-      const model = modelsToTry[i];
+    // Option 1: MODEL-FIRST Priority Strategy (Each model tests all available keys before falling back)
+    for (let i = 0; i < candidateModels.length; i++) {
+      const model = candidateModels[i];
 
-      // 1. Fast Real-Time SSE Stream Endpoint
-      const streamEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+      for (let k = 0; k < keyPool.length; k++) {
+        const currentKey = keyPool[k];
 
-      try {
-        const res = await fetchWithTimeout(streamEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }, REQUEST_TIMEOUT_MS);
+        // Dual-endpoint smart routing: gemini-3.7-flash works best on v1, others on v1beta
+        const epVersion = (model === 'gemini-3.7-flash') ? 'v1' : 'v1beta';
+        const streamEndpoint = `https://generativelanguage.googleapis.com/${epVersion}/models/${model}:streamGenerateContent?alt=sse&key=${currentKey}`;
 
-        if (res.status === 404) {
-          // Model deprecated / not found on this API key tier -> immediately try next
-          continue;
-        }
+        try {
+          const res = await fetchWithTimeout(streamEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }, REQUEST_TIMEOUT_MS);
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          const errMsg = errData.error?.message || `HTTP ${res.status}`;
-
-          if (res.status === 400 && errMsg.includes('API_KEY_INVALID')) {
-            throw new Error('Gemini API Key সঠিক নয়। Google AI Studio থেকে সঠিক Key দিন।');
-          }
-
-          // If proxy/endpoint rejects system_instruction, thinkingConfig or maxOutputTokens, fallback payload format
-          if (res.status === 400 && (errMsg.includes('system_instruction') || errMsg.includes('thinkingConfig') || errMsg.includes('maxOutputTokens') || errMsg.includes('exceed') || errMsg.includes('Unknown field'))) {
-            payload = {
-              contents: [{ parts: [{ text: activePrompt }, ...contentParts] }],
-              generationConfig: {
-                temperature: 0.2,
-                maxOutputTokens: 8192
-              },
-              safetySettings: payload.safetySettings
-            };
-            i--; // Retry this model with compatible payload
+          if (res.status === 404) {
+            // Model not supported on this specific key (e.g. legacy 2.5-flash on new keys) -> try next key
             continue;
           }
 
-          if (res.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('Quota')) {
-            isRateLimited = true;
-            modelCooldowns.set(model, Date.now() + 180000); // 3-minute cooldown
-            const nextModel = modelsToTry[i + 1] || 'বিকল্প মডেল';
-            setLoading(true, `[${model} কোটা ব্যস্ত] অবিলম্বে পরবর্তী মডেল (${nextModel})-এ রূপান্তর শুরু হচ্ছে...`, 50 + (i * 4));
-            lastError = new Error(`${model} কোটা ব্যস্ত বা রেট লিমিট অতিক্রম করেছে।`);
-            continue; // Zero delay! Jump straight to next model immediately
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            const errMsg = errData.error?.message || `HTTP ${res.status}`;
+
+            if (res.status === 400 && errMsg.includes('API_KEY_INVALID')) {
+              // Invalid key -> try next key in pool immediately
+              continue;
+            }
+
+            // If proxy/endpoint rejects system_instruction, thinkingConfig or maxOutputTokens, fallback payload format
+            if (res.status === 400 && (errMsg.includes('system_instruction') || errMsg.includes('thinkingConfig') || errMsg.includes('maxOutputTokens') || errMsg.includes('exceed') || errMsg.includes('Unknown field'))) {
+              payload = {
+                contents: [{ parts: [{ text: activePrompt }, ...contentParts] }],
+                generationConfig: {
+                  temperature: 0.2,
+                  maxOutputTokens: 8192
+                },
+                safetySettings: payload.safetySettings
+              };
+              k--; // Retry current key with compatible payload
+              continue;
+            }
+
+            if (res.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('Quota')) {
+              isRateLimited = true;
+              const nextModelDesc = candidateModels[i + 1] || 'বিকল্প মডেল';
+              setLoading(true, `[${model} কোটা ব্যস্ত] অবিলম্বে পরবর্তী মডেল (${nextModelDesc}) বা কি-তে রূপান্তর শুরু হচ্ছে...`, 50 + (i * 4));
+              continue;
+            }
+
+            if (res.status === 503) {
+              // High demand spike on this endpoint/key -> try next key
+              continue;
+            }
+
+            lastError = new Error(errMsg);
+            continue;
           }
 
-          lastError = new Error(errMsg);
-          continue;
-        }
+          // Read and parse SSE stream chunks in real-time with activity keep-alive
+          if (res.body && typeof res.body.getReader === 'function') {
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let fullStreamedText = '';
+            let lastChunkTime = 0;
+            const STREAM_IDLE_TIMEOUT_MS = 60000;
 
-        // Read and parse SSE stream chunks in real-time with activity keep-alive
-        if (res.body && typeof res.body.getReader === 'function') {
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder('utf-8');
-          let buffer = '';
-          let fullStreamedText = '';
-          let lastChunkTime = 0;
-          const STREAM_IDLE_TIMEOUT_MS = 60000; // 60s idle timeout between chunks
+            while (true) {
+              let chunkTimeoutId;
+              const chunkTimeoutPromise = new Promise((_, reject) => {
+                chunkTimeoutId = setTimeout(() => reject(new Error('স্ট্রিমিং চলাকালীন সংযোগ বিচ্ছিন্ন হয়েছে (Idle Timeout)')), STREAM_IDLE_TIMEOUT_MS);
+              });
 
-          while (true) {
-            let chunkTimeoutId;
-            const chunkTimeoutPromise = new Promise((_, reject) => {
-              chunkTimeoutId = setTimeout(() => reject(new Error('স্ট্রিমিং চলাকালীন সংযোগ বিচ্ছিন্ন হয়েছে (Idle Timeout)')), STREAM_IDLE_TIMEOUT_MS);
-            });
+              const { done, value } = await Promise.race([reader.read(), chunkTimeoutPromise]).finally(() => clearTimeout(chunkTimeoutId));
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
 
-            const { done, value } = await Promise.race([reader.read(), chunkTimeoutPromise]).finally(() => clearTimeout(chunkTimeoutId));
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (trimmed.startsWith('data:')) {
-                const dataJson = trimmed.slice(5).trim();
-                if (!dataJson || dataJson === '[DONE]') continue;
-                try {
-                  const chunkObj = JSON.parse(dataJson);
-                  const candidate = chunkObj.candidates?.[0];
-                  const chunkPart = candidate?.content?.parts?.[0]?.text || '';
-                  if (chunkPart) {
-                    fullStreamedText += chunkPart;
-                    // Anti-repetition stream guard: clamp any runaway dot repetition immediately
-                    if (fullStreamedText.includes('.......')) {
-                      fullStreamedText = fullStreamedText.replace(/\.{8,}/g, '......');
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('data:')) {
+                  const dataJson = trimmed.slice(5).trim();
+                  if (!dataJson || dataJson === '[DONE]') continue;
+                  try {
+                    const chunkObj = JSON.parse(dataJson);
+                    const candidate = chunkObj.candidates?.[0];
+                    const chunkPart = candidate?.content?.parts?.[0]?.text || '';
+                    if (chunkPart) {
+                      fullStreamedText += chunkPart;
+                      if (fullStreamedText.includes('.......')) {
+                        fullStreamedText = fullStreamedText.replace(/\.{8,}/g, '......');
+                      }
+                      const cTime = Date.now();
+                      if (cTime - lastChunkTime > 60 || fullStreamedText.length < 80) {
+                        lastChunkTime = cTime;
+                        if (onStreamChunk) onStreamChunk(fullStreamedText);
+                      }
                     }
-                    const cTime = Date.now();
-                    // 60ms UI stream throttle for silky smooth 60fps rendering
-                    if (cTime - lastChunkTime > 60 || fullStreamedText.length < 80) {
-                      lastChunkTime = cTime;
-                      if (onStreamChunk) onStreamChunk(fullStreamedText);
-                    }
-                  }
-                  if (candidate?.finishReason === 'MAX_TOKENS') {
-                    console.warn('Gemini reached MAX_TOKENS ceiling.');
-                  }
-                } catch (pe) { /* partial chunk */ }
+                  } catch (pe) { /* partial chunk */ }
+                }
               }
+            }
+
+            if (fullStreamedText.trim()) {
+              if (onStreamChunk) onStreamChunk(fullStreamedText);
+              return cleanOcrResponse(fullStreamedText);
             }
           }
 
-          if (fullStreamedText.trim()) {
-            if (onStreamChunk) onStreamChunk(fullStreamedText);
-            return cleanOcrResponse(fullStreamedText);
+          // Non-streaming fallback on current model and key
+          const fallbackRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/${epVersion}/models/${model}:generateContent?key=${currentKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }, REQUEST_TIMEOUT_MS);
+
+          if (fallbackRes.ok) {
+            const fbData = await fallbackRes.json().catch(() => ({}));
+            const fbCandidate = fbData.candidates?.[0];
+            if (fbCandidate && fbCandidate.content && fbCandidate.content.parts) {
+              const fullText = fbCandidate.content.parts.map(p => p.text || '').join('\n');
+              if (onStreamChunk) onStreamChunk(fullText);
+              return cleanOcrResponse(fullText);
+            }
           }
-        }
 
-        // Standard non-streaming fallback
-        const fallbackRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }, REQUEST_TIMEOUT_MS);
-
-        if (fallbackRes.ok) {
-          const fbData = await fallbackRes.json().catch(() => ({}));
-          const fbCandidate = fbData.candidates?.[0];
-          if (fbCandidate && fbCandidate.content && fbCandidate.content.parts) {
-            const fullText = fbCandidate.content.parts.map(p => p.text || '').join('\n');
-            if (onStreamChunk) onStreamChunk(fullText);
-            return cleanOcrResponse(fullText);
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            lastError = new Error(`${model} রেসপন্স দিতে দেরি করছে, পরবর্তী কি/মডেল চেষ্টা করা হচ্ছে...`);
+            continue;
           }
+          if (err.message.includes('Safety Filter')) {
+            throw err;
+          }
+          lastError = err;
         }
-
-      } catch (err) {
-        if (err.name === 'AbortError') {
-          lastError = new Error(`${model} রেসপন্স দিতে দেরি করছে, পরের মডেল চেষ্টা করা হচ্ছে...`);
-          continue;
-        }
-        if (err.message.includes('API Key') || err.message.includes('Safety Filter')) {
-          throw err;
-        }
-        lastError = err;
       }
     }
 
-    // Cooldown auto-retry on gemini-3.8-flash
+    // Cooldown auto-retry on gemini-3.5-flash
     if (isRateLimited) {
       try {
-        setLoading(true, 'রেট লিমিট কুলডাউন চলছে (ফ্ল্যাগশিপ মডেল gemini-3.8-flash চেষ্টা হচ্ছে)...', 88);
-        const retryModel = 'gemini-3.8-flash';
+        setLoading(true, 'রেট লিমিট কুলডাউন চলছে (ফ্ল্যাগশিপ মডেল gemini-3.5-flash চেষ্টা হচ্ছে)...', 88);
+        const retryModel = 'gemini-3.5-flash';
         const retryEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${retryModel}:generateContent?key=${apiKey}`;
         const retryRes = await fetchWithTimeout(retryEndpoint, {
           method: 'POST',
@@ -1233,7 +1257,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       return;
     }
 
-    const apiKey = state.byokApiKey ? state.byokApiKey.trim() : '';
+    const apiKey = (state.byokApiKey && state.byokApiKey.trim().length > 10)
+      ? state.byokApiKey.trim()
+      : (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getActiveApiKey === 'function' ? FayzarOcrConfig.getActiveApiKey() : '');
     if (!apiKey && !state.demoMode) {
       toggleModal(elements.byokModal, true);
       showToast('পুনরায় যাচাইয়ের জন্য আপনার Gemini API Key প্রদান করুন।', 'warning');

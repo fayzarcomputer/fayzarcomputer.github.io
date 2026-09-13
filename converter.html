@@ -286,10 +286,10 @@
         </div>
         <div>
           <h1 class="text-base sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 flex-wrap">
-            <span>ফয়জার কনভার্টার</span>
+            <span data-i18n="converter_page_title">ফয়জার কনভার্টার</span>
             <span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black">v4.5 AI OCR</span>
           </h1>
-          <p class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">
+          <p class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5" data-i18n="converter_page_subtitle">
             ইউনিকোড ⇄ বিজয় (SutonnyMJ), গণিত প্রশ্নপত্র, সমীকরণ ও অফিস ডকুমেন্ট (.docx, .doc, .xlsx, .pptx, PDF, Image) রূপান্তর
           </p>
         </div>
@@ -819,10 +819,10 @@
                 <i class="fa-solid fa-wand-magic-sparkles mr-1" aria-hidden="true"></i> অটো
               </button>
               <button type="button" id="textModeU2BBtn" class="px-3.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-200 hover:text-emerald-600 transition font-bold">
-                ইউনিকোড ➔ বিজয়
+                <span data-i18n="converter_btn_uni_to_bijoy">ইউনিকোড ➔ বিজয়</span>
               </button>
               <button type="button" id="textModeB2UBtn" class="px-3.5 py-1.5 rounded-xl text-slate-700 dark:text-slate-200 hover:text-emerald-600 transition font-bold">
-                বিজয় ➔ ইউনিকোড
+                <span data-i18n="converter_btn_bijoy_to_uni">বিজয় ➔ ইউনিকোড</span>
               </button>
             </div>
           </div>
@@ -832,10 +832,10 @@
               <i class="fa-solid fa-right-left text-blue-600" aria-hidden="true"></i> অদল-বদল
             </button>
             <button id="clearTextBtn" type="button" aria-label="টেক্সট ক্লিয়ার করুন" class="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-1.5">
-              <i class="fa-solid fa-trash-can text-rose-500" aria-hidden="true"></i> ক্লিয়ার
+              <i class="fa-solid fa-trash-can text-rose-500" aria-hidden="true"></i> <span data-i18n="converter_btn_clear">ক্লিয়ার</span>
             </button>
             <button id="copyConvertedTextBtn" type="button" aria-label="কনভার্ট হওয়া টেক্সট কপি করুন" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-extrabold transition flex items-center gap-1.5 shadow-md">
-              <i class="fa-solid fa-copy" aria-hidden="true"></i> কপি টেক্সট
+              <i class="fa-solid fa-copy" aria-hidden="true"></i> <span data-i18n="converter_btn_copy">কপি টেক্সট</span>
             </button>
           </div>
         </div>
@@ -845,7 +845,7 @@
           <div class="flex flex-col">
             <div class="flex items-center justify-between mb-2">
               <label for="sourceTextArea" id="sourceLabel" class="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <i class="fa-solid fa-pen text-emerald-600" aria-hidden="true"></i> মূল টেক্সট পেস্ট বা টাইপ করুন:
+                <i class="fa-solid fa-pen text-emerald-600" aria-hidden="true"></i> <span data-i18n="converter_input_lbl">মূল টেক্সট পেস্ট বা টাইপ করুন:</span>
               </label>
               <span id="sourceStats" class="text-[11px] font-bold text-slate-500 dark:text-slate-400">০ শব্দ | ০ বর্ণ</span>
             </div>
@@ -855,7 +855,7 @@
           <div class="flex flex-col">
             <div class="flex items-center justify-between mb-2">
               <label for="targetTextArea" id="targetLabel" class="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <i class="fa-solid fa-check-double text-blue-600" aria-hidden="true"></i> কনভার্ট হওয়া আউটপুট (SutonnyMJ):
+                <i class="fa-solid fa-check-double text-blue-600" aria-hidden="true"></i> <span data-i18n="converter_output_lbl">কনভার্ট হওয়া আউটপুট (SutonnyMJ):</span>
               </label>
               <span id="targetStats" class="text-[11px] font-bold text-slate-500 dark:text-slate-400">০ শব্দ | ০ বর্ণ</span>
             </div>
@@ -865,7 +865,7 @@
               <span class="text-[11px] text-slate-700 dark:text-slate-300 font-bold">সরাসরি ফাইল ডাউনলোড:</span>
               <div class="flex items-center gap-2">
                 <button id="downloadTextDocxBtn" aria-label="আধুনিক ওয়ার্ড .DOCX ফরম্যাটে ডাউনলোড করুন" class="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl shadow-md transition">
-                  <i class="fa-solid fa-file-word" aria-hidden="true"></i> .DOCX ডাউনলোড
+                  <i class="fa-solid fa-file-word" aria-hidden="true"></i> <span data-i18n="converter_btn_docx">.DOCX ডাউনলোড</span>
                 </button>
                 <button id="downloadTextDocBtn" aria-label="ওয়ার্ড ২০০৩ .DOC ফরম্যাটে ডাউনলোড করুন" class="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl shadow-md transition">
                   <i class="fa-solid fa-file-lines" aria-hidden="true"></i> .DOC (2003)

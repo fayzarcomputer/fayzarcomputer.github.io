@@ -231,13 +231,13 @@
     </div>
 
     <div class="container mx-auto max-w-5xl text-center relative z-10">
-      <span class="inline-block text-xs font-black px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 mb-3 shadow-xs">
+      <span class="inline-block text-xs font-black px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 mb-3 shadow-xs" data-i18n="contact_page_badge">
         📍 সরাসরি আসুন বা যোগাযোগ করুন
       </span>
-      <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-3">
+      <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-3" data-i18n="contact_page_title">
         আমাদের ঠিকানা ও যোগাযোগের বিবরণ
       </h1>
-      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
+      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal" data-i18n="contact_page_subtitle">
         যেকোনো ডিজিটাল সেবা, ভূমিসেবা পরামর্শ বা অনলাইন আবেদনের প্রয়োজনে সরাসরি আমাদের কেন্দ্রে আসুন অথবা ফোন/হোয়াটসঅ্যাপে যোগাযোগ করুন।
       </p>
     </div>
@@ -394,15 +394,15 @@
         <form id="contactFeedbackForm" class="space-y-4 text-xs">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             <div>
-              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">আপনার নাম *</label>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="contact_form_name">আপনার নাম *</label>
               <input type="text" id="contactFbUserName" required placeholder="উদাঃ মোঃ রফিকুল ইসলাম" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner">
             </div>
             <div>
-              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">মোবাইল বা ইমেইল *</label>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="contact_form_phone">মোবাইল বা ইমেইল *</label>
               <input type="text" id="contactFbUserContact" required placeholder="উদাঃ 017xxxxxxxx বা ইমেইল" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner">
             </div>
             <div>
-              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">সেবার বিষয় / ক্যাটাগরি</label>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="contact_form_subject">সেবার বিষয় / ক্যাটাগরি</label>
               <select id="contactFbCategory" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner">
                 <option value="ডিজিটাল ভূমিসেবা">ডিজিটাল ভূমিসেবা (নামজারি, খাজনা)</option>
                 <option value="সরকারি চাকরির আবেদন">সরকারি চাকরির আবেদন ও সার্কুলার</option>
@@ -414,7 +414,7 @@
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">আপনার মূল্যবান মন্তব্য, অভিজ্ঞতা বা পরামর্শ *</label>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1" data-i18n="contact_form_message">আপনার মূল্যবান মন্তব্য, অভিজ্ঞতা বা পরামর্শ *</label>
             <textarea id="contactFbUserMessage" rows="3" required placeholder="আপনার সেবাপ্রাপ্তির অভিজ্ঞতা কেমন ছিল বা সেবার মান আরও উন্নত করতে কী পরামর্শ দিতে চান বিস্তারিত লিখুন..." class="w-full p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-medium text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 resize-none shadow-inner"></textarea>
           </div>
 
@@ -423,7 +423,7 @@
               <i class="fa-solid fa-circle-check text-emerald-600"></i> ধন্যবাদ! আপনার মূল্যবান মতামত ও মন্তব্য গৃহীত হয়েছে।
             </span>
             <button type="submit" id="contactFbSubmitBtn" class="w-full sm:w-auto ml-auto px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
-              <i class="fa-solid fa-paper-plane"></i> মতামত পাঠান
+              <i class="fa-solid fa-paper-plane"></i> <span data-i18n="contact_btn_send">মতামত পাঠান</span>
             </button>
           </div>
         </form>

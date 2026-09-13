@@ -170,12 +170,12 @@
       <div class="container mx-auto max-w-5xl text-center relative z-10">
         <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-black text-[11px] mb-2.5 shadow-2xs">
           <i class="fas fa-certificate text-emerald-600"></i>
-          <span>স্বচ্ছ ফি ও সেবাসমূহ • সরকার অনুমোদিত ভূমিসেবা কেন্দ্র</span>
+          <span data-i18n="services_page_badge">স্বচ্ছ ফি ও সেবাসমূহ • সরকার অনুমোদিত ভূমিসেবা কেন্দ্র</span>
         </div>
-        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-tight">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white leading-tight" data-i18n="services_page_title">
           সকল ডিজিটাল ও ভূমিসেবামূল্য এবং প্রয়োজনীয় কাগজপত্র চেকলিস্ট
         </h1>
-        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-2 leading-relaxed font-normal">
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto mt-2 leading-relaxed font-normal" data-i18n="services_page_subtitle">
           দোকানে আসার আগেই যেকোনো সেবার সরকারি রাজস্ব ফি, কম্পিউটার পারিশ্রমিক এবং সাথে আনার প্রয়োজনীয় কাগজপত্রের তালিকা জেনে নিন। কোনো গোপন বা অতিরিক্ত চার্জ নেই।
         </p>
 
@@ -207,17 +207,17 @@
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-xs font-extrabold text-[#075e24] dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="text-xs font-extrabold text-[#075e24] dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5" data-i18n="services_checklist_tag">
                 <i class="fas fa-clipboard-check text-emerald-600"></i> স্বচ্ছ ফি ও চেকলিস্ট
               </span>
               <span id="checklist-cycle-status" class="inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 status-dot-open"></span> অটো-রোটেশন সচল (প্রতি ৩ সে.)
               </span>
             </div>
-            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1" data-i18n="services_checklist_title">
               সেবামূল্য ও প্রয়োজনীয় কাগজপত্র চেকলিস্ট
             </h2>
-            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1" data-i18n="services_checklist_subtitle">
               দোকানে আসার আগেই যেকোনো সেবা নির্বাচন করে জেনে নিন সরকারি ফি, কম্পিউটার চার্জ এবং সাথে আনার প্রয়োজনীয় কাগজপত্র।
             </p>
           </div>
@@ -240,7 +240,7 @@
         <div class="bg-white dark:bg-slate-800/95 rounded-3xl p-5 sm:p-7 shadow-xl border-2 border-emerald-500/30">
           <div class="mb-4">
             <label for="calc-service-select" class="block text-xs sm:text-sm font-black text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-1.5">
-              <i class="fas fa-hand-pointer text-emerald-600"></i> প্রয়োজনীয় সেবাটি নির্বাচন করুন (বা স্বয়ংক্রিয়ভাবে পরিবর্তিত হচ্ছে):
+              <i class="fas fa-hand-pointer text-emerald-600"></i> <span data-i18n="services_checklist_subtitle">প্রয়োজনীয় সেবাটি নির্বাচন করুন (বা স্বয়ংক্রিয়ভাবে পরিবর্তিত হচ্ছে):</span>
             </label>
             <div class="relative">
               <select id="calc-service-select" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-emerald-500 dark:border-emerald-700 rounded-2xl px-4 py-3.5 text-slate-800 dark:text-slate-100 text-xs sm:text-sm font-bold focus:outline-none focus:border-emerald-600 appearance-none cursor-pointer shadow-inner">
@@ -307,7 +307,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+              <span class="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5" data-i18n="services_lbl_govt_fee">
                 <i class="fas fa-building-columns text-slate-500"></i> সরকারি রাজস্ব ফি
               </span>
               <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">অফিসিয়াল</span>
@@ -319,7 +319,7 @@
 
           <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+              <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5" data-i18n="services_lbl_shop_fee">
                 <i class="fas fa-desktop text-emerald-600"></i> কম্পিউটার সার্ভিস চার্জ
               </span>
               <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200">দোকান ফি</span>
@@ -333,7 +333,7 @@
         <!-- Required Documents Checklist -->
         <div class="p-4 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/90 border-2 border-emerald-500/20 shadow-xs space-y-3">
           <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-            <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2" data-i18n="services_lbl_required_docs">
               <i class="fas fa-list-check text-emerald-600"></i> সাথে যা যা আনতে হবে (কাগজপত্রের চেকলিস্ট):
             </h4>
             <span class="text-[11px] font-extrabold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">

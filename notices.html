@@ -213,13 +213,13 @@
     </div>
 
     <div class="container mx-auto max-w-5xl text-center relative z-10">
-      <span class="inline-block text-xs font-black px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 mb-3 shadow-xs">
+      <span class="inline-block text-xs font-black px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 mb-3 shadow-xs" data-i18n="notices_page_badge">
         📢 লাইভ বুলেটিন বোর্ড • দৈনিক আপডেট
       </span>
-      <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-3">
+      <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-3" data-i18n="notices_page_title">
         চলমান সরকারি চাকরি ও স্কুল-কলেজ সংক্রান্ত নোটিশ
       </h1>
-      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
+      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal" data-i18n="notices_page_subtitle">
         ফুলবাড়ী সরকারি কলেজ সহ স্থানীয় শিক্ষার্থী ও চাকরিপ্রার্থীদের জন্য নিয়মিত হালনাগাদকৃত সার্কুলার, পরীক্ষার সময়সূচী এবং আবেদনের শেষ তারিখের আপডেট।
       </p>
     </div>
@@ -238,6 +238,7 @@
             type="text" 
             id="notice-search-input" 
             placeholder="পদ, প্রতিষ্ঠান বা বিষয় দিয়ে খুঁজুন..." 
+            data-i18n-placeholder="notices_search_placeholder"
             class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl text-xs font-bold focus:outline-none focus:border-emerald-500 text-slate-800 dark:text-slate-100 shadow-inner"
           >
           <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
@@ -248,19 +249,19 @@
           
           <!-- স্কুল-কলেজ সংক্রান্ত নোটিশ -->
           <button data-notice-category="college" class="notice-tab-btn active px-4 py-2.5 rounded-xl text-xs font-black border bg-emerald-600 text-white shadow-md transition flex items-center gap-1.5">
-            <i class="fas fa-graduation-cap text-amber-300"></i> স্কুল-কলেজ সংক্রান্ত নোটিশ
+            <i class="fas fa-graduation-cap text-amber-300"></i> <span data-i18n="notices_tab_college">স্কুল-কলেজ সংক্রান্ত নোটিশ</span>
             <span id="site-college-badge" class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black">০</span>
           </button>
 
           <!-- চাকুরির সার্কুলার -->
           <button data-notice-category="jobs" class="notice-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold border bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition shadow-xs flex items-center gap-1.5">
-            <i class="fas fa-briefcase text-amber-500"></i> চাকুরির সার্কুলার
+            <i class="fas fa-briefcase text-amber-500"></i> <span data-i18n="notices_tab_jobs">চাকুরির সার্কুলার</span>
             <span id="site-job-badge" class="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-600 text-[10px] font-extrabold">০</span>
           </button>
 
           <!-- সকল নোটিশ (শেষে) -->
           <button data-notice-category="all" class="notice-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold border bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition shadow-xs flex items-center gap-1.5">
-            <i class="fas fa-layer-group text-blue-500"></i> সকল নোটিশ
+            <i class="fas fa-layer-group text-blue-500"></i> <span data-i18n="notices_tab_all">সকল নোটিশ</span>
             <span id="site-all-badge" class="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-600 text-[10px] font-extrabold">০</span>
           </button>
 
@@ -272,11 +273,11 @@
       <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold px-2">
         <div class="flex items-center gap-2">
           <span id="category-cycle-indicator" class="inline-flex items-center gap-1.5 text-[11px] font-extrabold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 status-dot-open"></span> ক্যাটাগরি স্বয়ংক্রিয়ভাবে পরিবর্তিত হচ্ছে (প্রতি ৫ সে.)
+            <span class="w-2 h-2 rounded-full bg-emerald-500 status-dot-open"></span> <span data-i18n="notices_status_autocycle">ক্যাটাগরি স্বয়ংক্রিয়ভাবে পরিবর্তিত হচ্ছে (প্রতি ৫ সে.)</span>
           </span>
         </div>
         <span class="text-[11px] text-slate-400 flex items-center gap-1">
-          <i class="fas fa-mouse-pointer text-amber-500"></i> যেকোনো বাটনে ক্লিক বা সার্চ করলে পরিবর্তন থেমে থাকবে
+          <i class="fas fa-mouse-pointer text-amber-500"></i> <span data-i18n="notices_status_pause">যেকোনো বাটনে ক্লিক বা সার্চ করলে পরিবর্তন থেমে থাকবে</span>
         </span>
       </div>
 

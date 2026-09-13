@@ -424,15 +424,24 @@ const ALL_NOTICES_DATA = [
 let allServices = (typeof window !== 'undefined' && window.OFFLINE_DATA?.services) || ALL_SERVICES_DATA;
 let allNotices = (typeof window !== 'undefined' && window.OFFLINE_DATA?.notices) || ALL_NOTICES_DATA;
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   initTheme();
   initShopStatus();
   initMobileMenu();
+  populateServiceSelects();
+  initChecklistController();
   loadDataAndRender();
   initHeroSearch();
+  initHeroMiniNoticeBoard();
   initToolsIfPresent();
   initForms();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 // =========================================================================
 // ৩. থিম কন্ট্রোলার (Light/Dark Theme)
@@ -791,7 +800,14 @@ async function loadDataAndRender() {
       } catch(sheetErr) {}
 
       if (loadedNotices) {
-        allNotices = loadedNotices;
+        // Merge offline college/admission notices if Google Sheets only has jobs
+        const hasCollege = loadedNotices.some(n => n.category === 'college' || n.category === 'admissions');
+        const fallbackCollege = (window.OFFLINE_DATA?.notices || ALL_NOTICES_DATA || []).filter(n => n.category === 'college' || n.category === 'admissions' || n.category === 'results');
+        if (!hasCollege && fallbackCollege.length > 0) {
+          allNotices = [...loadedNotices, ...fallbackCollege];
+        } else {
+          allNotices = loadedNotices;
+        }
       } else {
         const nRes = await fetch('data/notices.json');
         if (nRes.ok) {
@@ -836,6 +852,7 @@ async function loadDataAndRender() {
 
   // Populate Dropdowns in forms
   populateServiceSelects();
+  initChecklistController();
 
   // Render on Homepage
   renderHomepageComponents();
@@ -848,6 +865,10 @@ async function loadDataAndRender() {
 }
 
 function populateServiceSelects() {
+  const svcs = (allServices && allServices.length > 0)
+    ? allServices
+    : ((typeof window !== 'undefined' && window.OFFLINE_DATA?.services) || ALL_SERVICES_DATA || []);
+
   const selects = [
     document.getElementById('order-service-select'),
     document.getElementById('calc-service-select')
@@ -855,7 +876,9 @@ function populateServiceSelects() {
 
   selects.forEach(sel => {
     if (!sel) return;
-    sel.innerHTML = allServices.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+    if (svcs.length > 0) {
+      sel.innerHTML = svcs.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+    }
   });
 }
 
@@ -1243,176 +1266,332 @@ function renderHomepageComponents() {
     startNoticeAutoTimer();
   }
 
-  // ৩. ডিজিটাল ও ভূমিসেবামূল্য এবং চেকলিস্ট ক্যালকুলেটর কন্ট্রোলার (Dynamic Checklist - Auto-Rotate)
-  const checklistResultDisplay = document.getElementById('calc-result-display');
-  const calcSelect = document.getElementById('calc-service-select');
-  if (checklistResultDisplay && calcSelect) {
-    const checklistServices = allServices.filter(s => s.includeInChecklist !== false);
-    const list = checklistServices.length > 0 ? checklistServices : allServices;
+  // ৩. ডিজিটাল ও ভূমিসেবামূল্য এবং চেকলিস্ট ক্যালকুলেটর কন্ট্রোলার
+  initChecklistController();
 
-    let currentChecklistIdx = 0;
-    let checklistAutoTimer = null;
-    let isChecklistHovered = false;
-    let isChecklistSelectFocused = false;
+  // ৪. হিরো সেকশন মিনি নোটিশ বোর্ড কন্ট্রোলার (২টি করে নোটিশ স্বয়ংক্রিয় রোটেশন)
+  initHeroMiniNoticeBoard();
+}
 
-    const checklistIndicator = document.getElementById('checklist-service-indicator');
-    const checklistPrevBtn = document.getElementById('checklist-prev-btn');
-    const checklistNextBtn = document.getElementById('checklist-next-btn');
-    const checklistCycleStatus = document.getElementById('checklist-cycle-status');
-    const checklistCard = checklistResultDisplay.closest('.rounded-3xl') || checklistResultDisplay;
+// ৪. হিরো সেকশন মিনি নোটিশ বোর্ড কন্ট্রোলার (Homepage Hero Mini Notice Board)
+function initHeroMiniNoticeBoard() {
+  const container = document.getElementById('hero-notices-container');
+  if (!container) return;
 
-    function updateChecklistCycleStatus(paused) {
-      if (!checklistCycleStatus) return;
-      if (paused) {
-        checklistCycleStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> বিরতি (মাউস রাখা হয়েছে)';
-        checklistCycleStatus.className = 'inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800';
-      } else {
-        checklistCycleStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 status-dot-open"></span> অটো-রোটেশন সচল (প্রতি ৩ সে.)';
-        checklistCycleStatus.className = 'inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800';
-      }
+  const counterEl = document.getElementById('hero-notice-counter');
+  const prevBtn = document.getElementById('hero-notice-prev');
+  const nextBtn = document.getElementById('hero-notice-next');
+  const boardEl = document.getElementById('hero-notice-board');
+
+  // Filter all active job, admission, and college notices
+  let noticeList = (typeof allNotices !== 'undefined' && Array.isArray(allNotices) && allNotices.length > 0)
+    ? allNotices
+    : ((typeof window !== 'undefined' && window.OFFLINE_DATA?.notices) || ALL_NOTICES_DATA || []);
+
+  if (!noticeList || noticeList.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-6 text-slate-500 dark:text-slate-400 text-xs font-bold">
+        বর্তমানে কোনো সক্রিয় নোটিশ নেই।
+      </div>
+    `;
+    if (counterEl) counterEl.textContent = '০/০';
+    return;
+  }
+
+  const batchSize = 2; // Exactly 2 notices at a time
+  const totalBatches = Math.max(1, Math.ceil(noticeList.length / batchSize));
+  let currentBatch = 0;
+  let autoTimer = null;
+  let isPaused = false;
+
+  function renderBatch(batchIdx) {
+    currentBatch = (batchIdx + totalBatches) % totalBatches;
+    const start = currentBatch * batchSize;
+    const batchItems = noticeList.slice(start, start + batchSize);
+
+    if (counterEl) {
+      counterEl.textContent = `${toBanglaNumber(currentBatch + 1)}/${toBanglaNumber(totalBatches)}`;
     }
 
-    function renderChecklist(idx) {
-      if (list.length === 0) {
-        checklistResultDisplay.innerHTML = '<div class="text-center py-6 text-slate-400 font-bold text-xs">কোনো চেকলিস্ট তথ্য পাওয়া যায়নি।</div>';
-        return;
-      }
+    container.style.opacity = '0';
+    setTimeout(() => {
+      container.innerHTML = batchItems.map(n => {
+        const isJob = n.category === 'jobs';
+        const badgeText = n.badge || (isJob ? 'চাকরি সার্কুলার' : 'ভর্তি ও নোটিশ');
+        const badgeBg = isJob
+          ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white'
+          : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white';
+        const deadlineText = n.deadline || 'চলমান';
+        const orgText = n.dept || n.org || 'সরকারি প্রতিষ্ঠান';
 
-      currentChecklistIdx = (idx + list.length) % list.length;
-      const s = list[currentChecklistIdx];
-
-      // ড্রপডাউন ভ্যালু সিঙ্ক
-      if (calcSelect.value !== s.id) {
-        calcSelect.value = s.id;
-      }
-
-      // ইনডিকেটর আপডেট
-      if (checklistIndicator) {
-        checklistIndicator.textContent = `সেবা ${toBanglaNumber(currentChecklistIdx + 1)}/${toBanglaNumber(list.length)}`;
-      }
-
-      const docs = Array.isArray(s.documents) ? s.documents : [];
-      const whatsappMsg = `আসসালামু আলাইকুম, আমি "${s.title}" সেবাটি নিতে আগ্রহী। প্রয়োজনীয় কাগজপত্র ও ফি সম্পর্কে বিস্তারিত জানতে চাচ্ছি।`;
-
-      checklistResultDisplay.innerHTML = `
-        <div class="space-y-4 animate-fade-in text-slate-800 dark:text-slate-100">
-          <!-- Top Service Info Bar -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-slate-100 via-slate-50 to-emerald-50/50 dark:from-slate-900/90 dark:via-slate-800/80 dark:to-emerald-950/30 border border-slate-200 dark:border-slate-700/80 shadow-xs">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${getServiceIconBg(s.category)} shadow-md flex items-center justify-center text-xl flex-shrink-0">
-                <i class="fas ${s.icon || 'fa-landmark'}"></i>
-              </div>
-              <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${getServiceBadgeClass(s.category)}">
-                    ${s.badge || 'জনপ্রিয় সেবা'}
-                  </span>
-                  ${s.duration ? `
-                    <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                      <i class="fas fa-clock text-[9px]"></i> ডেলিভারি: ${s.duration}
-                    </span>
-                  ` : ''}
-                </div>
-                <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">${s.title}</h3>
-              </div>
-            </div>
-            ${s.portal ? `
-              <div class="self-start sm:self-auto">
-                <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 shadow-2xs">
-                  <i class="fas fa-globe text-emerald-600"></i> ${s.portal}
-                </span>
-              </div>
-            ` : ''}
-          </div>
-
-          <!-- Description / Summary -->
-          ${s.summary ? `
-            <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
-              <i class="fas fa-circle-info text-emerald-600 mr-1.5"></i> ${s.summary}
-            </p>
-          ` : ''}
-
-          <!-- Fee Breakdown Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-                  <i class="fas fa-building-columns text-slate-500"></i> সরকারি রাজস্ব ফি
-                </span>
-                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">অফিসিয়াল</span>
-              </div>
-              <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-                ${s.govtFee || 'সরকারি নির্ধারিত ফি'}
-              </div>
-            </div>
-
-            <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
-              <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                  <i class="fas fa-desktop text-emerald-600"></i> কম্পিউটার সার্ভিস চার্জ
-                </span>
-                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200">দোকান ফি</span>
-              </div>
-              <div class="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400">
-                ${s.serviceFee || '৫০ - ১০০ ৳'}
-              </div>
-            </div>
-          </div>
-
-          <!-- Required Documents Checklist -->
-          <div class="p-4 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/90 border-2 border-emerald-500/20 shadow-xs space-y-3">
-            <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-              <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <i class="fas fa-list-check text-emerald-600"></i> সাথে যা যা আনতে হবে (কাগজপত্রের চেকলিস্ট):
-              </h4>
-              <span class="text-[11px] font-extrabold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
-                ${toBanglaNumber(docs.length)} টি কাগজপত্র
+        return `
+          <div onclick="openNoticeModal('${n.id}')" class="p-2.5 sm:p-3 rounded-xl bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-emerald-500 dark:hover:border-emerald-400 hover:bg-emerald-50/40 dark:hover:bg-slate-800 transition-all duration-200 flex flex-col justify-between cursor-pointer group shadow-2xs">
+            <div class="flex items-center justify-between gap-2">
+              <span class="px-2 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wide ${badgeBg} shadow-2xs shrink-0">
+                ${isJob ? '💼 ' : '🎓 '}${badgeText}
+              </span>
+              <span class="text-[10px] font-extrabold text-rose-600 dark:text-rose-400 flex items-center gap-1 shrink-0">
+                <i class="fa-regular fa-clock text-[9px]"></i> শেষ: ${deadlineText}
               </span>
             </div>
 
-            ${docs.length > 0 ? `
-              <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-800 dark:text-slate-200">
-                ${docs.map((doc, dIdx) => `
-                  <li class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/70 hover:border-emerald-500/50 transition-colors shadow-2xs">
-                    <span class="w-5 h-5 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center flex-shrink-0 text-[10px] font-black mt-0.5">
-                      ${toBanglaNumber(dIdx + 1)}
-                    </span>
-                    <span class="font-bold leading-relaxed">${doc}</span>
-                  </li>
-                `).join('')}
-              </ul>
-            ` : `
-              <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">এই সেবার জন্য সরাসরি দোকানে যোগাযোগ করুন অথবা প্রয়োজনীয় নথি সাথে নিয়ে আসুন।</p>
-            `}
+            <h4 class="text-xs font-black text-slate-900 dark:text-white leading-snug line-clamp-1 mt-1.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" title="${n.title}">
+              ${n.title}
+            </h4>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+              <span class="line-clamp-1 flex items-center gap-1 text-[10.5px]">
+                <i class="fa-solid fa-building text-[9px] text-emerald-600 dark:text-emerald-400"></i>
+                <span>${orgText}</span>
+              </span>
+              <div class="flex items-center gap-2 shrink-0">
+                ${(n.sourceUrl || n.pdfUrl || n.link) ? `
+                  <a href="${n.sourceUrl || n.pdfUrl || n.link}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5" title="সরাসরি আবেদন লিংক">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i> আবেদন লিংক
+                  </a>
+                ` : ''}
+                <span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 group-hover:underline flex items-center gap-0.5">
+                  বিস্তারিত <i class="fa-solid fa-chevron-right text-[8px]"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      container.style.opacity = '1';
+    }, 150);
+  }
+
+  function nextBatch() {
+    renderBatch(currentBatch + 1);
+  }
+
+  function prevBatch() {
+    renderBatch(currentBatch - 1);
+  }
+
+  function startAutoTimer() {
+    clearInterval(autoTimer);
+    autoTimer = setInterval(() => {
+      if (!isPaused) {
+        nextBatch();
+      }
+    }, 4500);
+  }
+
+  function resetAutoTimer() {
+    startAutoTimer();
+  }
+
+  prevBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    prevBatch();
+    resetAutoTimer();
+  });
+
+  nextBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    nextBatch();
+    resetAutoTimer();
+  });
+
+  if (boardEl) {
+    boardEl.addEventListener('mouseenter', () => { isPaused = true; });
+    boardEl.addEventListener('mouseleave', () => { isPaused = false; });
+    boardEl.addEventListener('touchstart', () => { isPaused = true; }, { passive: true });
+    boardEl.addEventListener('touchend', () => { isPaused = false; }, { passive: true });
+  }
+
+  renderBatch(0);
+  startAutoTimer();
+}
+
+let checklistAutoTimer = null;
+
+function initChecklistController() {
+  const checklistResultDisplay = document.getElementById('calc-result-display');
+  const calcSelect = document.getElementById('calc-service-select');
+  if (!checklistResultDisplay || !calcSelect) return;
+
+  if (!calcSelect.options || calcSelect.options.length === 0) {
+    populateServiceSelects();
+  }
+
+  const svcs = (allServices && allServices.length > 0)
+    ? allServices
+    : ((typeof window !== 'undefined' && window.OFFLINE_DATA?.services) || ALL_SERVICES_DATA || []);
+
+  const checklistServices = svcs.filter(s => s.includeInChecklist !== false);
+  const list = checklistServices.length > 0 ? checklistServices : svcs;
+  if (!list || list.length === 0) return;
+
+  let currentChecklistIdx = 0;
+  clearInterval(checklistAutoTimer);
+  checklistAutoTimer = null;
+  let isChecklistHovered = false;
+  let isChecklistSelectFocused = false;
+
+  const checklistIndicator = document.getElementById('checklist-service-indicator');
+  const checklistPrevBtn = document.getElementById('checklist-prev-btn');
+  const checklistNextBtn = document.getElementById('checklist-next-btn');
+  const checklistCycleStatus = document.getElementById('checklist-cycle-status');
+  const checklistCard = checklistResultDisplay.closest('.rounded-3xl') || checklistResultDisplay;
+
+  function updateChecklistCycleStatus(paused) {
+    if (!checklistCycleStatus) return;
+    if (paused) {
+      checklistCycleStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500"></span> বিরতি (মাউস রাখা হয়েছে)';
+      checklistCycleStatus.className = 'inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800';
+    } else {
+      checklistCycleStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 status-dot-open"></span> অটো-রোটেশন সচল (প্রতি ৩ সে.)';
+      checklistCycleStatus.className = 'inline-flex items-center gap-1.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800';
+    }
+  }
+
+  function renderChecklist(idx) {
+    if (list.length === 0) {
+      checklistResultDisplay.innerHTML = '<div class="text-center py-6 text-slate-400 font-bold text-xs">কোনো চেকলিস্ট তথ্য পাওয়া যায়নি।</div>';
+      return;
+    }
+
+    currentChecklistIdx = (idx + list.length) % list.length;
+    const s = list[currentChecklistIdx];
+
+    // ড্রপডাউন ভ্যালু সিঙ্ক
+    if (calcSelect.value !== s.id) {
+      calcSelect.value = s.id;
+    }
+
+    // ইনডিকেটর আপডেট
+    if (checklistIndicator) {
+      checklistIndicator.textContent = `সেবা ${toBanglaNumber(currentChecklistIdx + 1)}/${toBanglaNumber(list.length)}`;
+    }
+
+    const docs = Array.isArray(s.documents) ? s.documents : [];
+    const whatsappMsg = `আসসালামু আলাইকুম, আমি "${s.title}" সেবাটি নিতে আগ্রহী। প্রয়োজনীয় কাগজপত্র ও ফি সম্পর্কে বিস্তারিত জানতে চাচ্ছি।`;
+
+    checklistResultDisplay.innerHTML = `
+      <div class="space-y-4 animate-fade-in text-slate-800 dark:text-slate-100">
+        <!-- Top Service Info Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-slate-100 via-slate-50 to-emerald-50/50 dark:from-slate-900/90 dark:via-slate-800/80 dark:to-emerald-950/30 border border-slate-200 dark:border-slate-700/80 shadow-xs">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${getServiceIconBg(s.category)} shadow-md flex items-center justify-center text-xl flex-shrink-0">
+              <i class="fas ${s.icon || 'fa-landmark'}"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${getServiceBadgeClass(s.category)}">
+                  ${s.badge || 'জনপ্রিয় সেবা'}
+                </span>
+                ${s.duration ? `
+                  <span class="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                    <i class="fas fa-clock text-[9px]"></i> ডেলিভারি: ${s.duration}
+                  </span>
+                ` : ''}
+              </div>
+              <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-1">${s.title}</h3>
+            </div>
+          </div>
+          ${s.portal ? `
+            <div class="self-start sm:self-auto">
+              <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 shadow-2xs">
+                <i class="fas fa-globe text-emerald-600"></i> ${s.portal}
+              </span>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Description / Summary -->
+        ${s.summary ? `
+          <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60">
+            <i class="fas fa-circle-info text-emerald-600 mr-1.5"></i> ${s.summary}
+          </p>
+        ` : ''}
+
+        <!-- Fee Breakdown Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                <i class="fas fa-building-columns text-slate-500"></i> সরকারি রাজস্ব ফি
+              </span>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">অফিসিয়াল</span>
+            </div>
+            <div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+              ${s.govtFee || 'সরকারি নির্ধারিত ফি'}
+            </div>
           </div>
 
-          <!-- Quick Action CTA Buttons -->
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-            <a href="https://wa.me/8801717101919?text=${encodeURIComponent(whatsappMsg)}" target="_blank" rel="noopener" class="w-full sm:w-auto flex-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs sm:text-sm font-extrabold py-3 px-5 rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
-              <i class="fab fa-whatsapp text-base text-emerald-200"></i>
-              <span>এই সেবার জন্য WhatsApp-এ মেসেজ দিন</span>
-            </a>
-            <a href="tel:01717101919" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 shadow-xs">
-              <i class="fas fa-phone-alt text-emerald-600"></i>
-              <span>সরাসরি কল: 01717-101919</span>
-            </a>
+          <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 flex flex-col justify-between space-y-1.5 shadow-2xs">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                <i class="fas fa-desktop text-emerald-600"></i> কম্পিউটার সার্ভিস চার্জ
+              </span>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200">দোকান ফি</span>
+            </div>
+            <div class="text-sm sm:text-base font-black text-emerald-700 dark:text-emerald-400">
+              ${s.serviceFee || '৫০ - ১০০ ৳'}
+            </div>
           </div>
         </div>
-      `;
-    }
 
-    function startChecklistAutoTimer() {
-      clearInterval(checklistAutoTimer);
-      checklistAutoTimer = setInterval(() => {
-        if (!isChecklistHovered && !isChecklistSelectFocused) {
-          renderChecklist(currentChecklistIdx + 1);
-        }
-      }, 3000);
-    }
+        <!-- Required Documents Checklist -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/90 border-2 border-emerald-500/20 shadow-xs space-y-3">
+          <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+            <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fas fa-list-check text-emerald-600"></i> সাথে যা যা আনতে হবে (কাগজপত্রের চেকলিস্ট):
+            </h4>
+            <span class="text-[11px] font-extrabold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+              ${toBanglaNumber(docs.length)} টি কাগজপত্র
+            </span>
+          </div>
 
-    function resetChecklistAutoTimer() {
-      startChecklistAutoTimer();
-    }
+          ${docs.length > 0 ? `
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-800 dark:text-slate-200">
+              ${docs.map((doc, dIdx) => `
+                <li class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/70 hover:border-emerald-500/50 transition-colors shadow-2xs">
+                  <span class="w-5 h-5 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center flex-shrink-0 text-[10px] font-black mt-0.5">
+                    ${toBanglaNumber(dIdx + 1)}
+                  </span>
+                  <span class="font-bold leading-relaxed">${doc}</span>
+                </li>
+              `).join('')}
+            </ul>
+          ` : `
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">এই সেবার জন্য সরাসরি দোকানে যোগাযোগ করুন অথবা প্রয়োজনীয় নথি সাথে নিয়ে আসুন।</p>
+          `}
+        </div>
+
+        <!-- Quick Action CTA Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+          <a href="https://wa.me/8801717101919?text=${encodeURIComponent(whatsappMsg)}" target="_blank" rel="noopener" class="w-full sm:w-auto flex-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs sm:text-sm font-extrabold py-3 px-5 rounded-2xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+            <i class="fab fa-whatsapp text-base text-emerald-200"></i>
+            <span>এই সেবার জন্য WhatsApp-এ মেসেজ দিন</span>
+          </a>
+          <a href="tel:01717101919" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs sm:text-sm font-black transition flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 shadow-xs">
+            <i class="fas fa-phone-alt text-emerald-600"></i>
+            <span>সরাসরি কল: 01717-101919</span>
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  function startChecklistAutoTimer() {
+    clearInterval(checklistAutoTimer);
+    checklistAutoTimer = setInterval(() => {
+      if (!isChecklistHovered && !isChecklistSelectFocused) {
+        renderChecklist(currentChecklistIdx + 1);
+      }
+    }, 3000);
+  }
+
+  function resetChecklistAutoTimer() {
+    startChecklistAutoTimer();
+  }
+
+  if (!calcSelect.getAttribute('data-events-bound')) {
+    calcSelect.setAttribute('data-events-bound', 'true');
 
     // Prev / Next বাটন
     checklistPrevBtn?.addEventListener('click', () => {
@@ -1455,12 +1634,14 @@ function renderHomepageComponents() {
       isChecklistHovered = false;
       updateChecklistCycleStatus(false);
     });
-
-    // প্রথম রেন্ডার ও টাইমার শুরু
-    renderChecklist(0);
-    startChecklistAutoTimer();
   }
+
+  // প্রথম রেন্ডার ও টাইমার শুরু
+  renderChecklist(0);
+  startChecklistAutoTimer();
 }
+
+window.initChecklistController = initChecklistController;
 
 function renderServicesPage() {
   const gridContainer = document.getElementById('services-grid-container');
@@ -1695,6 +1876,11 @@ function renderNoticesPage() {
           </div>
 
           <div class="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+            ${(n.sourceUrl || n.pdfUrl || n.link) ? `
+              <a href="${n.sourceUrl || n.pdfUrl || n.link}" target="_blank" rel="noopener noreferrer" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-black py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> অনলাইনে সরাসরি আবেদন / সার্কুলার
+              </a>
+            ` : ''}
             <button onclick="openNoticeModal('${n.id}')" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-extrabold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700">
               <i class="fas fa-eye"></i> বিস্তারিত দেখুন
             </button>
@@ -1791,7 +1977,12 @@ window.openServiceModal = function(serviceId) {
       </ul>
     </div>
 
-    <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
+    <div class="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
+      ${(n.sourceUrl || n.pdfUrl || n.link) ? `
+        <a href="${n.sourceUrl || n.pdfUrl || n.link}" target="_blank" rel="noopener noreferrer" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i> অনলাইনে সরাসরি আবেদন / সার্কুলার লিংক
+        </a>
+      ` : ''}
       <a href="https://wa.me/8801717101919?text=আসসালামু%20আলাইকুম,%20আমি%20${encodeURIComponent(s.title)}%20সেবাটি%20নিতে%20চাচ্ছি。" target="_blank" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md">
         <i class="fab fa-whatsapp text-base"></i> হোয়াটসঅ্যাপে সরাসরি আবেদন শুরু করুন
       </a>
@@ -1826,8 +2017,13 @@ window.openNoticeModal = function(noticeId) {
 
     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">${n.summary || n.details || ''}</p>
 
-    <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
-      <a href="https://wa.me/8801717101919?text=আসসালামু%20আলাইকুম,%20আমি%20${encodeURIComponent(n.title)}%20বিজ্ঞপ্তির%20আবেদন%20করতে%20চাচ্ছি。" target="_blank" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md">
+    <div class="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
+      ${(n.sourceUrl || n.pdfUrl || n.link) ? `
+        <a href="${n.sourceUrl || n.pdfUrl || n.link}" target="_blank" rel="noopener noreferrer" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition">
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i> অনলাইনে সরাসরি আবেদন / সার্কুলার লিংক
+        </a>
+      ` : ''}
+      <a href="https://wa.me/8801717101919?text=আসসালামু%20আলাইকুম,%20আমি%20${encodeURIComponent(n.title)}%20বিজ্ঞপ্তির%20আবেদন%20করতে%20চাচ্ছি。" target="_blank" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md">
         <i class="fab fa-whatsapp text-base"></i> হোয়াটসঅ্যাপে ডকুমেন্টস পাঠিয়ে আবেদন করুন
       </a>
     </div>
@@ -2559,16 +2755,6 @@ function initUnifiedConverterEngine() {
       wizardProgressStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-emerald-600 text-lg"></i> <span id="wizardProgressTitle">AI প্রসেসিং শুরু হচ্ছে...</span>';
     }
 
-    const targetPageSize = document.getElementById('ai-target-page-size')?.value || 'a4';
-    const targetPageMargin = document.getElementById('ai-target-page-margin')?.value || 'normal';
-    const targetFontSize = document.getElementById('ai-target-font-size')?.value || '12';
-    const pageSetupOptions = {
-      pageSize: targetPageSize,
-      margin: targetPageMargin,
-      fontSize: targetFontSize,
-      targetFont: selectedUnicodeFont || 'Kalpurush'
-    };
-
     try {
       const res = await window.FayzarAiOcrEngine.startUnifiedOcr(
         selectedAiTargetFormat,
@@ -2607,8 +2793,7 @@ function initUnifiedConverterEngine() {
           if (wizardPreviewContent) {
             wizardPreviewContent.value = liveChunk;
           }
-        },
-        pageSetupOptions
+        }
       );
 
       wizardProgressCard?.classList.add('hidden');
@@ -2623,10 +2808,10 @@ function initUnifiedConverterEngine() {
       if (wizardResultStatsBadge) wizardResultStatsBadge.textContent = `${modeLabel} এ সফলভাবে রূপান্তর হয়েছে`;
 
       if (wizardDlDocBtn) {
-        wizardDlDocBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('doc', pageSetupOptions);
+        wizardDlDocBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('doc');
       }
       if (wizardDlDocxBtn) {
-        wizardDlDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument(selectedAiTargetFormat === 'unicode_docx' ? 'unicode_docx' : 'bijoy_docx', pageSetupOptions);
+        wizardDlDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument(selectedAiTargetFormat === 'unicode_docx' ? 'unicode_docx' : 'bijoy_docx');
       }
       if (wizardVerifyBtn) {
         wizardVerifyBtn.onclick = () => {
@@ -3316,26 +3501,42 @@ function initRateChartController() {
   const searchInput = document.getElementById('rate-search-input');
   const tabBtns = document.querySelectorAll('.rate-tab-btn');
   const cards = document.querySelectorAll('.rate-category-card');
+  const tableRows = document.querySelectorAll('#master-rate-table tbody tr.rate-table-row');
+  const noResultRow = document.getElementById('rate-table-no-results');
 
-  if (!cards.length) return;
+  if (!cards.length && !tableRows.length) return;
 
   let activeCat = 'all';
   let searchQuery = '';
 
-  function filterRateCards() {
+  function filterRateItems() {
+    // ১. কার্ড ফিল্টারিং (যদি পেজে কার্ড থাকে)
     cards.forEach(card => {
       const cardCat = card.dataset.rateCategory;
       const textContent = card.textContent.toLowerCase();
-      
       const matchesCat = (activeCat === 'all' || cardCat === activeCat);
       const matchesSearch = (!searchQuery || textContent.includes(searchQuery));
+      card.style.display = (matchesCat && matchesSearch) ? 'flex' : 'none';
+    });
 
+    // ২. একক ছক / মাস্টার টেবিল রো ফিল্টারিং
+    let visibleRowCount = 0;
+    tableRows.forEach(row => {
+      const rowCat = row.dataset.rateCategory;
+      const textContent = row.textContent.toLowerCase();
+      const matchesCat = (activeCat === 'all' || rowCat === activeCat);
+      const matchesSearch = (!searchQuery || textContent.includes(searchQuery));
       if (matchesCat && matchesSearch) {
-        card.style.display = 'flex';
+        row.style.display = '';
+        visibleRowCount++;
       } else {
-        card.style.display = 'none';
+        row.style.display = 'none';
       }
     });
+
+    if (noResultRow) {
+      noResultRow.style.display = (visibleRowCount === 0 && tableRows.length > 0) ? '' : 'none';
+    }
   }
 
   tabBtns.forEach(btn => {
@@ -3345,14 +3546,14 @@ function initRateChartController() {
       });
       btn.className = 'rate-tab-btn active px-3.5 py-2 rounded-xl text-xs font-black border bg-emerald-600 text-white shadow-xs transition cursor-pointer';
       activeCat = btn.dataset.rateCat || 'all';
-      filterRateCards();
+      filterRateItems();
     });
   });
 
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value.trim().toLowerCase();
-      filterRateCards();
+      filterRateItems();
     });
   }
 }

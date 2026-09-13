@@ -103,21 +103,15 @@
   }
 
   function initTheme() {
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    themeToggleBtn?.addEventListener('click', () => {
-      if (document.documentElement.classList.contains('dark')) {
-        document.documentElement.classList.remove('dark');
-        localStorage.theme = 'light';
-      } else {
+    // Unified with centralized FayzarUI Day/Night theme engine (theme-lang.js)
+    if (window.FayzarUI && typeof window.FayzarUI.getTheme === 'function') {
+      const current = window.FayzarUI.getTheme();
+      if (current === 'dark') {
         document.documentElement.classList.add('dark');
-        localStorage.theme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
       }
-    });
+    }
   }
 
   function resetToWelcomeState() {

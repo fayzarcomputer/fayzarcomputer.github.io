@@ -1,6 +1,6 @@
 # AGENTS.md: Antigravity Agent Core Directives
 
-Refer to [GEMINI.md](file:///c:/Users/Admin/.gemini/antigravity-ide/scratch/fayzar-computer-v2/GEMINI.md) and [SYSTEM_ARCHITECTURE_AND_WORKFLOW.md](file:///c:/Users/Admin/.gemini/antigravity-ide/scratch/fayzar-computer-web/SYSTEM_ARCHITECTURE_AND_WORKFLOW.md) for complete SDLC instructions and architectural details.
+Refer to [GEMINI.md](file:///c:/Users/Admin/.gemini/antigravity-ide/scratch/fayzar-computer-web/GEMINI.md) and [SYSTEM_ARCHITECTURE_AND_WORKFLOW.md](file:///c:/Users/Admin/.gemini/antigravity-ide/scratch/fayzar-computer-web/SYSTEM_ARCHITECTURE_AND_WORKFLOW.md) for complete SDLC instructions and architectural details.
 
 ## Superpowers Workflow Summary
 - **Phase 1: Brainstorming & Specification:** Propose design -> Wait for user approval before coding.

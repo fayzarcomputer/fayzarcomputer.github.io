@@ -51,9 +51,6 @@
   const editorClassSelect = document.getElementById('editorClassSelect');
   const editorSectionSelect = document.getElementById('editorSectionSelect');
   let currentSection = 'all';
-  const editorGroupFilterWrapper = document.getElementById('editorGroupFilterWrapper');
-  const editorGroupSelect = document.getElementById('editorGroupSelect');
-  let currentGroup = 'all';
   const editorRoleInstruction = document.getElementById('editorRoleInstruction');
   const publishControlContainer = document.getElementById('publishControlContainer');
   const classPublishStatusBadge = document.getElementById('classPublishStatusBadge');
@@ -64,7 +61,6 @@
   const saveEditorChangesBtn = document.getElementById('saveEditorChangesBtn');
   const editorTableHead = document.getElementById('editorTableHead');
   const editorTableBody = document.getElementById('editorTableBody');
-  const spreadsheetLockNoticeBanner = document.getElementById('spreadsheetLockNoticeBanner');
 
   // Excel Import Tab
   const importYearSelect = document.getElementById('importYearSelect');
@@ -111,7 +107,43 @@
   const cfgInstNameEn = document.getElementById('cfgInstNameEn');
   const cfgInstAddress = document.getElementById('cfgInstAddress');
   const cfgExamName = document.getElementById('cfgExamName');
-  const resetDefaultDataBtn = document.getElementById('resetDefaultDataBtn');
+  // Toast Notification System
+  function showToast(message, type = 'info') {
+    const box = document.getElementById('toast-box');
+    if (!box) {
+      console.log(`[Toast ${type}]: ${message}`);
+      return;
+    }
+
+    const toast = document.createElement('div');
+    let bg = 'bg-slate-900 border-slate-700 text-white';
+    let icon = '<i class="fas fa-info-circle text-sky-400"></i>';
+
+    if (type === 'success') {
+      bg = 'bg-emerald-950 border-emerald-500/60 text-emerald-100 shadow-emerald-900/30';
+      icon = '<i class="fas fa-check-circle text-emerald-400"></i>';
+    } else if (type === 'error') {
+      bg = 'bg-rose-950 border-rose-500/60 text-rose-100 shadow-rose-900/30';
+      icon = '<i class="fas fa-exclamation-circle text-rose-400"></i>';
+    } else if (type === 'warning') {
+      bg = 'bg-amber-950 border-amber-500/60 text-amber-100 shadow-amber-900/30';
+      icon = '<i class="fas fa-triangle-exclamation text-amber-400"></i>';
+    }
+
+    toast.className = `${bg} border shadow-2xl rounded-2xl px-4 py-3 text-xs font-bold flex items-center gap-2.5 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto max-w-sm`;
+    toast.innerHTML = `${icon} <span>${message}</span>`;
+
+    box.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.remove('translate-y-2', 'opacity-0');
+    }, 10);
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-2');
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+  window.showToast = showToast;
 
   // Initialize
   async function init() {
@@ -215,21 +247,15 @@
   }
 
   function initTheme() {
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    adminThemeToggleBtn?.addEventListener('click', () => {
-      if (document.documentElement.classList.contains('dark')) {
-        document.documentElement.classList.remove('dark');
-        localStorage.theme = 'light';
-      } else {
+    // Unified with centralized FayzarUI Day/Night theme engine (theme-lang.js)
+    if (window.FayzarUI && typeof window.FayzarUI.getTheme === 'function') {
+      const current = window.FayzarUI.getTheme();
+      if (current === 'dark') {
         document.documentElement.classList.add('dark');
-        localStorage.theme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
       }
-    });
+    }
   }
 
   function showAuthOverlay() {
@@ -276,19 +302,9 @@
       }
     }
 
-    // 3. Tab Buttons Visibility & Access (Settings & Batch Print are Web Super Admin ONLY)
-    const settingsTabBtn = document.querySelector('[data-admin-tab="settingsTab"]');
-    const batchPrintTabBtn = document.querySelector('[data-admin-tab="batchPrintTab"]');
-    const isSuper = (user.role === 'super_admin');
-
-    if (settingsTabBtn) settingsTabBtn.classList.toggle('hidden', !isSuper);
-    if (batchPrintTabBtn) batchPrintTabBtn.classList.toggle('hidden', !isSuper);
-
-    // If non-super admin is on restricted tab, switch back to spreadsheetTab
-    const currentActiveTab = document.querySelector('.admin-tab-btn.active')?.getAttribute('data-admin-tab');
-    if (!isSuper && (currentActiveTab === 'settingsTab' || currentActiveTab === 'batchPrintTab')) {
-      switchAdminTab('spreadsheetTab');
-    }
+    // 3. Batch Print Tab Control (Accessible to all authenticated users)
+    if (batchPrintMainCard) batchPrintMainCard.classList.remove('hidden');
+    if (batchPreviewSection) batchPreviewSection.classList.remove('hidden');
 
     // 4. Publish / Draft Control (Web Admin ONLY)
     if (publishControlContainer) {
@@ -310,17 +326,6 @@
         editorRoleInstruction.textContent = `(${user.school_name} এর সকল মার্কস নিয়ন্ত্রণ)`;
       } else {
         editorRoleInstruction.textContent = '(ওয়েব সুপার অ্যাডমিন - সর্বময় নিয়ন্ত্রণ)';
-      }
-    }
-
-
-    // 6. Class Settings Button: only visible to super_admin & school_master
-    const manageClassesBtnEl = document.getElementById('openManageClassesBtn');
-    if (manageClassesBtnEl) {
-      if (user.role === 'teacher') {
-        manageClassesBtnEl.style.display = 'none';
-      } else {
-        manageClassesBtnEl.style.display = '';
       }
     }
 
@@ -483,33 +488,6 @@
       const matchExam = !currentExamId || sExamId === currentExamId || s.exam_id === currentExamId;
       return matchSchool && matchClass && matchYear && matchExam;
     });
-  }
-
-  // Check if Exam/Class is locked for normal School/Teachers due to being Published
-  function isExamOrCurrentClassLocked(examId = currentExamId, classId = currentClassId) {
-    const user = currentUser || (typeof ResultEngine !== 'undefined' && ResultEngine.Storage && ResultEngine.Storage.getCurrentUser());
-    if (!user) return true;
-    if (user.role === 'super_admin') return false; // Web Super Admin (Fayzar Computer) has ALWAYS full override!
-
-    const school = getActiveSchool();
-    const targetExamId = examId || currentExamId;
-    const exam = (school.exams || []).find(x => x.id === targetExamId);
-    if (exam && (exam.is_published === true || exam.published === true)) {
-      return true;
-    }
-
-    const students = allStudents.filter(s => {
-      const matchSchool = (s.institution_id === activeSchoolId) || (!s.institution_id && activeSchoolId === 'dreamland-school');
-      const matchClass = !classId || String(s.class_id) === String(classId);
-      const matchExam = !targetExamId || s.exam_id === targetExamId || (exam && s.exam_name_bn === exam.name_bn);
-      return matchSchool && matchClass && matchExam;
-    });
-
-    if (students.length > 0 && students.some(s => s.publish_status === 'published' || s.publish_status === 'scheduled')) {
-      return true;
-    }
-
-    return false;
   }
 
   // Helpers for Class Classification & Subject CQ/MCQ/Practical Components
@@ -817,138 +795,12 @@
       }
     }
 
-    // Populate Group (বিভাগ) Filter Dropdown for Class 9-10
-    const isSecClass = isSecondaryClass(currentClassId);
-    if (editorGroupFilterWrapper && editorGroupSelect) {
-      if (isSecClass) {
-        editorGroupFilterWrapper.classList.remove('hidden');
-        const school = getActiveSchool();
-        const isMadrasah = school.id && school.id.includes('madrasah');
-        const sciCount = allStudentsInClass.filter(s => s.group === 'science' || s.group_bn === 'বিজ্ঞান' || s.group_bn?.includes('বিজ্ঞান')).length;
-        const humCount = allStudentsInClass.filter(s => s.group === 'humanities' || s.group_bn === 'মানবিক' || s.group_bn?.includes('মানবিক')).length;
-        const genCount = allStudentsInClass.filter(s => s.group === 'general' || s.group_bn === 'সাধারণ' || s.group_bn?.includes('সাধারণ')).length;
-
-        const prevGrp = editorGroupSelect.value || currentGroup || 'all';
-        let grpHtml = `<option value="all">সকল বিভাগ (${ResultEngine.toBnDigit(allStudentsInClass.length)} জন)</option>`;
-        if (isMadrasah) {
-          grpHtml += `<option value="general">সাধারণ বিভাগ (${ResultEngine.toBnDigit(genCount)} জন)</option>`;
-          grpHtml += `<option value="science">বিজ্ঞান বিভাগ (${ResultEngine.toBnDigit(sciCount)} জন)</option>`;
-        } else {
-          grpHtml += `<option value="science">বিজ্ঞান বিভাগ (${ResultEngine.toBnDigit(sciCount)} জন)</option>`;
-          grpHtml += `<option value="humanities">মানবিক বিভাগ (${ResultEngine.toBnDigit(humCount)} জন)</option>`;
-          if (genCount > 0) {
-            grpHtml += `<option value="general">সাধারণ বিভাগ (${ResultEngine.toBnDigit(genCount)} জন)</option>`;
-          }
-        }
-        editorGroupSelect.innerHTML = grpHtml;
-        if (['all', 'science', 'humanities', 'general'].includes(prevGrp)) {
-          editorGroupSelect.value = prevGrp;
-          currentGroup = prevGrp;
-        } else {
-          editorGroupSelect.value = 'all';
-          currentGroup = 'all';
-        }
-      } else {
-        editorGroupFilterWrapper.classList.add('hidden');
-        currentGroup = 'all';
-      }
-    }
-
-    let studentsInClass = allStudentsInClass.filter(s => {
-      const matchSec = (currentSection === 'all') || ((s.section || 'সাধারণ') === currentSection);
-      let matchGrp = true;
-      if (isSecClass && currentGroup !== 'all') {
-        if (currentGroup === 'science') {
-          matchGrp = (s.group === 'science' || s.group_bn === 'বিজ্ঞান' || s.group_bn?.includes('বিজ্ঞান'));
-        } else if (currentGroup === 'humanities') {
-          matchGrp = (s.group === 'humanities' || s.group_bn === 'মানবিক' || s.group_bn?.includes('মানবিক'));
-        } else if (currentGroup === 'general') {
-          matchGrp = (s.group === 'general' || s.group_bn === 'সাধারণ' || s.group_bn?.includes('সাধারণ'));
-        }
-      }
-      return matchSec && matchGrp;
-    });
+    let studentsInClass = currentSection === 'all' 
+      ? allStudentsInClass 
+      : allStudentsInClass.filter(s => (s.section || 'সাধারণ') === currentSection);
 
     // Sort by roll ascending
     studentsInClass.sort((a, b) => (parseInt(a.roll, 10) || 0) - (parseInt(b.roll, 10) || 0));
-
-    const isLockedForCurrentUser = isExamOrCurrentClassLocked();
-    const school = getActiveSchool();
-    const currentExam = (school.exams || []).find(x => x.id === currentExamId);
-    const isExamPublished = (currentExam && (currentExam.is_published === true || currentExam.published === true)) || 
-                            (allStudentsInClass.length > 0 && allStudentsInClass.some(s => s.publish_status === 'published' || s.publish_status === 'scheduled'));
-    const isSuperAdmin = (currentUser && currentUser.role === 'super_admin');
-
-    // Dynamic Publish/Lock Status Notice Banner
-    if (spreadsheetLockNoticeBanner) {
-      if (isLockedForCurrentUser) {
-        spreadsheetLockNoticeBanner.className = 'p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs mb-3';
-        spreadsheetLockNoticeBanner.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-              <i class="fas fa-lock text-sm"></i>
-            </span>
-            <div>
-              <div class="font-black text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                <span>ফলাফল অনলাইনে প্রকাশিত (লকড)</span>
-              </div>
-              <div class="text-[11px] font-normal text-amber-800 dark:text-amber-300 mt-0.5">
-                এই পরীক্ষার ফলাফল ইতিমধ্যে অনলাইনে প্রকাশিত হয়েছে। তাই স্কুল ও শিক্ষকদের জন্য নম্বর এন্ট্রি ও সংশোধন বন্ধ রয়েছে। কোনো সংশোধন প্রয়োজন হলে শুধুমাত্র <strong>ওয়েব সুপার অ্যাডমিন (ফয়জার কম্পিউটার)</strong> করতে পারবেন।
-              </div>
-            </div>
-          </div>
-          <span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-200 text-[10px] font-black self-start sm:self-auto whitespace-nowrap">
-            🔒 শুধুমাত্র পাঠযোগ্য (Read-Only)
-          </span>
-        `;
-        spreadsheetLockNoticeBanner.classList.remove('hidden');
-      } else if (isExamPublished && isSuperAdmin) {
-        spreadsheetLockNoticeBanner.className = 'p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs mb-3';
-        spreadsheetLockNoticeBanner.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <span class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <i class="fas fa-shield-halved text-sm"></i>
-            </span>
-            <div>
-              <div class="font-black text-emerald-900 dark:text-emerald-200">ওয়েব সুপার অ্যাডমিন মোড (ফলাফল প্রকাশিত)</div>
-              <div class="text-[11px] font-normal text-emerald-800 dark:text-emerald-300 mt-0.5">
-                ফলাফল ইতিমধ্যে অনলাইনে প্রকাশিত হয়েছে। আপনি বিশেষ ক্ষমতাপ্রাপ্ত হওয়ায় প্রয়োজন অনুযায়ী যেকোনো নম্বর সংশোধন করতে পারবেন।
-              </div>
-            </div>
-          </div>
-          <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 text-[10px] font-black self-start sm:self-auto whitespace-nowrap">
-            🛡️ সুপার অ্যাডমিন এডিট সক্রিয়
-          </span>
-        `;
-        spreadsheetLockNoticeBanner.classList.remove('hidden');
-      } else {
-        spreadsheetLockNoticeBanner.className = 'p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs flex items-center justify-between gap-2 mb-3';
-        spreadsheetLockNoticeBanner.innerHTML = `
-          <div class="flex items-center gap-2">
-            <i class="fas fa-file-pen text-emerald-600"></i>
-            <span><strong>ড্রাফট পর্যায়:</strong> ফলাফল এখনও অপ্রকাশিত রয়েছে। স্কুল ও শিক্ষকগণ স্বাভাবিকভাবে নম্বর এন্ট্রি ও এডিট করতে পারবেন।</span>
-          </div>
-          <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold">🔓 এন্ট্রি সক্রিয়</span>
-        `;
-        spreadsheetLockNoticeBanner.classList.remove('hidden');
-      }
-    }
-
-    // Action buttons state based on publish lock
-    if (saveEditorChangesBtn) {
-      if (isLockedForCurrentUser) {
-        saveEditorChangesBtn.disabled = true;
-        saveEditorChangesBtn.classList.add('opacity-40', 'cursor-not-allowed');
-        saveEditorChangesBtn.title = 'ফলাফল পাবলিশ হওয়ায় লক করা হয়েছে';
-      } else {
-        saveEditorChangesBtn.disabled = false;
-        saveEditorChangesBtn.classList.remove('opacity-40', 'cursor-not-allowed');
-        saveEditorChangesBtn.title = '';
-      }
-    }
-    if (addNewStudentBtn) addNewStudentBtn.classList.toggle('hidden', isLockedForCurrentUser);
-    const openSubjectEntryModalBtn = document.getElementById('openSubjectEntryModalBtn');
-    if (openSubjectEntryModalBtn) openSubjectEntryModalBtn.classList.toggle('hidden', isLockedForCurrentUser);
 
     if (studentsInClass.length === 0) {
       const school = getActiveSchool();
@@ -1039,11 +891,6 @@
     // If a subject has papers (e.g. Bangla 1st & 2nd, English 1st & 2nd, Arabic 1st & 2nd),
     // UNPACK each paper as an independent column so teachers enter each paper directly!
     const columns = getDistinctClassColumns(studentsInClass);
-    // Filter columns for teacher: only show assigned subjects (hide others completely)
-    let displayColumns = columns;
-    if (currentUser && currentUser.role === 'teacher') {
-      displayColumns = columns.filter(c => isSubjectAssignedToUser(c, currentClassId));
-    }
 
     // Build Table Header (2-Tier Header for direct CQ, MCQ, and Practical entry)
     let theadRow1 = `
@@ -1056,7 +903,7 @@
     let theadRow2 = '<tr>';
     let hasSubRow = false;
 
-    displayColumns.forEach(col => {
+    columns.forEach(col => {
       const isTeacherSubject = isSubjectAssignedToUser(col);
       const thStyle = isTeacherSubject ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 font-black' : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200';
       const comps = getSubjectComponentConfig(col, currentClassId, activeSchoolId);
@@ -1117,17 +964,10 @@
       let trHtml = `
         <tr class="${rowBg} hover:bg-slate-100/60 dark:hover:bg-slate-800/80 transition-colors" data-student-id="${st.id}">
           <td class="py-2 px-1 border-r border-slate-200 dark:border-slate-700 text-center">
-            ${isLockedForCurrentUser ? `
-              <span class="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 inline-flex items-center gap-1 cursor-not-allowed" title="ফলাফল পাবলিশ হওয়ায় তথ্য সংশোধন বন্ধ">
-                <i class="fas fa-lock text-slate-400 text-xs"></i>
-                <span>লকড</span>
-              </span>
-            ` : `
-              <button type="button" onclick="window.openEditStudentModal('${st.id}')" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs inline-flex items-center gap-1" title="শিক্ষার্থীর তথ্য সংশোধন করুন">
-                <i class="fas fa-user-pen text-emerald-600"></i>
-                <span>এডিট</span>
-              </button>
-            `}
+            <button type="button" onclick="window.openEditStudentModal('${st.id}')" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs inline-flex items-center gap-1" title="শিক্ষার্থীর তথ্য সংশোধন করুন">
+              <i class="fas fa-user-pen text-emerald-600"></i>
+              <span>এডিট</span>
+            </button>
           </td>
           <td class="py-2.5 px-2 border-r border-slate-200 dark:border-slate-700 text-center font-bold font-mono text-slate-800 dark:text-slate-200">
             ${ResultEngine.toBnDigit(st.roll)}
@@ -1153,7 +993,7 @@
           </td>
       `;
 
-      displayColumns.forEach(col => {
+      columns.forEach(col => {
         let studentTarget = null;
         let isApplicable = true;
 
@@ -1183,7 +1023,7 @@
             </td>
           `;
         } else {
-          const isEditable = !isLockedForCurrentUser && isSubjectAssignedToUser(col);
+          const isEditable = isSubjectAssignedToUser(col);
           const isAbs = studentTarget.is_absent || String(studentTarget.marks_obtained).toUpperCase() === 'ABS';
 
           // Unified cell-fail helper (defined once per subject block)
@@ -1649,11 +1489,6 @@
   }
 
   function openSubjectEntryModal() {
-    if (isExamOrCurrentClassLocked()) {
-      alert('অনুমতি নেই! এই পরীক্ষার ফলাফল ইতিমধ্যে প্রকাশিত হয়ে গেছে। ফলাফল সংশোধনের একক ক্ষমতা শুধুমাত্র ওয়েব সুপার অ্যাডমিনের নিকট সংরক্ষিত।');
-      return;
-    }
-
     const modal = document.getElementById('subjectEntryModal');
     const select = document.getElementById('subjectEntrySubjectSelect');
     if (!modal || !select) return;
@@ -2100,7 +1935,7 @@
     closeSubjectEntryModal();
     renderSpreadsheet();
     renderBatchPreview();
-    alert(`সফল! "${col.name_bn}" বিষয়ের নম্বর সফলভাবে সংরক্ষিত এবং কার্যকর করা হয়েছে।`);
+    showToast(`সফল! "${col.name_bn}" বিষয়ের নম্বর সফলভাবে সংরক্ষিত এবং কার্যকর করা হয়েছে।`, 'success');
   }
 
   // Cell Breakdown Modal
@@ -2241,16 +2076,6 @@
 
   // Concurrency-Safe Save to Local & Firebase
   async function saveSpreadsheetChanges() {
-    if (isExamOrCurrentClassLocked()) {
-      // Locked: show notice in banner, no popup
-      const lockBanner = document.getElementById('spreadsheetLockNoticeBanner');
-      if (lockBanner) {
-        lockBanner.className = 'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold';
-        lockBanner.innerHTML = '<i class="fas fa-lock"></i> অনুমতি নেই! ফলাফল পাবলিশ হয়ে গেছে। শুধুমাত্র ওয়েব সুপার অ্যাডমিন সংশোধন করতে পারবেন।';
-      }
-      return;
-    }
-
     if (saveEditorChangesBtn) {
       saveEditorChangesBtn.disabled = true;
       saveEditorChangesBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> সংরক্ষণ হচ্ছে...';
@@ -2266,11 +2091,11 @@
       });
 
       // 2. Save locally
-      ResultEngine.Storage.saveStudents(allStudents);
+      await ResultEngine.Storage.saveStudents(allStudents);
 
       // 3. Sync changed students to Firebase with updateMask for concurrency safety
       const syncPromises = studentsInClass.map(st => {
-        const mask = (currentUser.role === 'teacher') ? ['subjects', 'total_marks', 'gpa', 'grade', 'status'] : null;
+        const mask = (currentUser && currentUser.role === 'teacher') ? ['subjects', 'total_marks', 'gpa', 'grade', 'status'] : null;
         return ResultEngine.Firestore.saveStudentToFirestore(st, mask);
       });
 
@@ -2285,25 +2110,19 @@
         });
       } catch (e) {}
 
-      // Show success silently via indicator (no popup)
-      const saveIndicator = document.getElementById('autoSaveIndicator');
-      if (saveIndicator) {
-        saveIndicator.className = 'sm:flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800';
-        saveIndicator.innerHTML = '<i class="fas fa-circle-check text-xs"></i> <span>সংরক্ষিত ও সিঙ্ক সম্পন্ন</span>';
-        saveIndicator.classList.remove('hidden');
+      showToast('সফল! সমস্ত নম্বর সংরক্ষিত ও ব্যাকএন্ডে সিঙ্ক হয়েছে।', 'success');
+      const indicator = document.getElementById('autoSaveIndicator');
+      if (indicator) {
+        indicator.innerHTML = '<i class="fas fa-circle-check text-emerald-500"></i> <span class="text-emerald-600 dark:text-emerald-400">সফলভাবে সংরক্ষিত</span>';
+        indicator.classList.remove('hidden');
       }
     } catch (err) {
       console.error('Save error:', err);
-      const errIndicator = document.getElementById('autoSaveIndicator');
-      if (errIndicator) {
-        errIndicator.className = 'flex items-center gap-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-800';
-        errIndicator.innerHTML = '<i class="fas fa-triangle-exclamation text-xs"></i> <span>সংরক্ষণে সমস্যা হয়েছে</span>';
-        errIndicator.classList.remove('hidden');
-      }
+      showToast('সংরক্ষণে সমস্যা: ' + err.message, 'error');
     } finally {
       if (saveEditorChangesBtn) {
         saveEditorChangesBtn.disabled = false;
-        saveEditorChangesBtn.innerHTML = '<i class="fas fa-floppy-disk"></i> পরিবর্তন সংরক্ষণ';
+        saveEditorChangesBtn.innerHTML = '<i class="fas fa-save"></i> পরিবর্তন সংরক্ষণ';
       }
       renderSpreadsheet();
     }
@@ -2341,15 +2160,22 @@
     return `${ampm} ${ResultEngine.toBnDigit(h)}:${ResultEngine.toBnDigit(m < 10 ? '0' + m : m)} মিনিট`;
   }
 
-  // Web Admin Exclusive: Target Exam Publish Modal
-  window.openPublishModalForTargetExam = function (exam, examStudents) {
+  // Web Admin Exclusive: Toggle Publish / Draft & Publish Modal
+  window.openPublishModal = function () {
     if (!currentUser || currentUser.role !== 'super_admin') {
       alert('অনুমতি নেই! ফলাফল পাবলিশ করার একক ক্ষমতা শুধুমাত্র ফয়জার কম্পিউটার (ওয়েব অ্যাডমিন)-এর কাছে সংরক্ষিত।');
       return;
     }
 
-    window._publishingTargetExamId = exam.id;
+    const studentsInClass = getStudentsInCurrentClass();
+    if (studentsInClass.length === 0) {
+      alert('নির্বাচিত ক্লাসে কোনো শিক্ষার্থী নেই।');
+      return;
+    }
+
     const school = getActiveSchool();
+    const currentClass = (school.classes || config.classes || []).find(c => c.id === currentClassId);
+    const currentExam = (school.exams || []).find(x => x.id === currentExamId);
 
     if (publishModalTargetText) {
       publishModalTargetText.innerHTML = `
@@ -2357,17 +2183,19 @@
           <i class="fas fa-school mr-1"></i> ${school.name_bn}
         </div>
         <div class="text-xs text-emerald-800 dark:text-emerald-300 mt-1">
-          <strong>পরীক্ষা:</strong> ${exam.name_bn || exam.id} (${ResultEngine.toBnDigit(exam.year || currentYear)}) &nbsp;|&nbsp; 
-          <strong>মোট শিক্ষার্থী:</strong> ${ResultEngine.toBnDigit(examStudents.length)} জন (সকল শ্রেণি)
+          <strong>শ্রেণি:</strong> ${currentClass ? currentClass.name_bn : currentClassId} &nbsp;|&nbsp; 
+          <strong>পরীক্ষা:</strong> ${currentExam ? currentExam.name_bn : currentExamId} (${ResultEngine.toBnDigit(currentYear)}) &nbsp;|&nbsp; 
+          <strong>মোট শিক্ষার্থী:</strong> ${ResultEngine.toBnDigit(studentsInClass.length)} জন
         </div>
       `;
     }
 
+    // Prefill date & time
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    const sample = examStudents.find(s => s.published_date) || {};
+    const sample = studentsInClass.find(s => s.published_date) || {};
     if (publishScheduleDate) publishScheduleDate.value = sample.published_date || todayStr;
     if (publishScheduleTime) publishScheduleTime.value = sample.published_time || timeStr;
     if (publishNoticeText) publishNoticeText.value = sample.publish_notice || 'প্রধান শিক্ষকের অনুমোদনক্রমে ফলাফল আনুষ্ঠানিকভাবে প্রকাশিত হলো।';
@@ -2375,55 +2203,20 @@
     if (publishScheduleModal) publishScheduleModal.classList.remove('hidden');
   };
 
-  window.openPublishModal = function () {
-    if (!currentUser || currentUser.role !== 'super_admin') {
-      alert('অনুমতি নেই! ফলাফল পাবলিশ করার একক ক্ষমতা শুধুমাত্র ফয়জার কম্পিউটার (ওয়েব অ্যাডমিন)-এর কাছে সংরক্ষিত।');
-      return;
-    }
-
-    const school = getActiveSchool();
-    const currentExam = (school.exams || []).find(x => x.id === currentExamId);
-    if (currentExam) {
-      const examStudents = allStudents.filter(s => {
-        const matchSchool = (s.institution_id === activeSchoolId) || (!s.institution_id && activeSchoolId === 'dreamland-school');
-        return matchSchool && (s.exam_id === currentExam.id || s.exam_name_bn === currentExam.name_bn);
-      });
-      window.openPublishModalForTargetExam(currentExam, examStudents);
-    }
-  };
-
   window.closePublishModal = function () {
     if (publishScheduleModal) publishScheduleModal.classList.add('hidden');
-    window._publishingTargetExamId = null;
   };
 
-  window.confirmPublishWithDateTime = async function (e) {
+  window.confirmPublishWithDateTime = function (e) {
     if (e && e.preventDefault) e.preventDefault();
     if (!currentUser || currentUser.role !== 'super_admin') {
       alert('অনুমতি নেই! ফলাফল পাবলিশ করার একক ক্ষমতা শুধুমাত্র ফয়জার কম্পিউটার (ওয়েব অ্যাডমিন)-এর কাছে সংরক্ষিত।');
       return;
     }
 
-    const school = getActiveSchool();
-    let targetStudents = [];
-    let examObj = null;
-
-    if (window._publishingTargetExamId) {
-      examObj = (school.exams || []).find(x => x.id === window._publishingTargetExamId);
-      targetStudents = allStudents.filter(s => {
-        const matchSchool = (s.institution_id === activeSchoolId) || (!s.institution_id && activeSchoolId === 'dreamland-school');
-        return matchSchool && (s.exam_id === window._publishingTargetExamId || (examObj && s.exam_name_bn === examObj.name_bn));
-      });
-    } else {
-      examObj = (school.exams || []).find(x => x.id === currentExamId);
-      targetStudents = allStudents.filter(s => {
-        const matchSchool = (s.institution_id === activeSchoolId) || (!s.institution_id && activeSchoolId === 'dreamland-school');
-        return matchSchool && (s.exam_id === currentExamId || (examObj && s.exam_name_bn === examObj.name_bn));
-      });
-    }
-
-    if (targetStudents.length === 0) {
-      alert('এই পরীক্ষায় কোনো শিক্ষার্থী নেই।');
+    const studentsInClass = getStudentsInCurrentClass();
+    if (studentsInClass.length === 0) {
+      alert('নির্বাচিত ক্লাসে কোনো শিক্ষার্থী নেই।');
       return;
     }
 
@@ -2441,11 +2234,7 @@
     const dateBn = formatBengaliDate(dateVal);
     const timeBn = formatBengaliTime(timeVal);
 
-    if (examObj) {
-      examObj.is_published = true;
-    }
-
-    targetStudents.forEach(s => {
+    studentsInClass.forEach(s => {
       s.publish_status = publishMode === 'scheduled' ? 'scheduled' : 'published';
       s.published_date = dateVal;
       s.published_time = timeVal;
@@ -2455,78 +2244,29 @@
       s.published_at = `${dateVal}T${timeVal}:00`;
     });
 
-    await ResultEngine.Storage.saveStudents(allStudents);
-    await ResultEngine.Storage.saveConfig(config);
+    ResultEngine.Storage.saveStudents(allStudents);
 
     // Sync to Firestore
-    try {
-      targetStudents.forEach(st => {
-        ResultEngine.Firestore.saveStudentToFirestore(st, [
-          'publish_status',
-          'published_date',
-          'published_time',
-          'published_date_bn',
-          'published_time_bn',
-          'publish_notice',
-          'published_at'
-        ]);
-      });
-    } catch (err) {}
+    studentsInClass.forEach(st => {
+      ResultEngine.Firestore.saveStudentToFirestore(st, [
+        'publish_status',
+        'published_date',
+        'published_time',
+        'published_date_bn',
+        'published_time_bn',
+        'publish_notice',
+        'published_at'
+      ]);
+    });
 
     window.closePublishModal();
 
-    const examTitle = examObj ? examObj.name_bn : 'ফলাফল';
     const successMsg = publishMode === 'scheduled'
-      ? `"${examTitle}"-এর ফলাফল প্রকাশের সময় নির্ধারিত হয়েছে!\nতারিখ: ${dateBn}\nসময়: ${timeBn}\n(শিক্ষার্থীরা নির্ধারিত সময়ে ফলাফল দেখতে পাবে)`
-      : `"${examTitle}"-এর ফলাফল সফলভাবে অনলাইনে প্রকাশিত (Published) হয়েছে!\nপ্রকাশের সময়: ${dateBn}, ${timeBn}`;
+      ? `ফলাফল প্রকাশের সময় নির্ধারিত হয়েছে!\nতারিখ: ${dateBn}\nসময়: ${timeBn}\n(শিক্ষার্থীরা নির্ধারিত সময়ে ফলাফল দেখতে পাবে)`
+      : `ফলাফল সফলভাবে অনলাইনে প্রকাশিত (Published) হয়েছে!\nপ্রকাশের সময়: ${dateBn}, ${timeBn}`;
 
-    alert(successMsg + '\n\nফলাফল প্রকাশিত হওয়ায় স্কুল ও সাধারণ শিক্ষকদের জন্য এডিট লক করা হয়েছে। শুধুমাত্র ওয়েব সুপার অ্যাডমিন এটি সংশোধন করতে পারবেন।');
-    renderManageExamsList();
+    alert(successMsg);
     renderSpreadsheet();
-  };
-
-  window.toggleExamPublish = async function (examId, toPublish) {
-    if (!currentUser || currentUser.role !== 'super_admin') {
-      alert('অনুমতি নেই! ফলাফল পাবলিশ করার একক ক্ষমতা শুধুমাত্র ফয়জার কম্পিউটার (ওয়েব অ্যাডমিন)-এর কাছে সংরক্ষিত।');
-      return;
-    }
-
-    const school = getActiveSchool();
-    const exam = (school.exams || []).find(x => x.id === examId);
-    if (!exam) {
-      alert('পরীক্ষাটি খুঁজে পাওয়া যায়নি।');
-      return;
-    }
-
-    const examStudents = allStudents.filter(s => {
-      const matchSchool = (s.institution_id === activeSchoolId) || (!s.institution_id && activeSchoolId === 'dreamland-school');
-      return matchSchool && (s.exam_id === exam.id || s.exam_name_bn === exam.name_bn);
-    });
-
-    if (toPublish) {
-      window.openPublishModalForTargetExam(exam, examStudents);
-    } else {
-      if (!confirm(`আপনি কি নিশ্চিত যে "${exam.name_bn || exam.id}" পরীক্ষার ফলাফল ড্রাফট (Draft) করতে চান?\n\nড্রাফট করলে শিক্ষার্থীরা অনলাইনে রেজাল্ট দেখতে পাবে না এবং স্কুল ও শিক্ষকগণ পুনরায় নম্বর এন্ট্রি ও সংশোধন করতে পারবেন।`)) {
-        return;
-      }
-
-      exam.is_published = false;
-      examStudents.forEach(s => {
-        s.publish_status = 'draft';
-      });
-
-      await ResultEngine.Storage.saveStudents(allStudents);
-      await ResultEngine.Storage.saveConfig(config);
-      try {
-        examStudents.forEach(st => {
-          ResultEngine.Firestore.saveStudentToFirestore(st, ['publish_status']);
-        });
-      } catch (err) {}
-
-      renderManageExamsList();
-      renderSpreadsheet();
-      alert(`"${exam.name_bn || exam.id}"-এর ফলাফল ড্রাফট (Draft) করা হয়েছে। স্কুল ও শিক্ষকগণ এখন পুনরায় নম্বর এন্ট্রি ও সংশোধন করতে পারবেন।`);
-    }
   };
 
   async function toggleClassPublishStatus() {
@@ -3215,11 +2955,15 @@
 
     allStudents.push(...clonedList);
     ResultEngine.Storage.saveStudents(allStudents);
+    if (typeof ResultEngine.Storage.saveCustomStudents === 'function') {
+      const customList = allStudents.filter(s => s.is_custom || (typeof s.id === 'string' && s.id.startsWith('st_')));
+      ResultEngine.Storage.saveCustomStudents(customList);
+    }
 
     // Sync to Firestore in background
     clonedList.forEach(cl => ResultEngine.Firestore.saveStudentToFirestore(cl));
 
-    alert(`সফল! ২০২৫ সাল থেকে ${ResultEngine.toBnDigit(clonedList.length)} জন শিক্ষার্থী ${ResultEngine.toBnDigit(currentYear)} সালের "${examTitle}"-এ অন্তর্ভুক্ত হয়েছে। এখন সরাসরি নম্বর বসিয়ে সংরক্ষণ করুন।`);
+    showToast(`সফল! ২০২৫ সাল থেকে ${ResultEngine.toBnDigit(clonedList.length)} জন শিক্ষার্থী ${ResultEngine.toBnDigit(currentYear)} সালের "${examTitle}"-এ অন্তর্ভুক্ত হয়েছে।`, 'success');
     renderSpreadsheet();
     renderBatchPreview();
   };
@@ -3603,10 +3347,6 @@
 
   async function handleCreateNewStudent(e) {
     if (e && e.preventDefault) e.preventDefault();
-    if (isExamOrCurrentClassLocked()) {
-      alert('অনুমতি নেই! এই পরীক্ষার ফলাফল ইতিমধ্যে প্রকাশিত হয়ে গেছে। নতুন শিক্ষার্থী যোগ করার ক্ষমতা শুধুমাত্র ওয়েব সুপার অ্যাডমিনের নিকট সংরক্ষিত।');
-      return;
-    }
 
     const roll = parseInt(document.getElementById('newStudentRoll')?.value, 10);
     const name = document.getElementById('newStudentNameBn')?.value.trim();
@@ -3620,12 +3360,12 @@
     const fourthSubject = isSec ? (document.getElementById('newStudentFourthSubject')?.value || '') : '';
 
     if (!roll || !name) {
-      alert('রোল নম্বর ও শিক্ষার্থীর নাম আবশ্যক!');
+      showToast('রোল নম্বর ও শিক্ষার্থীর নাম আবশ্যক!', 'warning');
       return;
     }
 
     if (isSec && (!fourthSubject || fourthSubject === 'none')) {
-      alert('নবম ও দশম শ্রেণির শিক্ষার্থীর ক্ষেত্রে একটি ৪র্থ বিষয় নির্বাচন করা আবশ্যক!\nঅনুগ্রহ করে একটি ৪র্থ বিষয় নির্বাচন করুন।');
+      showToast('নবম ও দশম শ্রেণির শিক্ষার্থীর ক্ষেত্রে একটি ৪র্থ বিষয় নির্বাচন করা আবশ্যক!', 'warning');
       document.getElementById('newStudentFourthSubject')?.focus();
       return;
     }
@@ -3634,37 +3374,86 @@
     const currentStudents = getStudentsInCurrentClass();
     const exists = currentStudents.some(s => parseInt(s.roll, 10) === roll && (s.section || 'ক') === section);
     if (exists) {
-      alert(`রোল নম্বর ${ResultEngine.toBnDigit(roll)} শাখা "${section}"-এ ইতিমধ্যে বিদ্যমান! অনুগ্রহ করে অন্য রোল নম্বর দিন।`);
+      showToast(`রোল নম্বর ${ResultEngine.toBnDigit(roll)} শাখা "${section}"-এ ইতিমধ্যে বিদ্যমান! অন্য রোল নম্বর দিন।`, 'warning');
       return;
     }
 
     const school = getActiveSchool();
+    const currentYearVal = editorYearSelect?.value || currentYear || '2026';
+    const currentExamVal = editorExamSelect?.value || currentExamId;
+    const currentClassVal = editorClassSelect?.value || currentClassId;
+
+    currentYear = currentYearVal;
+    currentExamId = currentExamVal;
+    currentClassId = currentClassVal;
+
     const classObj = (school.classes || config.classes || []).find(c => c.id === currentClassId) || { name_bn: currentClassId };
     const currentExamObj = (school.exams || []).find(e => e.id === currentExamId);
     const examTitle = currentExamObj ? currentExamObj.name_bn : `${ResultEngine.toBnDigit(currentYear)} সালের পরীক্ষা`;
 
-    const subjectList = getClassSubjectList(currentClassId, religion, group, fourthSubject, activeSchoolId).map(sub => {
-      const copy = {
-        ...sub,
-        cq: 0,
-        mcq: 0,
-        practical: 0,
-        marks_obtained: 0,
-        grade: 'F',
-        point: 0,
-        is_absent: false
-      };
-      if (Array.isArray(copy.papers)) {
-        copy.papers = copy.papers.map(p => ({
-          ...p,
+    // Inherit subject configuration from existing class students if available
+    let subjectList = [];
+    if (currentStudents.length > 0) {
+      const templateStudent = currentStudents.find(s => s.religion === religion && (isSec ? s.group_bn === groupBn : true)) || currentStudents[0];
+      if (templateStudent && Array.isArray(templateStudent.subjects) && templateStudent.subjects.length > 0) {
+        subjectList = JSON.parse(JSON.stringify(templateStudent.subjects)).map(sub => {
+          const cleanSub = {
+            ...sub,
+            cq: 0,
+            mcq: 0,
+            practical: 0,
+            marks_obtained: 0,
+            grade: 'F',
+            point: 0,
+            is_absent: false
+          };
+          if (Array.isArray(cleanSub.papers)) {
+            cleanSub.papers = cleanSub.papers.map(p => ({
+              ...p,
+              cq: 0,
+              mcq: 0,
+              practical: 0,
+              marks_obtained: 0
+            }));
+          }
+          return cleanSub;
+        });
+
+        if (templateStudent.religion !== religion) {
+          subjectList = subjectList.filter(s => {
+            const code = String(s.code || '');
+            const n = s.name_bn || '';
+            return !['111', '112', '113', '114'].includes(code) && !n.includes('ধর্ম');
+          });
+          addReligionSubject(subjectList, religion);
+        }
+      }
+    }
+
+    if (!subjectList || subjectList.length === 0) {
+      subjectList = getClassSubjectList(currentClassId, religion, group, fourthSubject, activeSchoolId).map(sub => {
+        const copy = {
+          ...sub,
           cq: 0,
           mcq: 0,
           practical: 0,
-          marks_obtained: 0
-        }));
-      }
-      return copy;
-    });
+          marks_obtained: 0,
+          grade: 'F',
+          point: 0,
+          is_absent: false
+        };
+        if (Array.isArray(copy.papers)) {
+          copy.papers = copy.papers.map(p => ({
+            ...p,
+            cq: 0,
+            mcq: 0,
+            practical: 0,
+            marks_obtained: 0
+          }));
+        }
+        return copy;
+      });
+    }
 
     const newStudent = {
       id: `st_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -3693,7 +3482,8 @@
       position: null,
       merit_position: null,
       class_position: null,
-      publish_status: 'draft'
+      publish_status: 'draft',
+      is_custom: true
     };
 
     const calc = ResultEngine.calculateStudent(newStudent);
@@ -3709,8 +3499,12 @@
       if (target) Object.assign(target, r);
     });
 
-    // Save locally
+    // Save locally to both allStudents and custom delta storage
     await ResultEngine.Storage.saveStudents(allStudents);
+    if (typeof ResultEngine.Storage.saveCustomStudents === 'function') {
+      const customList = allStudents.filter(s => s.is_custom || (typeof s.id === 'string' && s.id.startsWith('st_')));
+      await ResultEngine.Storage.saveCustomStudents(customList);
+    }
     ResultEngine.Firestore.saveStudentToFirestore(newStudent);
 
     // Sync to backend
@@ -3723,9 +3517,26 @@
     } catch (err) {}
 
     closeAddStudentModal();
+
+    // Reset section filter to 'all' so new student is immediately visible
+    currentSection = 'all';
+    if (editorSectionSelect) {
+      editorSectionSelect.value = 'all';
+    }
+
     renderSpreadsheet();
     renderBatchPreview();
-    alert(`শিক্ষার্থী "${name}" (রোল: ${ResultEngine.toBnDigit(roll)}) সফলভাবে যোগ করা হয়েছে!`);
+    showToast(`শিক্ষার্থী "${name}" (রোল: ${ResultEngine.toBnDigit(roll)}) সফলভাবে যোগ করা হয়েছে!`, 'success');
+
+    // Smoothly scroll to and highlight the newly added student's row
+    setTimeout(() => {
+      const newRow = document.querySelector(`tr[data-student-id="${newStudent.id}"]`);
+      if (newRow) {
+        newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        newRow.classList.add('ring-2', 'ring-emerald-500');
+        setTimeout(() => newRow.classList.remove('ring-2', 'ring-emerald-500'), 2500);
+      }
+    }, 100);
   }
 
   // =========================================================================
@@ -3785,10 +3596,6 @@
 
   async function handleSaveEditedStudent(e) {
     if (e && e.preventDefault) e.preventDefault();
-    if (isExamOrCurrentClassLocked()) {
-      alert('অনুমতি নেই! এই পরীক্ষার ফলাফল ইতিমধ্যে প্রকাশিত হয়ে গেছে। শিক্ষার্থী তথ্য সংশোধন করার ক্ষমতা শুধুমাত্র ওয়েব সুপার অ্যাডমিনের নিকট সংরক্ষিত।');
-      return;
-    }
 
     const studentId = document.getElementById('editStudentId')?.value;
     const student = allStudents.find(s => s.id === studentId);
@@ -3809,7 +3616,7 @@
     const fourthSubject = isSec ? (document.getElementById('editStudentFourthSubject')?.value || '') : '';
 
     if (!roll || !name) {
-      alert('রোল নম্বর ও শিক্ষার্থীর নাম আবশ্যক!');
+      showToast('রোল নম্বর ও শিক্ষার্থীর নাম আবশ্যক!', 'warning');
       return;
     }
 
@@ -3817,7 +3624,7 @@
     const currentStudents = getStudentsInCurrentClass();
     const duplicate = currentStudents.some(s => s.id !== studentId && parseInt(s.roll, 10) === roll && (s.section || 'ক') === section);
     if (duplicate) {
-      alert(`রোল নম্বর ${ResultEngine.toBnDigit(roll)} শাখা "${section}"-এ ইতিমধ্যে বিদ্যমান! অন্য রোল নম্বর দিন।`);
+      showToast(`রোল নম্বর ${ResultEngine.toBnDigit(roll)} শাখা "${section}"-এ ইতিমধ্যে বিদ্যমান! অন্য রোল নম্বর দিন।`, 'warning');
       return;
     }
 
@@ -3887,15 +3694,10 @@
     window.closeEditStudentModal();
     renderSpreadsheet();
     renderBatchPreview();
-    alert(`শিক্ষার্থী "${name}" এর তথ্য সফলভাবে আপডেট ও সংরক্ষণ করা হয়েছে!`);
+    showToast(`শিক্ষার্থী "${name}" এর তথ্য সফলভাবে আপডেট ও সংরক্ষণ করা হয়েছে!`, 'success');
   }
 
   async function deleteStudentFromModal() {
-    if (isExamOrCurrentClassLocked()) {
-      alert('অনুমতি নেই! এই পরীক্ষার ফলাফল ইতিমধ্যে প্রকাশিত হয়ে গেছে। শিক্ষার্থী মুছে ফেলার ক্ষমতা শুধুমাত্র ওয়েব সুপার অ্যাডমিনের নিকট সংরক্ষিত।');
-      return;
-    }
-
     const studentId = document.getElementById('editStudentId')?.value;
     const student = allStudents.find(s => s.id === studentId);
     if (!student) return;
@@ -3905,6 +3707,10 @@
     }
 
     allStudents = allStudents.filter(s => s.id !== studentId);
+    try {
+      const remainingCustom = ResultEngine.Storage.getCustomStudents().filter(s => s.id !== studentId);
+      ResultEngine.Storage.saveCustomStudents(remainingCustom);
+    } catch (e) {}
 
     // Recalculate positions
     const classStudents = getStudentsInCurrentClass();
@@ -3927,7 +3733,7 @@
     window.closeEditStudentModal();
     renderSpreadsheet();
     renderBatchPreview();
-    alert('শিক্ষার্থী সফলভাবে মুছে ফেলা হয়েছে!');
+    showToast('শিক্ষার্থী সফলভাবে মুছে ফেলা হয়েছে!', 'info');
   }
   window.deleteStudentFromModal = deleteStudentFromModal;
 
@@ -4073,15 +3879,14 @@
     renderSpreadsheet();
     renderBatchPreview();
     if (updatedCount > 0) {
-      alert(`সফল! বর্তমান শ্রেণির সকল শিক্ষার্থীর জন্য বিষয়সমূহের পূর্ণমান সফলভাবে আপডেট ও ফলাফল পুনঃগণনা করা হয়েছে (${ResultEngine.toBnDigit(updatedCount)} জন শিক্ষার্থী)।`);
+      showToast(`সফল! বর্তমান শ্রেণির বিষয়সমূহের পূর্ণমান আপডেট ও পুনঃগণনা সম্পন্ন হয়েছে (${ResultEngine.toBnDigit(updatedCount)} জন শিক্ষার্থী)।`, 'success');
     } else {
-      alert(`সফল! বর্তমান শ্রেণির বিষয়সমূহের পূর্ণমান কনফিগারেশন সফলভাবে সংরক্ষিত হয়েছে।`);
+      showToast('সফল! বর্তমান শ্রেণির বিষয়সমূহের পূর্ণমান কনফিগারেশন সংরক্ষিত হয়েছে।', 'success');
     }
   };
 
   // Dropdown UI Helpers
   window.toggleExcelTemplatesMenu = function (e) {
-    if (!e && window.event) e = window.event;
     if (e && e.stopPropagation) e.stopPropagation();
     const menu = document.getElementById('excelTemplatesMenu') || document.getElementById('spreadsheetExcelDropdownMenu');
     if (menu) menu.classList.toggle('hidden');
@@ -4476,14 +4281,6 @@
   // Smart Upsert Excel Importer (স্মার্ট আপডেট ও সংযোজন)
   async function handleExcelUpload(file) {
     if (!file) return;
-
-    const targetExamId = (importExamSelect && importExamSelect.value) ? importExamSelect.value : currentExamId;
-    const targetClassId = (importClassSelect && importClassSelect.value) ? importClassSelect.value : currentClassId;
-    if (isExamOrCurrentClassLocked(targetExamId, targetClassId)) {
-      alert('অনুমতি নেই! এই পরীক্ষার ফলাফল ইতিমধ্যে প্রকাশিত হয়ে গেছে। এক্সেল ইমপোর্টের মাধ্যমে তথ্য পরিবর্তনের একক ক্ষমতা শুধুমাত্র ওয়েব সুপার অ্যাডমিনের নিকট সংরক্ষিত।');
-      return;
-    }
-
     if (typeof XLSX === 'undefined') {
       alert('SheetJS লাইব্রেরি লোড হয়নি!');
       return;
@@ -4625,6 +4422,10 @@
 
         // Persist to local backend & browser storage
         await ResultEngine.Storage.saveStudents(allStudents);
+        if (typeof ResultEngine.Storage.saveCustomStudents === 'function') {
+          const customList = allStudents.filter(s => s.is_custom || (typeof s.id === 'string' && s.id.startsWith('st_')));
+          await ResultEngine.Storage.saveCustomStudents(customList);
+        }
 
         // Background sync to Firestore
         ranked.forEach(st => ResultEngine.Firestore.saveStudentToFirestore(st));
@@ -4645,7 +4446,7 @@
           `;
         }
 
-        alert(`সফল! মোট ${ResultEngine.toBnDigit(totalHandled)} জন শিক্ষার্থীর তথ্য সফলভাবে এক্সেল থেকে সেভ করা হয়েছে (নতুন যুক্ত: ${ResultEngine.toBnDigit(createdCount)}, আপডেট: ${ResultEngine.toBnDigit(updatedCount)})।`);
+        showToast(`সফল! মোট ${ResultEngine.toBnDigit(totalHandled)} জন শিক্ষার্থীর তথ্য সফলভাবে এক্সেল থেকে সেভ করা হয়েছে (নতুন যুক্ত: ${ResultEngine.toBnDigit(createdCount)}, আপডেট: ${ResultEngine.toBnDigit(updatedCount)})।`, 'success');
         switchAdminTab('spreadsheetTab');
         renderSpreadsheet();
       } catch (err) {
@@ -4898,13 +4699,13 @@
         }
 
         await ResultEngine.Storage.saveConfig(config);
-        alert(`"${nameBn}" শ্রেণি সফলভাবে আপডেট করা হয়েছে!`);
+        showToast(`"${nameBn}" শ্রেণি সফলভাবে আপডেট করা হয়েছে!`, 'success');
       }
     } else {
       // ADDING NEW CLASS
       const isDuplicate = school.classes.some(c => c.id === cid || c.name_bn === nameBn);
       if (isDuplicate) {
-        alert(`সতর্কতা: এই নামের বা আইডির শ্রেণি (${nameBn} / ${cid}) ইতিমধ্যে তালিকায় বিদ্যমান!`);
+        showToast(`সতর্কতা: এই নামের বা আইডির শ্রেণি (${nameBn} / ${cid}) ইতিমধ্যে তালিকায় বিদ্যমান!`, 'warning');
         return;
       }
 
@@ -4922,7 +4723,7 @@
 
       currentClassId = cid;
       await ResultEngine.Storage.saveConfig(config);
-      alert(`নতুন শ্রেণি "${nameBn}" সফলভাবে তৈরি ও সক্রিয় করা হয়েছে!`);
+      showToast(`নতুন শ্রেণি "${nameBn}" সফলভাবে তৈরি ও সক্রিয় করা হয়েছে!`, 'success');
     }
 
     window.resetClassForm();
@@ -4993,7 +4794,7 @@
     if (exams.length === 0) {
       manageExamsTableBody.innerHTML = `
         <tr>
-          <td colspan="4" class="py-6 text-center text-slate-400 font-bold">
+          <td colspan="3" class="py-6 text-center text-slate-400 font-bold">
             কোনো পরীক্ষা পাওয়া যায়নি। ওপরের ফর্ম ব্যবহার করে নতুন পরীক্ষা যোগ করুন।
           </td>
         </tr>
@@ -5003,12 +4804,10 @@
 
     manageExamsTableBody.innerHTML = exams.map(ex => {
       const isCurrent = ex.id === currentExamId;
-      const examStudents = allStudents.filter(s => {
+      const count = allStudents.filter(s => {
         const matchSchool = (s.institution_id === activeSchoolId) || (!s.institution_id && activeSchoolId === 'dreamland-school');
         return matchSchool && (s.exam_id === ex.id || s.exam_name_bn === ex.name_bn);
-      });
-      const count = examStudents.length;
-      const isExamPub = (ex.is_published === true || ex.published === true) || (count > 0 && examStudents.some(s => s.publish_status === 'published' || s.publish_status === 'scheduled'));
+      }).length;
 
       return `
         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${isCurrent ? 'bg-sky-50/50 dark:bg-sky-950/20' : ''}">
@@ -5022,38 +4821,16 @@
             </div>
             <div class="text-[10px] text-slate-400 font-mono flex items-center gap-2">
               <span>ID: ${ex.id}</span>
-              ${count > 0 ? `<span class="text-emerald-600 font-sans">(${ResultEngine.toBnDigit(count)} জন শিক্ষার্থী)</span>` : '<span class="text-slate-400 font-sans">(০ জন শিক্ষার্থী)</span>'}
+              ${count > 0 ? `<span class="text-emerald-600 font-sans">(${ResultEngine.toBnDigit(count)} জন শিক্ষার্থী)</span>` : ''}
             </div>
-          </td>
-          <td class="py-3 px-3 text-center">
-            ${isExamPub ? `
-              <span class="px-2.5 py-1 rounded-full text-[10.5px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60 inline-flex items-center gap-1.5 shadow-2xs">
-                <i class="fas fa-circle-check text-emerald-600 text-xs"></i>
-                <span>প্রকাশিত (Live)</span>
-              </span>
-            ` : `
-              <span class="px-2.5 py-1 rounded-full text-[10.5px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/60 inline-flex items-center gap-1.5 shadow-2xs">
-                <i class="fas fa-clock text-amber-600 text-xs"></i>
-                <span>ড্রাফট (লক মুক্ত)</span>
-              </span>
-            `}
           </td>
           <td class="py-3 px-3 text-right">
             <div class="flex items-center justify-end gap-1.5">
-              ${isExamPub ? `
-                <button type="button" onclick="window.toggleExamPublish('${ex.id}', false)" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-xs cursor-pointer flex items-center gap-1 transition-all" title="ফলাফল ড্রাফট করুন (শিক্ষকদের জন্য এডিট সচল হবে)">
-                  <i class="fas fa-file-pen text-[11px]"></i> <span>ড্রাফট</span>
-                </button>
-              ` : `
-                <button type="button" onclick="window.toggleExamPublish('${ex.id}', true)" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs cursor-pointer flex items-center gap-1 transition-all" title="ফলাফল অনলাইনে প্রকাশ করুন (শিক্ষকদের জন্য লক হবে)">
-                  <i class="fas fa-bullhorn text-[11px]"></i> <span>পাবলিশ</span>
-                </button>
-              `}
-              <button type="button" onclick="window.editExam('${ex.id}')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/60 dark:hover:bg-sky-800 text-sky-700 dark:text-sky-300 cursor-pointer flex items-center gap-1 transition-all" title="নাম বা সাল এডিট করুন">
-                <i class="fas fa-edit text-[11px]"></i> <span>এডিট</span>
+              <button type="button" onclick="window.editExam('${ex.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-100 hover:bg-sky-200 dark:bg-sky-900/60 dark:hover:bg-sky-800 text-sky-700 dark:text-sky-300 cursor-pointer flex items-center gap-1" title="নাম বা সাল এডিট করুন">
+                <i class="fas fa-edit"></i> <span>এডিট</span>
               </button>
-              <button type="button" onclick="window.deleteExam('${ex.id}')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-800 text-rose-700 dark:text-rose-300 cursor-pointer flex items-center gap-1 transition-all" title="মুছে ফেলুন">
-                <i class="fas fa-trash-alt text-[11px]"></i> <span>ডিলিট</span>
+              <button type="button" onclick="window.deleteExam('${ex.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-800 text-rose-700 dark:text-rose-300 cursor-pointer flex items-center gap-1" title="মুছে ফেলুন">
+                <i class="fas fa-trash-alt"></i> <span>ডিলিট</span>
               </button>
             </div>
           </td>
@@ -5146,7 +4923,7 @@
         }
 
         await ResultEngine.Storage.saveConfig(config);
-        alert(`পরীক্ষার নাম ও তথ্য সফলভাবে আপডেট করা হয়েছে!\nনতুন নাম: "${nameBn}" (${year})`);
+        showToast(`পরীক্ষার নাম ও তথ্য সফলভাবে আপডেট করা হয়েছে! (${nameBn})`, 'success');
       }
     } else {
       // ADDING NEW EXAM
@@ -5162,7 +4939,7 @@
       await ResultEngine.Storage.saveConfig(config);
       currentYear = year;
       currentExamId = examId;
-      alert(`নতুন পরীক্ষা "${nameBn}" (${year}) সফলভাবে তৈরি ও সক্রিয় করা হয়েছে!`);
+      showToast(`নতুন পরীক্ষা "${nameBn}" (${year}) সফলভাবে তৈরি ও সক্রিয় করা হয়েছে!`, 'success');
     }
 
     window.resetExamForm();
@@ -5184,48 +4961,12 @@
 
     let confirmMsg = `আপনি কি নিশ্চিত যে "${exam.name_bn || exam.id}" (${exam.year || '2026'}) পরীক্ষাটি তালিকা থেকে মুছে ফেলতে চান?`;
     if (countStudents > 0) {
-      confirmMsg += `\n\nসতর্কতা: এই পরীক্ষার অধীনে বর্তমানে ${ResultEngine.toBnDigit(countStudents)} জন শিক্ষার্থীর ফলাফল সংরক্ষিত আছে! পরীক্ষাটি ডিলিট করলে এদের সংরক্ষিত মার্কশীট ডাটাও মুছে যাবে।`;
+      confirmMsg += `\n\nসতর্কতা: এই পরীক্ষার অধীনে বর্তমানে ${ResultEngine.toBnDigit(countStudents)} জন শিক্ষার্থীর ফলাফল সংরক্ষিত আছে!`;
     }
 
     if (!confirm(confirmMsg)) return;
 
-    // 1. Remove from active school object
-    school.exams = (school.exams || []).filter(x => x.id !== examId);
-
-    // 2. Remove from config.institutions
-    if (config && Array.isArray(config.institutions)) {
-      const inst = config.institutions.find(i => i.id === activeSchoolId);
-      if (inst && Array.isArray(inst.exams)) {
-        inst.exams = inst.exams.filter(x => x.id !== examId);
-      }
-    }
-
-    // 3. Remove from window.DEFAULT_RESULTS_CONFIG in memory
-    if (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG && Array.isArray(window.DEFAULT_RESULTS_CONFIG.institutions)) {
-      const inst = window.DEFAULT_RESULTS_CONFIG.institutions.find(i => i.id === activeSchoolId);
-      if (inst && Array.isArray(inst.exams)) {
-        inst.exams = inst.exams.filter(x => x.id !== examId);
-      }
-    }
-
-    // 4. Track deleted exam IDs to avoid re-population from static fallbacks
-    if (!config.deleted_exam_ids) config.deleted_exam_ids = [];
-    if (!config.deleted_exam_ids.includes(examId)) {
-      config.deleted_exam_ids.push(examId);
-    }
-    config._lastModified = Date.now();
-
-    // 5. Clean up students belonging to this exam
-    if (countStudents > 0) {
-      allStudents = allStudents.filter(s => {
-        const matchSchool = (s.institution_id === activeSchoolId) || (!s.institution_id && activeSchoolId === 'dreamland-school');
-        const matchExam = (s.exam_id === examId || s.exam_name_bn === exam.name_bn);
-        return !(matchSchool && matchExam);
-      });
-      await ResultEngine.Storage.saveStudents(allStudents);
-    }
-
-    // 6. Save updated config to storage & server
+    school.exams = school.exams.filter(x => x.id !== examId);
     await ResultEngine.Storage.saveConfig(config);
 
     if (currentExamId === examId) {
@@ -5237,7 +4978,7 @@
     populateYearAndExamDropdowns();
     renderSpreadsheet();
     renderBatchPreview();
-    alert('পরীক্ষাটি তালিকা থেকে সফলভাবে মুছে ফেলা হয়েছে।');
+    alert('পরীক্ষাটি তালিকা থেকে মুছে ফেলা হয়েছে।');
   };
 
   // Backward-compatibility aliases
@@ -6010,19 +5751,6 @@
 
   // Tab switching
   function switchAdminTab(tabName) {
-    // RBAC: Settings and Batch Print are Web Super Admin ONLY
-    if ((tabName === 'settingsTab' || tabName === 'batchPrintTab') && currentUser && currentUser.role !== 'super_admin') {
-      alert('এই অপশনটি শুধুমাত্র ওয়েব সুপার অ্যাডমিন-এর জন্য সংরক্ষিত।');
-      return;
-    }
-
-    if (tabName !== 'spreadsheetTab') {
-      const card = document.getElementById('spreadsheetCard');
-      if (card && card.classList.contains('spreadsheet-fullscreen')) {
-        window.toggleSpreadsheetFullscreen();
-      }
-    }
-
     adminTabButtons.forEach(btn => {
       if (btn.getAttribute('data-admin-tab') === tabName) {
         btn.classList.add('active', 'bg-emerald-600', 'text-white');
@@ -6137,8 +5865,6 @@
 
     editorClassSelect?.addEventListener('change', (e) => {
       currentClassId = e.target.value;
-      currentGroup = 'all';
-      currentSection = 'all';
       if (batchClassSelect) batchClassSelect.value = currentClassId;
       if (importClassSelect) importClassSelect.value = currentClassId;
       renderSpreadsheet();
@@ -6162,11 +5888,6 @@
 
     editorSectionSelect?.addEventListener('change', (e) => {
       currentSection = e.target.value;
-      renderSpreadsheet();
-    });
-
-    editorGroupSelect?.addEventListener('change', (e) => {
-      currentGroup = e.target.value;
       renderSpreadsheet();
     });
 

@@ -57,23 +57,32 @@
        ১. সিকিউরিটি পিন লক স্ক্রিন (PIN Security Gate)
        ========================================================================= -->
   <div id="admin-login-screen" class="fixed inset-0 z-50 bg-[#060a14]/95 backdrop-blur-xl flex items-center justify-center p-4">
-    <div class="max-w-md w-full glass-card rounded-3xl p-8 sm:p-9 shadow-2xl border border-slate-700/80 text-center relative overflow-hidden">
-      <div class="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <!-- Option 2 Ambient Glow Backdrop -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-16 -left-16 w-96 h-96 rounded-full bg-emerald-500/15 blur-3xl"></div>
+      <div class="absolute -bottom-16 -right-16 w-96 h-96 rounded-full bg-blue-600/15 blur-3xl"></div>
+      <div class="absolute top-12 left-[10%] w-5 h-5 bg-emerald-400/20 rotate-45 rounded-xs border border-emerald-400/30"></div>
+      <div class="absolute bottom-20 right-[12%] w-6 h-6 bg-blue-500/20 rotate-12 rounded-xs border border-blue-400/30"></div>
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,#10b9810a_1px,transparent_1px),linear-gradient(to_bottom,#10b9810a_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+    </div>
 
-      <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white mx-auto flex items-center justify-center text-3xl mb-5 shadow-lg shadow-emerald-500/25">
-        <i class="fas fa-shield-halved"></i>
+    <div class="max-w-md w-full glass-card rounded-3xl p-8 sm:p-10 shadow-2xl border border-slate-700/80 text-center relative overflow-hidden z-10">
+      
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-500 text-white mx-auto flex items-center justify-center text-3xl mb-4 shadow-xl shadow-emerald-600/30">
+        <i class="fa-solid fa-landmark"></i>
       </div>
       
-      <h2 class="text-2xl sm:text-3xl font-black text-white tracking-wide">ফয়জার কম্পিউটার</h2>
-      <p class="text-xs text-emerald-400 font-extrabold mt-1 uppercase tracking-wider">ডিজিটাল অ্যাডমিন কন্ট্রোল সেন্টার v2.5</p>
-      <p class="text-xs text-slate-400 mt-2 mb-6">ওয়েবসাইট কনটেন্ট, নোটিশ, সেবা, টুলস ও ফিডব্যাক ব্যবস্থাপনার জন্য সিকিউরিটি পিন প্রবেশ করান।</p>
+      <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">ফয়জার কম্পিউটার</h2>
+      <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-[11px] font-extrabold mt-1.5 mb-2">
+        <i class="fas fa-shield-halved"></i> ডিজিটাল অ্যাডমিন কন্ট্রোল সেন্টার v2.5
+      </div>
+      <p class="text-xs text-slate-300 mb-6 leading-relaxed">ওয়েবসাইট কনটেন্ট, নোটিশ, সেবা, টুলস ও ফিডব্যাক ব্যবস্থাপনার জন্য সিকিউরিটি পিন প্রবেশ করান।</p>
       
       <form id="admin-login-form" class="space-y-4 text-left">
         <div>
           <label for="admin-pin-input" class="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
             <span>সিকিউরিটি পিন (PIN)</span>
-            <span class="text-[11px] text-slate-400 font-normal"><i class="fas fa-shield-halved text-emerald-400 mr-1"></i>সিকিউরিটি ভেরিফিকেশন</span>
+            <span class="text-[11px] text-emerald-400 font-bold"><i class="fas fa-shield-halved mr-1"></i>সিকিউরিটি ভেরিফিকেশন</span>
           </label>
           <div class="relative">
             <input 
@@ -84,7 +93,7 @@
               autofocus
               class="w-full bg-slate-900/90 border border-slate-700 focus:border-emerald-500 text-white rounded-2xl px-4 py-3.5 text-center text-xl tracking-widest font-mono focus:outline-none transition shadow-inner"
             >
-            <button type="button" onclick="togglePinVisibility()" class="absolute right-4 top-4 text-slate-400 hover:text-white transition">
+            <button type="button" onclick="togglePinVisibility()" class="absolute right-4 top-4 text-slate-400 hover:text-white transition cursor-pointer">
               <i id="pin-eye-icon" class="fas fa-eye"></i>
             </button>
           </div>
@@ -94,7 +103,7 @@
           <i class="fas fa-circle-exclamation"></i> সঠিক পিন প্রবেশ করান!
         </div>
         
-        <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2 text-sm">
+        <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2 text-sm cursor-pointer">
           <i class="fas fa-arrow-right-to-bracket"></i> ড্যাশবোর্ডে প্রবেশ করুন
         </button>
         
@@ -115,17 +124,17 @@
     
     <!-- Top Header -->
     <header class="bg-[#0d1527] border-b border-slate-800/80 sticky top-0 z-30 shadow-xl backdrop-blur-md">
-      <div class="container mx-auto max-w-7xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="container mx-auto max-w-7xl px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
         
         <!-- Left Brand Info -->
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-lg font-black shadow-md shadow-emerald-600/20">
-            <i class="fas fa-laptop-code"></i>
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-500 text-white flex items-center justify-center text-lg font-black shadow-md shadow-emerald-600/20">
+            <i class="fa-solid fa-landmark"></i>
           </div>
           <div>
             <div class="text-sm sm:text-base font-black text-white flex items-center gap-2">
-              <span>ফয়জার কম্পিউটার অ্যাডমিন স্যুট</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold hidden sm:inline-block">লাইভ কন্ট্রোল</span>
+              <span>ফয়জার কম্পিউটার</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold hidden sm:inline-block">অ্যাডমিন কন্ট্রোল সেন্টার</span>
             </div>
             <div class="text-[11px] text-slate-400 flex items-center gap-2">
               <span>ফুলবাড়ী সরকারি কলেজ গেট, দিনাজপুর</span>
@@ -250,21 +259,32 @@
            ===================================================================== -->
       <div id="panel-dashboard" class="space-y-6">
         
-        <!-- Welcome Hero Banner -->
-        <div class="glass-card rounded-3xl p-6 sm:p-7 relative overflow-hidden border border-emerald-500/30">
-          <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <!-- Welcome Hero Banner (Option 2 GovTech Aura) -->
+        <div class="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden border border-emerald-500/30 shadow-2xl">
+          <!-- Ambient Glow & Subtle Technical Grid Background -->
+          <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-10 -right-10 w-72 h-72 rounded-full bg-emerald-500/15 blur-3xl"></div>
+            <div class="absolute -bottom-10 -left-10 w-72 h-72 rounded-full bg-blue-600/15 blur-3xl"></div>
+            <div class="absolute top-8 right-[15%] w-4 h-4 bg-emerald-400/20 rotate-45 rounded-xs border border-emerald-400/30"></div>
+            <div class="absolute bottom-6 left-[25%] w-5 h-5 bg-blue-500/20 rotate-12 rounded-xs border border-blue-400/30"></div>
+            <div class="absolute inset-0 bg-[linear-gradient(to_right,#10b9810a_1px,transparent_1px),linear-gradient(to_bottom,#10b9810a_1px,transparent_1px)] bg-[size:28px_28px]"></div>
+          </div>
+          
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
             <div>
-              <span class="inline-block text-[11px] font-extrabold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
-                অভ্যন্তরীণ নিয়ন্ত্রণ কেন্দ্র
-              </span>
-              <h2 class="text-2xl sm:text-3xl font-black text-white">স্বাগতম, অ্যাডমিন প্যানেলে!</h2>
-              <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
+              <div class="inline-flex items-center gap-2 text-[11px] font-extrabold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-3 shadow-xs">
+                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                <span>অভ্যন্তরীণ ডিজিটাল নিয়ন্ত্রণ কেন্দ্র • LSFC Admin v2.5</span>
+              </div>
+              <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+                <span>স্বাগতম, অ্যাডমিন প্যানেলে!</span>
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1.5 max-w-2xl leading-relaxed">
                 এখান থেকে আপনি খুব সহজেই পুরো ওয়েবসাইটের প্রতিটি সেকশনের লেখা, নোটিশ বুলেটিন, সেবাসমূহ ও সরকারি ফি তালিকা, চেকলিস্ট এবং কনভার্টারের বানান সংশোধনসহ গ্রাহকদের পাঠানো মতামত পরিচালনা করতে পারবেন।
               </p>
             </div>
             <div class="flex items-center gap-2.5 flex-shrink-0">
-              <button onclick="saveAllToServer()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-lg transition flex items-center gap-2">
+              <button onclick="saveAllToServer()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-lg transition flex items-center gap-2 cursor-pointer border border-emerald-400/30">
                 <i class="fas fa-cloud-arrow-up"></i> ডেটা সিঙ্ক করুন
               </button>
             </div>
@@ -902,14 +922,94 @@
 
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-[#090f1d] border-t border-slate-800/80 py-4 px-4 text-center text-xs text-slate-500">
-      <div class="container mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div>ফয়জার কম্পিউটার এন্ড ফটোস্ট্যাট © ২০২৬ • সর্বস্বত্ব সংরক্ষিত।</div>
-        <div class="flex items-center gap-4 text-slate-400">
-          <a href="index.html" target="_blank" class="hover:text-emerald-400 transition">হোমপেজ</a>
-          <a href="services.html" target="_blank" class="hover:text-emerald-400 transition">সেবাসমূহ</a>
-          <a href="tools.html" target="_blank" class="hover:text-emerald-400 transition">টুলস</a>
+    <!-- Standardized Unified 4-Column Royal Footer -->
+    <footer class="bg-slate-900 text-slate-300 py-12 px-4 border-t border-slate-800 mt-12">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-8 border-b border-slate-800">
+          
+          <!-- Col 1: Brand & LSFC Authorization -->
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black">
+                <i class="fa-solid fa-landmark"></i>
+              </div>
+              <span class="text-base font-black text-white">ফয়জার কম্পিউটার</span>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed mb-3">
+              সরকার অনুমোদিত ডিজিটাল ও উন্মুক্ত ভূমিসেবা কেন্দ্র (LSFC)। অনুমোদন নং: <strong class="text-emerald-400">দিনাজ/ফুল/এলএসএসএফসি-০৭/২০২৫</strong>।
+            </p>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-[11px] font-bold">
+              <i class="fas fa-shield-halved"></i> <span>সরকারি নির্দেশিকা ও ফি তালিকাভুক্ত</span>
+            </div>
+          </div>
+
+          <!-- Col 2: Quick Links -->
+          <div>
+            <h4 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+              <i class="fas fa-link text-emerald-400"></i> দ্রুত নেভিগেশন
+            </h4>
+            <ul class="space-y-2 text-xs text-slate-400">
+              <li><a href="index.html" target="_blank" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> হোমপেজ</a></li>
+              <li><a href="services.html" target="_blank" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> সেবাসমূহ ও মূল্য তালিকা</a></li>
+              <li><a href="portal.html" target="_blank" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> জব ও চাকরির পোর্টাল</a></li>
+              <li><a href="converter.html" target="_blank" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> বিজয়-ইউনিকোড কনভার্টার</a></li>
+              <li><a href="tools.html" target="_blank" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> ছবি ও স্বাক্ষর রিসাইজার</a></li>
+              <li><a href="results.html" target="_blank" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> পরীক্ষার ফলাফল পোর্টাল</a></li>
+            </ul>
+          </div>
+
+          <!-- Col 3: Work Timings & Proprietor -->
+          <div>
+            <h4 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+              <i class="fas fa-clock text-amber-400"></i> কাজের সময়সূচী
+            </h4>
+            <ul class="space-y-2 text-xs text-slate-400">
+              <li class="flex justify-between border-b border-slate-800/80 pb-1">
+                <span>শনিবার - বৃহস্পতিবার:</span>
+                <span class="font-bold text-emerald-400">সকাল ৮:০০ - রাত ৯:০০</span>
+              </li>
+              <li class="flex justify-between border-b border-slate-800/80 pb-1">
+                <span>শুক্রবার:</span>
+                <span class="font-bold text-amber-400">বিকাল ৪:০০ - রাত ৯:০০</span>
+              </li>
+              <li class="pt-2">
+                <span class="text-white font-bold block">স্বত্বাধিকারী:</span>
+                <span class="text-slate-300">মোঃ ফয়জার আলী</span>
+              </li>
+              <li>
+                <span class="text-white font-bold block">ইমেইল:</span>
+                <span class="text-slate-400">fayzar.computer@gmail.com</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Col 4: Location & Contact -->
+          <div>
+            <h4 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+              <i class="fas fa-location-dot text-rose-500"></i> দোকানের ঠিকানা
+            </h4>
+            <p class="text-xs text-slate-400 leading-relaxed mb-3">
+              ফুলবাড়ী সরকারি কলেজ গেটের পশ্চিম পার্শ্বে, ফুলবাড়ী, দিনাজপুর - ৫২৬০
+            </p>
+            <div class="space-y-2">
+              <a href="tel:01717101919" class="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-black flex items-center justify-center gap-2 transition border border-slate-700">
+                <i class="fas fa-phone-alt text-emerald-400"></i> 01717-101919
+              </a>
+              <a href="https://wa.me/8801717101919" target="_blank" rel="noopener" class="w-full py-2 px-3 rounded-xl bg-[#075e24] hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-2 transition">
+                <i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপ বার্তা
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+          <div>
+            © ২০২৬ ফয়জার কম্পিউটার এন্ড ফটোস্ট্যাট। সর্বস্বত্ব সংরক্ষিত।
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="text-emerald-400 font-bold flex items-center gap-1"><i class="fas fa-shield-halved text-[10px]"></i> অ্যাডমিন অ্যাক্টিভ সেশন</span>
+          </div>
         </div>
       </div>
     </footer>

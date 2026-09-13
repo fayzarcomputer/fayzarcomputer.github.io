@@ -42,7 +42,7 @@ If a test fails or an error occurs:
 
 ## Core Domain & Architecture Anchors
 
-- **Project:** ফয়জার কম্পিউটার এন্ড ফটোস্ট্যাট (Fayzar Computer & Photostat)
+- **Project:** ফয়জার কম্পিউটার এন্ড ফটোস্ট্যাট (Fayzar Computer & Photostat) - Redesign
 - **Identity:** সরকার অনুমোদিত ভূমিসেবা কেন্দ্র (LSFC), অনুমোদন নং: দিনাজ/ফুল/এলএসএসএফসি-০৭/২০২৫
 - **Key Modules:**
   1. Homepage (`index.html`) - Hero, 19 Services, Live Notices, Tools Gateway, Checklist, Reviews.
@@ -53,4 +53,4 @@ If a test fails or an error occurs:
   6. Notice Board (`notices.html`) - Job circulars and exam notices with deadline alerts.
   7. Tools Hub (`tools.html`) - Teletalk 300x300 & 300x80 resizer, DOCX to DOC, background remover.
   8. Admin Panel (`admin.html`) - Content, services, candidate profiles, dictionary & backups.
-- **Offline Mandate:** 100% offline-ready. Zero external CDN dependencies. All Tailwind, Font Awesome, fonts, and scripts must reside locally.
+- **Offline Mandate:** 100% offline-first. Zero external CDN dependencies. All Tailwind, Font Awesome, fonts, and scripts must reside locally.

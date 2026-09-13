@@ -66,7 +66,6 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
 5. STRICT FIDELITY TO SOURCE & MANDATORY AUDIT NOTE (মূল ফাইলের সাথে হুবহু মিল ও অডিট নোট):
    - DO NOT alter, rewrite, rephrase, summarize, or modify the original text, question contents, equations, or numbers on your own.
    - STIMULUS (উদ্দীপক/অনুচ্ছেদ অপরিবর্তিত রাখা): NEVER change, paraphrase, shorten, or rewrite the stimulus. It MUST match the source image word-for-word!
-   - QUOTATION MARKS & PUNCTUATION FIDELITY: Always preserve all single and double quotation marks ('...', "...", ‘...’, “...”) around character names, single letters, placeholders, and terms (যেমন: 'জ', "জ", 'ক', 'খ', 'গ', 'A', 'B', 'পাখি') exactly as written in the source image! NEVER omit, drop, or remove quotes.
    - MANDATORY AUDIT NOTE: If you make any unavoidable correction (fixing an obvious printing typo, restoring blurred text, or resolving misspellings), you MUST explicitly document each and every change at the very end of the document in a dedicated note block:
      [নোট ও পরিবর্তনসমূহ:
      - প্রশ্ন ৩-এর উদ্দীপকে '...' মূল ছবির সাথে মিলানো হয়েছে।
@@ -99,10 +98,7 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
       ii. CP \perp BC
       iii. AB = AC - BC
       নিচের কোনটি সঠিক?
-      (ক) i ও ii
-      (খ) i ও iii
-      (গ) ii ও iii
-      (ঘ) i, ii ও iii ✅
+      (ক) i ও ii    (খ) i ও iii    (গ) ii ও iii    (ঘ) i, ii ও iii ✅
     - Keep MCQ options aligned side-by-side on the same line with proper spacing.
 
 11. CREATIVE QUESTIONS (সৃজনশীল প্রশ্নপত্র):
@@ -137,8 +133,7 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
     - DO NOT get trapped in repetitive dot loops. Continue transcribing the rest of the letter/form (বরাবর, বিষয়, জনাব, বিবরণ, আবেদনকারী, স্বাক্ষর ইত্যাদি) completely and faithfully!
 
 16. ACCURATE BENGALI TYPOGRAPHY:
-    - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output) clean in English.
-    - DASH & HYPHEN FIDELITY: Preserve all visible dashes and hyphens (-, –, —) between text and questions cleanly without converting or omitting them.`;
+    - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output) clean in English.`;
 
   const GEMINI_VERIFY_PROMPT = `You are the Chief Examination Paper Auditor, Proofreader, and Senior Bengali Question Typist.
 You are given:
@@ -291,9 +286,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
       copyBtn: document.getElementById('wizardCopyTextBtn') || document.getElementById('ai-ocr-copy-btn'),
       sendToConverterBtn: document.getElementById('ai-ocr-send-to-converter-btn'),
-      downloadDocBtn: document.getElementById('ai-ocr-download-doc-btn'),
+      downloadDocBtn: document.getElementById('wizardDlDocBtn') || document.getElementById('ai-ocr-download-doc-btn'),
       downloadBijoyDocxBtn: document.getElementById('ai-ocr-download-bijoy-docx-btn'),
-      downloadDocxBtn: document.getElementById('ai-ocr-download-docx-btn'),
+      downloadDocxBtn: document.getElementById('wizardDlDocxBtn') || document.getElementById('ai-ocr-download-docx-btn'),
 
       pageSizeSelect: document.getElementById('ai-target-page-size') || document.getElementById('ai-ocr-page-size'),
       pageMarginSelect: document.getElementById('ai-target-page-margin') || document.getElementById('ai-ocr-page-margin'),
@@ -645,9 +640,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         const thumbDiv = document.createElement('div');
         thumbDiv.className = 'w-14 h-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative flex-shrink-0';
         if (item.base64) {
-          thumbDiv.innerHTML = `<img src="${item.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx + 1}: ${item.name}</span>`;
+          thumbDiv.innerHTML = `<img src="${item.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
         } else if (item.isPdf) {
-          thumbDiv.innerHTML = `<i class="fa-solid fa-file-pdf text-rose-500 text-lg"></i><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx + 1}: ${item.name}</span>`;
+          thumbDiv.innerHTML = `<i class="fa-solid fa-file-pdf text-rose-500 text-lg"></i><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
           fastOptimizeImageFile(item.file).then(opt => {
             item.base64 = opt.base64;
             item.mimeType = opt.mimeType;
@@ -656,7 +651,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           fastOptimizeImageFile(item.file).then(opt => {
             item.base64 = opt.base64;
             item.mimeType = opt.mimeType;
-            thumbDiv.innerHTML = `<img src="${opt.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx + 1}: ${item.name}</span>`;
+            thumbDiv.innerHTML = `<img src="${opt.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
           });
         }
         elements.multiThumbs.appendChild(thumbDiv);
@@ -724,7 +719,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   }
 
   // Unified Smart Wizard Conversion Bridge
-  async function startUnifiedOcr(targetFormat = 'doc', onProgress = null, onStream = null, customOptions = {}) {
+  async function startUnifiedOcr(targetFormat = 'doc', onProgress = null, onStream = null) {
     if (!state.imageBase64 && state.filesQueue.length === 0) {
       throw new Error('অনুগ্রহ করে প্রথমে ছবি বা PDF ফাইল নির্বাচন করুন');
     }
@@ -781,7 +776,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     }
 
     // Auto-generate and download the requested target document
-    await downloadWordDocument(targetFormat, customOptions);
+    await downloadWordDocument(targetFormat);
 
     if (onProgress) onProgress('রূপান্তর সফলভাবে সম্পন্ন হয়েছে!', 100);
 
@@ -1108,7 +1103,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       } catch (retryErr) { /* ignore */ }
     }
 
-    // Dynamic Discovery Fallback (Filters out all Lite & 8b models)
+    // Dynamic Discovery Fallback
     try {
       setLoading(true, 'আপনার API Key-এর জন্য উপলব্ধ মডেল তালিকা খোঁজা হচ্ছে...', 92);
       const listRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {}, 6000);
@@ -1117,7 +1112,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         const available = (listData.models || [])
           .filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && m.name)
           .map(m => m.name.replace('models/', ''))
-          .filter(m => (m.includes('flash') || m.includes('pro')) && !m.includes('lite') && !m.includes('8b'));
+          .filter(m => m.includes('flash') || m.includes('pro'));
 
         for (const dynModel of available) {
           if (modelsToTry.includes(dynModel)) continue;
@@ -1488,10 +1483,13 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     // 1. Unpack any \text{...} that contains Bengali characters so Bengali words are never trapped in equations
     s = s.replace(/\\(?:text|mathrm|textmd|textbf|textit|mbox)\{\s*([^{}]*?[\u0980-\u09FF][^{}]*?)\s*\}/g, ' $1 ');
 
-    // 2. Separate multiple adjacent definitions: "} B =" -> "}, B ="
+    // 2. Strip quotes around Bengali words
+    s = s.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
+
+    // 3. Separate multiple adjacent definitions: "} B =" -> "}, B ="
     s = s.replace(/(\}\s*)([A-Za-z]\s*=)/g, (match, g1, g2) => `${g1.trim()}, ${g2}`);
 
-    // 3. Process all math delimiters and extract ALL Bengali text completely outside
+    // 4. Process all math delimiters and extract ALL Bengali text completely outside
     s = s.replace(/\$\$([\s\S]*?)\$\$|\$([^\$]+?)\$|\\\[([\s\S]*?\\\])|\\\(([\s\S]*?)\\\)/g, (match, d1, s1, b1, p1) => {
       const isDouble = Boolean(d1 || b1);
       const inner = (d1 || s1 || b1 || p1 || '').trim();
@@ -1500,9 +1498,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         return match;
       }
 
-      // Strip quotes around trapped Bengali words inside math mode only
-      const cleanInner = inner.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
-      const parts = cleanInner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
+      const parts = inner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
       let out = [];
       for (let p of parts) {
         p = (p || '').trim();
@@ -1546,7 +1542,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     // 1. Clean asterisks around Roman numerals: *i.* -> i., *ii.* -> ii., *iii.* -> iii.
     text = text.replace(/\*+\s*(i{1,4}|iv|v|vi{0,3}|ix|x)\s*\.\s*\*+/gi, '$1.');
-
+    
     // 2. Clean asterisks around inline Roman numerals: *i*, *ii*, *iii*, *i, ii*, *i ও ii*, *i, ii ও iii*
     text = text.replace(/\*+\s*([iIvVxX0-9]+(?:\s*,\s*[iIvVxX0-9]+)*(?:\s*ও\s*[iIvVxX0-9]+)*)\s*\*+/g, '$1');
     text = text.replace(/\*+([iIvVxX]+)\*+/g, '$1');
@@ -1584,7 +1580,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       // 4. Remove score marks [১], [২], [৩], [৪], [৮], [১০], (১), (২) at the end of creative questions
       l = l.replace(/(\?|।|:|[a-zA-Z\u0980-\u09FF"'”’\$])\s*\[\s*[০-৯0-9\s]+\s*\]\s*$/g, '$1');
       l = l.replace(/(\?|।|:|[a-zA-Z\u0980-\u09FF"'”’\$])\s*[\(（]\s*[০-৯0-9\s]+\s*[\)）]\s*$/g, '$1');
-
+      
       // If line is a CQ subquestion (e.g. ক. ... ১) with trailing mark digit, remove trailing digit
       if (/^[কখগঘabcd]\./i.test(trimmed)) {
         l = l.replace(/(\?|।)\s+[০-৯0-9]\s*$/g, '$1');
@@ -1596,7 +1592,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       l = l.replace(/(\?|।|[a-zA-Z\u0980-\u09FF])\s*মান\s*[:\s]*[০-৯0-9]+\s*$/g, '$1');
 
       // 4b. Format diagram/image tags strictly as [ছবি আছে-পৃ:০১] without any description
-      l = l.replace(/\[\s*(?:চিত্র|ছবি)\s*আছে\s*[:\-]\s*(?:পৃ(?:ষ্ঠা)?[:\s]*([০-৯0-9]+))?[^\]]*\]/gi, function (match, pageNum) {
+      l = l.replace(/\[\s*(?:চিত্র|ছবি)\s*আছে\s*[:\-]\s*(?:পৃ(?:ষ্ঠা)?[:\s]*([০-৯0-9]+))?[^\]]*\]/gi, function(match, pageNum) {
         let p = pageNum ? toBengaliNumber(pageNum.replace(/[^\d০-৯]/g, '').padStart(2, '0')) : '০১';
         return `[ছবি আছে-পৃ:${p}]`;
       });
@@ -1608,7 +1604,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     let finalOutput = cleanedLines.join('\n').trim();
 
     // 5. Clean stray quotes around units e.g. 2262 "cm" 3, "cm"^3, "cm"
-    finalOutput = finalOutput.replace(/(?<=\d|\))\s*["']\s*(cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)\s*["']\s*(\^?\d+)?/gi, function (match, unit, exp) {
+    finalOutput = finalOutput.replace(/(?<=\d|\))\s*["']\s*(cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)\s*["']\s*(\^?\d+)?/gi, function(match, unit, exp) {
       let cleanExp = exp ? exp.replace('^', '') : '';
       return cleanExp ? ` $${unit}^{${cleanExp}}$` : ` ${unit}`;
     });
@@ -1875,7 +1871,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     return /\$\$[\s\S]*?\$\$|\$[^\$]+?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)/.test(text);
   }
 
-  function renderRunsForOoxml(text, isBijoy, fontSizeHalfPt, unicodeFont = 'Kalpurush') {
+  function renderRunsForOoxml(text, isBijoy, fontSizeHalfPt) {
     if (!text || !text.trim()) return '';
     if (typeof EquationConverter !== 'undefined' && hasLatexMath(text)) {
       const segments = EquationConverter.splitTextAndMath(text);
@@ -1883,7 +1879,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       for (const seg of segments) {
         if (seg.type === 'math') {
           if (/[\u0980-\u09FF]/.test(seg.value)) {
-            runsXml += renderRunsForOoxmlPlain(seg.value, isBijoy, fontSizeHalfPt, false, unicodeFont);
+            runsXml += renderRunsForOoxmlPlain(seg.value, isBijoy, fontSizeHalfPt, false);
           } else if (typeof EquationConverter !== 'undefined' && typeof EquationConverter.latexToOmml === 'function') {
             runsXml += EquationConverter.latexToOmml(seg.value, isBijoy);
           } else {
@@ -1891,12 +1887,12 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             runsXml += renderEquationForOoxml(eqCode, isBijoy, fontSizeHalfPt, false);
           }
         } else if (seg.value) {
-          runsXml += renderRunsForOoxmlPlain(seg.value, isBijoy, fontSizeHalfPt, false, unicodeFont);
+          runsXml += renderRunsForOoxmlPlain(seg.value, isBijoy, fontSizeHalfPt, false);
         }
       }
       return runsXml;
     }
-    return renderRunsForOoxmlPlain(text, isBijoy, fontSizeHalfPt, false, unicodeFont);
+    return renderRunsForOoxmlPlain(text, isBijoy, fontSizeHalfPt, false);
   }
 
   function renderEquationForOoxml(eqCode, isBijoy, fontSizeHalfPt, isBold) {
@@ -1966,7 +1962,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       </w:r>\n`;
   }
 
-  function renderRunsForOoxmlPlain(text, isBijoy, fontSizeHalfPt, isBold, unicodeFont = 'Kalpurush') {
+  function renderRunsForOoxmlPlain(text, isBijoy, fontSizeHalfPt, isBold) {
     if (!text || !text.trim()) return '';
 
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -1993,7 +1989,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
           if (seg.type === 'english') {
             runsXml += `      <w:r>
         <w:rPr>
-          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman" w:hint="default"/>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
           <w:sz w:val="${fontSizeHalfPt}"/>
           <w:szCs w:val="${fontSizeHalfPt}"/>
           ${boldTag}
@@ -2002,45 +1998,11 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
         <w:t xml:space="preserve">${escapeXml(seg.text)}</w:t>
       </w:r>\n`;
           } else {
-            const fontName = isBijoy ? 'SutonnyMJ' : (unicodeFont || 'Kalpurush');
-            const rFontsXml = isBijoy
-              ? `<w:rFonts w:ascii="SutonnyMJ" w:hAnsi="SutonnyMJ" w:cs="SutonnyMJ" w:hint="ascii"/>`
-              : `<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="${fontName}" w:hint="cs"/>`;
-
-            if (isBijoy && /[\u2013\u2014]/.test(seg.text)) {
-              const dashParts = seg.text.split(/([\u2013\u2014]+)/);
-              for (const dp of dashParts) {
-                if (!dp) continue;
-                if (/[\u2013\u2014]/.test(dp)) {
-                  runsXml += `      <w:r>
+            const targetText = isBijoy && window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(seg.text) : seg.text;
+            const fontName = isBijoy ? 'SutonnyMJ' : 'Kalpurush';
+            runsXml += `      <w:r>
         <w:rPr>
-          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman" w:hint="default"/>
-          <w:sz w:val="${fontSizeHalfPt}"/>
-          <w:szCs w:val="${fontSizeHalfPt}"/>
-          ${boldTag}
-          ${vertAlignTag}
-        </w:rPr>
-        <w:t xml:space="preserve">${escapeXml(dp)}</w:t>
-      </w:r>\n`;
-                } else {
-                  const targetSub = window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(dp) : dp;
-                  runsXml += `      <w:r>
-        <w:rPr>
-          ${rFontsXml}
-          <w:sz w:val="${fontSizeHalfPt}"/>
-          <w:szCs w:val="${fontSizeHalfPt}"/>
-          ${boldTag}
-          ${vertAlignTag}
-        </w:rPr>
-        <w:t xml:space="preserve">${escapeXml(targetSub)}</w:t>
-      </w:r>\n`;
-                }
-              }
-            } else {
-              const targetText = isBijoy && window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(seg.text) : seg.text;
-              runsXml += `      <w:r>
-        <w:rPr>
-          ${rFontsXml}
+          <w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}"/>
           <w:sz w:val="${fontSizeHalfPt}"/>
           <w:szCs w:val="${fontSizeHalfPt}"/>
           ${boldTag}
@@ -2048,7 +2010,6 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
         </w:rPr>
         <w:t xml:space="preserve">${escapeXml(targetText)}</w:t>
       </w:r>\n`;
-            }
           }
         }
       }
@@ -2056,18 +2017,17 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     return runsXml;
   }
 
-  async function downloadWordDocument(format, customOptions = {}) {
+  async function downloadWordDocument(format) {
     const text = state.unicodeText;
     if (!text || !text.trim()) {
       showToast('ডাউনলোড করার মতো কোনো টেক্সট নেই', 'warning');
       return;
     }
 
-    const pageSizeVal = customOptions.pageSize || (elements.pageSizeSelect ? elements.pageSizeSelect.value : 'a4');
-    const marginVal = customOptions.margin || (elements.pageMarginSelect ? elements.pageMarginSelect.value : 'normal');
-    const fontSizeVal = customOptions.fontSize || (elements.fontSizeSelect ? elements.fontSizeSelect.value : '12');
+    const pageSizeVal = elements.pageSizeSelect ? elements.pageSizeSelect.value : 'a4';
+    const marginVal = elements.pageMarginSelect ? elements.pageMarginSelect.value : 'normal';
+    const fontSizeVal = elements.fontSizeSelect ? elements.fontSizeSelect.value : '12';
     const fontSizePt = parseInt(fontSizeVal, 10) || 12;
-    const targetFont = customOptions.targetFont || (typeof window !== 'undefined' && window.selectedUnicodeFont ? window.selectedUnicodeFont : 'Kalpurush');
 
     const rawName = state.selectedFile?.name || state.filesQueue?.[0]?.name || 'Question_Paper';
     const baseName = rawName.replace(/\.[^/.]+$/, '');
@@ -2079,9 +2039,9 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       try {
         let docBlob = null;
         if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.createDocFromText === 'function') {
-          docBlob = DocxHandler.createDocFromText(text, 'SutonnyMJ', true, fontSizePt, pageSizeVal, marginVal);
+          docBlob = DocxHandler.createDocFromText(text, 'SutonnyMJ', true, fontSizePt);
         } else if (typeof DocxToDocConverter !== 'undefined') {
-          const docxBlob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal, targetFont });
+          const docxBlob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
           const docxConverter = new DocxToDocConverter();
           const docResult = await docxConverter.convertDocxToDoc(docxBlob, {
             pageSize: pageSizeVal,
@@ -2109,7 +2069,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     if (format === 'bijoy_docx') {
       showToast(`বিজয় .DOCX তৈরি হচ্ছে...`, 'info');
       try {
-        const blob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal, targetFont });
+        const blob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
         triggerDownload(blob, `${baseName}_Bijoy.docx`);
         showToast(`বিজয় .DOCX ডাউনলোড সম্পন্ন!`, 'success');
       } catch (err) {
@@ -2123,7 +2083,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     if (format === 'unicode_docx') {
       showToast(`ইউনিকোড .DOCX তৈরি হচ্ছে...`, 'info');
       try {
-        const blob = await createDocxBlob(text, false, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal, targetFont });
+        const blob = await createDocxBlob(text, false, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
         triggerDownload(blob, `${baseName}_Unicode.docx`);
         showToast(`ইউনিকোড .DOCX ডাউনলোড সম্পন্ন!`, 'success');
       } catch (err) {
@@ -2151,7 +2111,6 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     const fontSizeVal = customOptions.fontSize || (elements.fontSizeSelect ? elements.fontSizeSelect.value : '12');
     const fontSizePt = parseInt(fontSizeVal, 10) || 12;
     const fontSizeHalfPt = fontSizePt * 2;
-    const unicodeFont = customOptions.targetFont || (typeof window !== 'undefined' && window.selectedUnicodeFont ? window.selectedUnicodeFont : 'Kalpurush');
 
     const PAGE_SIZES = {
       'a4': { w: 11906, h: 16838, name: 'A4' },
@@ -2179,7 +2138,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       if (block.type === 'paragraph') {
         const trimmed = block.text.trim();
         if (!trimmed) continue;
-        const runsXml = renderRunsForOoxml(block.text, isBijoy, fontSizeHalfPt, unicodeFont);
+        const runsXml = renderRunsForOoxml(block.text, isBijoy, fontSizeHalfPt);
         bodyContentXml += `    <w:p>
       <w:pPr>
         <w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/>
@@ -2197,7 +2156,7 @@ ${runsXml}    </w:p>\n`;
           const trPr = isHeader ? '<w:trPr><w:tblHeader/></w:trPr>' : '';
           const cellsXml = Array(maxCols).fill(0).map((_, c) => {
             const cellText = row[c] || '';
-            const cellRuns = renderRunsForOoxml(cellText, isBijoy, fontSizeHalfPt, unicodeFont);
+            const cellRuns = renderRunsForOoxml(cellText, isBijoy, fontSizeHalfPt);
             return `        <w:tc>
           <w:tcPr>
             <w:tcW w:w="${colWidth}" w:type="dxa"/>
@@ -2264,7 +2223,7 @@ ${bodyContentXml}
   <w:docDefaults>
     <w:rPrDefault>
       <w:rPr>
-        <w:rFonts w:ascii="${isBijoy ? 'SutonnyMJ' : 'Times New Roman'}" w:hAnsi="${isBijoy ? 'SutonnyMJ' : 'Times New Roman'}" w:cs="${isBijoy ? 'SutonnyMJ' : unicodeFont}"/>
+        <w:rFonts w:ascii="${isBijoy ? 'SutonnyMJ' : 'Times New Roman'}" w:hAnsi="${isBijoy ? 'SutonnyMJ' : 'Times New Roman'}" w:cs="${isBijoy ? 'SutonnyMJ' : 'Kalpurush'}"/>
         <w:sz w:val="${fontSizeHalfPt}"/>
         <w:szCs w:val="${fontSizeHalfPt}"/>
       </w:rPr>

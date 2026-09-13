@@ -621,6 +621,7 @@
   const Storage = {
     CONFIG_KEY: 'fayzar_results_config_v3',
     DATA_KEY: 'fayzar_results_data_v3',
+    CUSTOM_STUDENTS_KEY: 'fayzar_custom_students_v3',
     AUTH_USER_KEY: 'fayzar_result_current_user',
     IDB_NAME: 'FayzarResultsDB',
     IDB_STORE: 'results_store',
@@ -630,7 +631,7 @@
       if (typeof indexedDB === 'undefined') return null;
       return new Promise((resolve) => {
         try {
-          const req = indexedDB.open(this.IDB_NAME, 1);
+          const req = indexedDB.open(this.IDB_NAME, 2);
           req.onupgradeneeded = (e) => {
             const db = e.target.result;
             if (!db.objectStoreNames.contains(this.IDB_STORE)) {
@@ -648,7 +649,7 @@
     async _idbGet(key) {
       try {
         const db = await this._getIDB();
-        if (!db) return null;
+        if (!db || !db.objectStoreNames.contains(this.IDB_STORE)) return null;
         return new Promise((resolve) => {
           try {
             const tx = db.transaction(this.IDB_STORE, 'readonly');
@@ -667,7 +668,7 @@
     async _idbSet(key, val) {
       try {
         const db = await this._getIDB();
-        if (!db) return false;
+        if (!db || !db.objectStoreNames.contains(this.IDB_STORE)) return false;
         return new Promise((resolve) => {
           try {
             const tx = db.transaction(this.IDB_STORE, 'readwrite');
@@ -698,24 +699,6 @@
     },
 
     async loadConfig() {
-      // 1. First retrieve any local modified config from IndexedDB or localStorage
-      let localConfig = null;
-      try {
-        const idbConfig = await this._idbGet(this.CONFIG_KEY);
-        if (idbConfig && Array.isArray(idbConfig.institutions) && idbConfig.institutions.length > 0) {
-          localConfig = idbConfig;
-        } else if (typeof localStorage !== 'undefined') {
-          const cached = localStorage.getItem(this.CONFIG_KEY);
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            if (parsed && Array.isArray(parsed.institutions) && parsed.institutions.length > 0) {
-              localConfig = parsed;
-            }
-          }
-        }
-      } catch (e) {}
-
-      // 2. If running under HTTP server with active API, check server
       const isHttp = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'));
       if (isHttp && typeof fetch !== 'undefined') {
         try {
@@ -723,14 +706,6 @@
           if (res.ok) {
             const cfg = await res.json();
             if (cfg && Array.isArray(cfg.institutions) && cfg.institutions.length > 0) {
-              if (localConfig && Array.isArray(localConfig.deleted_exam_ids)) {
-                cfg.institutions.forEach(inst => {
-                  if (Array.isArray(inst.exams)) {
-                    inst.exams = inst.exams.filter(ex => !localConfig.deleted_exam_ids.includes(ex.id));
-                  }
-                });
-                cfg.deleted_exam_ids = localConfig.deleted_exam_ids;
-              }
               this._writeLocalConfig(cfg);
               await this._idbSet(this.CONFIG_KEY, cfg);
               return cfg;
@@ -738,25 +713,36 @@
           }
         } catch (e) {}
 
-        // Fallback to static data/results_config.json ONLY IF NO localConfig exists
-        if (!localConfig) {
+        try {
+          const res2 = await fetch('data/results_config.json', { cache: 'no-cache' });
+          if (res2.ok) {
+            const cfg2 = await res2.json();
+            if (cfg2 && Array.isArray(cfg2.institutions) && cfg2.institutions.length > 0) {
+              this._writeLocalConfig(cfg2);
+              await this._idbSet(this.CONFIG_KEY, cfg2);
+              return cfg2;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Check IndexedDB
+      const idbConfig = await this._idbGet(this.CONFIG_KEY);
+      if (idbConfig && Array.isArray(idbConfig.institutions) && idbConfig.institutions.length > 0) {
+        if (typeof window !== 'undefined') window.DEFAULT_RESULTS_CONFIG = idbConfig;
+        return idbConfig;
+      }
+
+      if (typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem(this.CONFIG_KEY);
+        if (cached) {
           try {
-            const res2 = await fetch('data/results_config.json', { cache: 'no-cache' });
-            if (res2.ok) {
-              const cfg2 = await res2.json();
-              if (cfg2 && Array.isArray(cfg2.institutions) && cfg2.institutions.length > 0) {
-                this._writeLocalConfig(cfg2);
-                await this._idbSet(this.CONFIG_KEY, cfg2);
-                return cfg2;
-              }
+            const parsed = JSON.parse(cached);
+            if (parsed && Array.isArray(parsed.institutions) && parsed.institutions.length > 0) {
+              return parsed;
             }
           } catch (e) {}
         }
-      }
-
-      if (localConfig) {
-        if (typeof window !== 'undefined') window.DEFAULT_RESULTS_CONFIG = localConfig;
-        return localConfig;
       }
 
       if (typeof window !== 'undefined' && window.DEFAULT_RESULTS_CONFIG && Array.isArray(window.DEFAULT_RESULTS_CONFIG.institutions)) {
@@ -801,6 +787,39 @@
       if (typeof window !== 'undefined') {
         window.DEFAULT_RESULTS_DATA = students;
       }
+    },
+
+    async getCustomStudents() {
+      let list = [];
+      try {
+        const idbCustom = await this._idbGet(this.CUSTOM_STUDENTS_KEY);
+        if (Array.isArray(idbCustom) && idbCustom.length > 0) {
+          list = idbCustom;
+        }
+      } catch (e) {}
+
+      if (list.length === 0 && typeof localStorage !== 'undefined') {
+        try {
+          const raw = localStorage.getItem(this.CUSTOM_STUDENTS_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
+          }
+        } catch (e) {}
+      }
+      return list;
+    },
+
+    async saveCustomStudents(customList) {
+      if (!Array.isArray(customList)) return;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(this.CUSTOM_STUDENTS_KEY, JSON.stringify(customList));
+        }
+      } catch (e) {
+        console.warn('Custom students localStorage write warning:', e);
+      }
+      await this._idbSet(this.CUSTOM_STUDENTS_KEY, customList);
     },
 
     async loadStudents() {
@@ -851,6 +870,8 @@
       // 3. SMART MERGE:
       // Never delete locally added students or newer offline edits!
       let finalStudents = [];
+      const customStudents = await this.getCustomStudents();
+
       if (serverStudents && Array.isArray(serverStudents) && localStudents.length > 0) {
         const serverMap = new Map(serverStudents.map(s => [s.id, s]));
         const localMap = new Map(localStudents.map(s => [s.id, s]));
@@ -885,9 +906,32 @@
           this.saveStudents(finalStudents);
         }
       } else if (serverStudents && Array.isArray(serverStudents) && serverStudents.length > 0) {
-        finalStudents = serverStudents;
+        finalStudents = [...serverStudents];
       } else if (localStudents.length > 0) {
-        finalStudents = localStudents;
+        finalStudents = [...localStudents];
+      }
+
+      // Always guarantee any custom-added student from delta storage is included
+      if (customStudents.length > 0) {
+        const currentFinalMap = new Map(finalStudents.map(s => [s.id, s]));
+        let deltaAdded = false;
+        customStudents.forEach(cs => {
+          if (!currentFinalMap.has(cs.id)) {
+            finalStudents.push(cs);
+            currentFinalMap.set(cs.id, cs);
+            deltaAdded = true;
+          } else {
+            const existing = currentFinalMap.get(cs.id);
+            if ((cs.updated_at || 0) > (existing.updated_at || 0)) {
+              Object.assign(existing, cs);
+              deltaAdded = true;
+            }
+          }
+        });
+        if (deltaAdded) {
+          this._writeLocalStudents(finalStudents);
+          await this._idbSet(this.DATA_KEY, finalStudents);
+        }
       }
 
       if (finalStudents.length > 0) {
@@ -906,6 +950,14 @@
       });
       this._writeLocalStudents(students);
       await this._idbSet(this.DATA_KEY, students);
+
+      // Track newly created / custom students in dedicated lightweight delta storage
+      try {
+        const customStudents = students.filter(s => s.is_custom || (typeof s.id === 'string' && s.id.startsWith('st_')));
+        if (customStudents.length > 0) {
+          await this.saveCustomStudents(customStudents);
+        }
+      } catch (e) {}
 
       if (typeof fetch !== 'undefined') {
         try {
@@ -930,9 +982,11 @@
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem(this.CONFIG_KEY);
         localStorage.removeItem(this.DATA_KEY);
+        localStorage.removeItem(this.CUSTOM_STUDENTS_KEY);
       }
       await this._idbSet(this.CONFIG_KEY, null);
       await this._idbSet(this.DATA_KEY, null);
+      await this._idbSet(this.CUSTOM_STUDENTS_KEY, null);
       const config = await this.loadConfig();
       const students = await this.loadStudents();
       return { config, students };

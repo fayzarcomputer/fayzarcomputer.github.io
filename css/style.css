@@ -54,7 +54,7 @@
   --shadow-hover: 0 20px 35px -5px rgba(5, 150, 105, 0.16), 0 10px 15px -5px rgba(15, 23, 42, 0.06);
 }
 
-/* Deep night-mode surfaces (used to replace scattered hardcoded dark hexes) */
+/* Deep night-mode surfaces (High-contrast canvas vs elevated cards) */
 .dark {
   --primary: #10b981;
   --primary-strong: #059669;
@@ -63,11 +63,11 @@
   --accent: #fbbf24;
   --accent-soft: rgba(245, 158, 11, 0.15);
 
-  --surface-bg: #0b1120;
-  --surface-alt: #0f172a;
-  --surface-card: #162238;
-  --surface-muted: #1e293b;
-  --surface-elevated: #1a263d;
+  --surface-bg: #060a12;
+  --surface-alt: #080e1c;
+  --surface-card: #16243d;
+  --surface-muted: #1e2e4a;
+  --surface-elevated: #1b2a47;
 
   --text-body: #f8fafc;
   --text-heading: #ffffff;

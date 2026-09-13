@@ -640,17 +640,6 @@
           const escaped = (seg.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
           if (seg.type === 'english') {
             runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
-          } else if (isBijoy && /[\u2013\u2014]/.test(seg.text)) {
-            const dashParts = seg.text.split(/([\u2013\u2014]+)/);
-            for (let dp of dashParts) {
-              if (!dp) continue;
-              const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-              if (/[\u2013\u2014]/.test(dp)) {
-                runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
-              } else {
-                runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
-              }
-            }
           } else {
             runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" ${isBijoy ? 'w:hint="ascii"' : 'w:hint="cs"'}/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
           }
@@ -714,26 +703,18 @@
     /**
      * Generate an Office 2003 .doc Blob from raw text with 100% font & math preservation
      */
-    static createDocFromText(text, fontName = 'SutonnyMJ', isBijoy = true, baseFontSizePt = 12, pageSize = 'a4', margin = 'normal') {
-      if (typeof fontName === 'object' && fontName !== null) {
-        const opts = fontName;
-        pageSize = opts.pageSize || pageSize || 'a4';
-        margin = opts.margin || margin || 'normal';
-        baseFontSizePt = opts.fontSize || opts.baseFontSizePt || baseFontSizePt || 12;
-        isBijoy = opts.isBijoy !== undefined ? opts.isBijoy : true;
-        fontName = opts.fontName || (isBijoy ? 'SutonnyMJ' : 'Kalpurush');
-      }
+    static createDocFromText(text, fontName = 'SutonnyMJ', isBijoy = true, baseFontSizePt = 12) {
       let sanitizedText = (text || '').replace(/\*\*/g, '').replace(/\r/g, '');
 
       // 0. Extract ALL Bengali text out of math mode so words like 'এবং', 'অথবা' are NEVER inside equations
       sanitizedText = sanitizedText.replace(/\\(?:text|mathrm|textmd|textbf|textit|mbox)\{\s*([^{}]*?[\u0980-\u09FF][^{}]*?)\s*\}/g, ' $1 ');
+      sanitizedText = sanitizedText.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
       sanitizedText = sanitizedText.replace(/(\}\s*)([A-Za-z]\s*=)/g, (match, g1, g2) => `${g1.trim()}, ${g2}`);
       sanitizedText = sanitizedText.replace(/\$\$([\s\S]*?)\$\$|\$([^\$]+?)\$|\\\[([\s\S]*?\\\])|\\\(([\s\S]*?)\\\)/g, (match, d1, s1, b1, p1) => {
         const isDouble = Boolean(d1 || b1);
         const inner = (d1 || s1 || b1 || p1 || '').trim();
         if (!/[\u0980-\u09FF]/.test(inner)) return match;
-        const cleanInner = inner.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
-        const parts = cleanInner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
+        const parts = inner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
         let out = [];
         for (let p of parts) {
           p = (p || '').trim();
@@ -989,25 +970,11 @@
       }
       const paragraphsHtml = htmlBlocks.join('\n');
 
-      const docPageSizes = {
-        'a4': '595.35pt 841.95pt',
-        'legal': '612.0pt 1008.0pt',
-        'letter': '612.0pt 792.0pt'
-      };
-      const docMargins = {
-        'normal': '72pt 72pt 72pt 72pt',
-        'narrow': '36pt 36pt 36pt 36pt',
-        'moderate': '54pt 54pt 54pt 54pt',
-        'wide': '90pt 90pt 90pt 90pt'
-      };
-      const cssPageSize = docPageSizes[String(pageSize || '').toLowerCase()] || docPageSizes['a4'];
-      const cssMargin = docMargins[String(margin || '').toLowerCase()] || docMargins['normal'];
-
       const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <style>
-@page Section1 { size: ${cssPageSize}; margin: ${cssMargin}; mso-header-margin: 36pt; mso-footer-margin: 36pt; }
+@page Section1 { size: 595.35pt 841.95pt; margin: 72pt 72pt 72pt 72pt; mso-header-margin: 36pt; mso-footer-margin: 36pt; }
 div.Section1 { page: Section1; }
 p.MsoNormal, li.MsoNormal, div.MsoNormal {
   margin: 0cm;

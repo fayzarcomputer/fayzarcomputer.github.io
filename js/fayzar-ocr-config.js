@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * Fayzar Computer v2 - AI OCR Secure Configuration & Multi-Key Vault
+ * Fayzar Computer Web - AI OCR Secure Configuration & Multi-Key Vault
  * ============================================================================
  * This file securely manages the AI OCR engine credentials and 12-key fallback pool.
  * Keys are dynamically deobfuscated at runtime (XOR 42 + Base64) to prevent source inspection.

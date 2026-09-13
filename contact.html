@@ -69,6 +69,7 @@
   <!-- Tailwind CSS CDN (unified config) -->
   <script src="js/vendor/tailwindcss.js"></script>
   <script src="js/offline-data.js"></script>
+  <script src="js/theme-lang.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -107,133 +108,136 @@
 
 <body class="bg-slate-100 dark:bg-[#070c18] text-slate-800 dark:text-slate-100 font-sans antialiased pb-20 lg:pb-0 transition-colors duration-300">
 
-  <!-- Top Announcement Bar -->
-  <aside class="bg-slate-900 text-white text-xs py-2.5 px-4 border-b border-slate-800 shadow-sm">
-    <div class="container mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2">
-      <div class="flex items-center gap-2">
-        <div id="shop-status-badge" class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 status-dot-open"></span> লোড হচ্ছে...
-        </div>
-        <span class="text-slate-300 hidden md:inline text-[11px]">| ফুলবাড়ী সরকারি কলেজ গেটের পশ্চিম পার্শ্বে, দিনাজপুর</span>
-      </div>
-      <div class="flex items-center gap-4 text-xs font-extrabold">
-        <a href="tel:01717101919" class="hover:text-amber-400 flex items-center gap-1 text-white">
-          <i class="fas fa-phone-volume text-emerald-400"></i> 01717-101919
-        </a>
-        <a href="https://wa.me/8801717101919" target="_blank" class="hover:text-emerald-300 flex items-center gap-1 text-emerald-400">
-          <i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপ
-        </a>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Sticky Header -->
-  <header class="sticky top-0 z-40 glass-header shadow-sm transition-all">
-    <div class="container mx-auto max-w-7xl px-4 py-2.5 sm:py-3.5 flex items-center justify-between">
-      <a href="index.html" class="flex items-center gap-3 group">
-        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 p-0.5 shadow-md flex items-center justify-center text-white text-xl group-hover:scale-105 transition">
-          <i class="fas fa-desktop text-amber-300"></i>
+    <!-- ========================================================================= -->
+  <!-- 1. AUTHENTIC land.gov.bd STYLE STICKY WHITE NAVIGATION BAR                -->
+  <!-- ========================================================================= -->
+  <nav class="bg-white dark:bg-[#080d1a] shadow-md sticky w-full z-50 top-0 transition-colors border-b border-slate-100 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex justify-between items-center py-1.5 lg:py-1">
+      
+      <!-- Left: Official Logo + Title (Clean, Spacious, NO background card, NO LSFC badge) -->
+      <a href="index.html" class="py-0.5 flex items-center gap-2 sm:gap-3 group shrink-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 rounded-xl bg-gradient-to-tr from-emerald-700 via-emerald-600 to-teal-500 text-white flex items-center justify-center font-black text-base sm:text-lg lg:text-xl shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform">
+          <i class="fa-solid fa-landmark text-base sm:text-lg lg:text-xl"></i>
         </div>
         <div>
-          <div class="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-none">
-            ফয়জার <span class="text-emerald-600 dark:text-emerald-400">কম্পিউটার</span>
-          </div>
-          <div class="text-[11px] font-bold text-amber-600 dark:text-amber-400 tracking-tight mt-0.5">
-            ডিজিটাল, অনলাইন ও ভূমিসেবা কেন্দ্র
-          </div>
+          <span class="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white block leading-tight">
+            <span data-i18n="brand_name">ফয়জার কম্পিউটার</span>
+          </span>
+          <span class="hidden sm:block text-[10px] sm:text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 leading-tight mt-0.5">
+            সরকার অনুমোদিত ডিজিটাল ও ভূমিসেবা কেন্দ্র
+          </span>
         </div>
       </a>
 
-      <!-- Desktop Nav -->
-      <nav class="hidden lg:flex items-center gap-1.5 text-xs xl:text-sm font-bold text-slate-700 dark:text-slate-200">
-        <a href="index.html" class="px-3.5 py-2 rounded-xl hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
-          <i class="fas fa-home"></i> হোম
-        </a>
-        <a href="services.html" class="px-3.5 py-2 rounded-xl hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
-          <i class="fas fa-layer-group text-emerald-600"></i> সার্ভিস
-        </a>
-        <a href="portal.html" class="px-3.5 py-2 rounded-xl hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition flex items-center gap-1.5 relative">
-          <i class="fas fa-user-astronaut text-cyan-400"></i> 
-          <span>জব</span>
-        </a>
-        <a href="converter.html" class="px-3.5 py-2 rounded-xl hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
-          <i class="fas fa-wand-magic-sparkles text-amber-500"></i> কনভার্টার
-        </a>
-        <a href="tools.html" class="px-3.5 py-2 rounded-xl hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
-          <i class="fas fa-toolbox text-emerald-600"></i> টুলস
-        </a>
-        <a href="results.html" class="px-3.5 py-2 rounded-xl hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 transition flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-extrabold relative">
-          <i class="fas fa-award text-amber-500"></i>
-          <span>রেজাল্ট</span>
-        </a>
-        <a href="contact.html" class="px-3.5 py-2 rounded-xl text-white bg-emerald-600 dark:bg-emerald-600 flex items-center gap-1.5 shadow-md font-extrabold">
-          <i class="fas fa-location-dot text-rose-200"></i> কন্টাক্ট
-        </a>
-      </nav>
+      <!-- Right: Two-Tier Layout (Subtle Top Micro-Bar + Auto-Adjusting Nav Links Always Visible on Top) -->
+      <div class="flex flex-col justify-end items-end shrink-0 ml-2 sm:ml-4 xl:ml-8">
+        
+        <!-- Top Tier: Compact Sleek Micro-Capsule (Softer Light-Emerald Gradient, Crisp White Text, Radiant Amber Theme Icon) -->
+        <div class="w-full flex justify-end mb-0.5">
+          <div class="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3.5 py-0.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-l-full shadow-2xs border border-emerald-500/30">
+            
+            <!-- Live Status -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-200 animate-pulse shrink-0"></span>
+              <span class="text-white font-bold text-[10px] sm:text-[11px] lg:text-[11.5px] tracking-wide whitespace-nowrap" data-i18n="topbar_status">দোকান খোলা আছে (রাত ৯টা পর্যন্ত)</span>
+            </div>
 
-      <!-- Day/Night & Action -->
-      <div class="flex items-center gap-2">
-        <button id="theme-toggle-btn" type="button" aria-label="ডার্ক বা লাইট মোড পরিবর্তন করুন" title="ডার্ক/লাইট মোড" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-amber-300 transition flex items-center justify-center shadow-xs border border-slate-300 dark:border-slate-700/60">
-          <i class="fas fa-moon text-sm dark:hidden" aria-hidden="true"></i>
-          <i class="fas fa-sun text-sm hidden dark:inline-block text-amber-400" aria-hidden="true"></i>
-        </button>
-        <a href="tel:01717101919" aria-label="সরাসরি কল করুন 01717-101919 নম্বরে" class="hidden sm:inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-extrabold px-4 py-2 rounded-xl shadow-md transition">
-          <i class="fas fa-phone-alt" aria-hidden="true"></i> <span>01717-101919</span>
-        </a>
-        <button id="mobile-menu-toggle" type="button" aria-label="মোবাইল নেভিগেশন মেনু খুলুন" title="মেনু" class="lg:hidden p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
-          <i class="fas fa-bars text-base" aria-hidden="true"></i>
-        </button>
+            <!-- [ বাং | EN ] Pill + Radiant Theme Toggle -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <div class="flex border border-white/60 rounded overflow-hidden text-[10px] sm:text-[10.5px] font-bold shadow-2xs">
+                <button type="button" id="lang-btn-bn" onclick="setLanguage('bn')" class="px-1.5 sm:px-2 py-0.2 bg-emerald-800 text-white font-bold cursor-pointer transition">বাং</button>
+                <button type="button" id="lang-btn-en" onclick="setLanguage('en')" class="px-1.5 sm:px-2 py-0.2 bg-white text-emerald-800 font-bold hover:bg-emerald-50 cursor-pointer transition">EN</button>
+              </div>
+
+              <!-- Day/Night Mode Toggle (Bright Amber Glow Icon, 100% visible on green) -->
+              <button type="button" id="theme-toggle-btn" class="w-5 h-5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-amber-300 hover:text-amber-200 transition cursor-pointer shadow-xs" title="Switch Theme">
+                <i id="theme-icon" class="fa-solid fa-moon text-xs text-amber-300"></i>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Bottom Tier: Main Navigation Links (Always on Top, Auto-Adjusts font size and gap when resized) -->
+        <div id="desktop-nav-links" class="flex items-center gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2.5 xl:gap-3 py-0.5 sm:py-1 text-[11.5px] sm:text-[12.5px] md:text-[13.5px] lg:text-[14.5px] xl:text-[15.5px] font-medium text-[#121212] dark:text-slate-100 whitespace-nowrap">
+          <!-- 1. হোম -->
+          <a href="index.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_home">হোম</a>
+
+          <!-- 2. সার্ভিস -->
+          <a href="services.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_services_short">সার্ভিস</a>
+
+          <!-- 3. জব -->
+          <a href="portal.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_jobs_short">জব</a>
+
+          <!-- 4. কনভার্টার -->
+          <a href="converter.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_converter_short">কনভার্টার</a>
+
+          <!-- 5. টুলস -->
+          <a href="tools.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_tools_short">টুলস</a>
+
+          <!-- 6. রেজাল্ট -->
+          <a href="results.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_results_short">রেজাল্ট</a>
+
+          <!-- 7. কন্টাক্ট (Active State on contact.html) -->
+          <a href="contact.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md text-[#075e24] bg-emerald-50 dark:bg-slate-800 dark:text-emerald-400 transition font-extrabold shadow-2xs flex items-center gap-1" data-i18n="nav_contact_short">
+            <span>কন্টাক্ট</span>
+            <span class="text-[8px] sm:text-[9px] uppercase font-black px-1 sm:px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Live</span>
+          </a>
+        </div>
+
       </div>
+
     </div>
 
-    <!-- Mobile Drawer -->
-    <div id="mobile-drawer" class="hidden lg:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-4 py-4 space-y-2 shadow-2xl">
-      <a href="index.html" class="block py-2.5 px-3 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
-        <i class="fas fa-home w-5"></i> হোম
-      </a>
-      <a href="services.html" class="block py-2.5 px-3 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
-        <i class="fas fa-layer-group text-emerald-600 w-5"></i> সার্ভিস
-      </a>
-      <a href="portal.html" class="block py-2.5 px-3 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 relative">
-        <i class="fas fa-user-astronaut text-cyan-400 w-5"></i> জব
-        <span class="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 font-black ml-auto">নতুন</span>
-      </a>
-      <a href="converter.html" class="block py-2.5 px-3 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
-        <i class="fas fa-wand-magic-sparkles text-amber-500 w-5"></i> কনভার্টার
-      </a>
-      <a href="tools.html" class="block py-2.5 px-3 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2">
-        <i class="fas fa-toolbox text-emerald-600 w-5"></i> টুলস
-      </a>
-      <a href="results.html" class="block py-2.5 px-3 rounded-xl text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 flex items-center gap-2">
-        <i class="fas fa-award text-amber-500 w-5"></i> রেজাল্ট
-      </a>
-      <a href="contact.html" class="block py-2.5 px-3 rounded-xl text-sm font-bold bg-emerald-600 text-white flex items-center gap-2">
-        <i class="fas fa-location-dot text-rose-200 w-5"></i> কন্টাক্ট
-      </a>
-      <div class="pt-3 grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-slate-800">
-        <a href="tel:01717101919" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-center py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs">
-          <i class="fas fa-phone-alt"></i> কল করুন
-        </a>
-        <a href="https://wa.me/8801717101919" target="_blank" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-center py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs">
-          <i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপ
-        </a>
-      </div>
+    <!-- Hidden i18n Tags for SEO & Multi-Language Compatibility -->
+    <div class="hidden" aria-hidden="true">
+      <span data-i18n="nav_land">নাগরিক ভূমিসেবা</span>
+      <span data-i18n="nav_applications">অনলাইন আবেদন</span>
+      <span data-i18n="nav_converter">বাংলা কনভার্টার</span>
+      <span data-i18n="nav_print_studio">প্রিন্ট ও স্টুডিও</span>
+      <span data-i18n="nav_notices">নোটিশ ও সার্কুলার</span>
+      <span data-i18n="nav_links">প্রয়োজনীয় ওয়েবলিংক</span>
+      <span data-i18n="nav_services">অন্যান্য সেবাসমূহ</span>
+      <span data-i18n="nav_tools">টুলস</span>
+      <span data-i18n="nav_results">ফলাফল</span>
+      <span data-i18n="nav_contact">যোগাযোগ</span>
     </div>
-  </header>
+  </nav>
 
-  <!-- Hero Header with Mesh Gradient -->
-  <section class="hero-gradient text-white py-16 px-4 relative overflow-hidden">
-    <div class="hero-pattern"></div>
-    <div class="glow-orb w-80 h-80 bg-rose-500/15 top-0 left-1/4"></div>
+  <!-- Hero Header with Option 2 Enhanced GovTech Background -->
+  <section class="relative overflow-hidden bg-gradient-to-b from-[#eefbf6] via-[#f0f6fe] to-white dark:from-[#05111c] dark:via-[#091526] dark:to-[#030712] py-12 sm:py-16 px-4 transition-colors border-b border-slate-200/80 dark:border-slate-800">
+    
+    <!-- Artistic Enhanced GovTech Background: Emerald & Blue Ambient Bloom, Mesh & Isometric Tech Elements -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <!-- Dual Ambient Light Blooms (Emerald Top-Left, Sapphire Top-Right) -->
+      <div class="absolute -top-16 -left-16 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-emerald-400/15 dark:bg-emerald-500/10 blur-3xl"></div>
+      <div class="absolute -top-16 -right-16 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-blue-500/15 dark:bg-blue-600/10 blur-3xl"></div>
+
+      <!-- Floating 3D Geometric Isometric Diamonds / Cubes -->
+      <div class="absolute top-8 left-[6%] w-5 h-5 bg-emerald-500/25 dark:bg-emerald-400/20 rotate-45 rounded-xs border border-emerald-400/40"></div>
+      <div class="absolute top-20 left-[3%] w-3 h-3 bg-sky-400/30 dark:bg-sky-400/20 rotate-12 rounded-xs"></div>
+      <div class="absolute top-10 right-[8%] w-6 h-6 bg-blue-600/20 dark:bg-blue-400/20 rotate-[30deg] rounded-xs border border-blue-400/30"></div>
+      <div class="absolute top-24 right-[4%] w-4 h-4 bg-teal-500/25 dark:bg-teal-400/20 rotate-45 rounded-xs"></div>
+
+      <!-- Elegant Vector Swoosh Arcs in Soft Emerald & Blue (Top Right) -->
+      <svg class="absolute top-2 right-2 w-72 lg:w-96 h-48 text-emerald-600/20 dark:text-emerald-400/15" viewBox="0 0 400 250" fill="none" stroke="currentColor">
+        <path d="M20,230 C130,170 270,110 390,25" stroke-width="2" stroke-linecap="round"/>
+        <path d="M60,240 C160,180 290,130 400,55" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <path d="M100,245 C190,195 310,150 410,85" stroke-width="1"/>
+      </svg>
+
+      <!-- Subtle Technical Dot Grid Overlay -->
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,#0596690a_1px,transparent_1px),linear-gradient(to_bottom,#0596690a_1px,transparent_1px)] bg-[size:32px_32px] dark:bg-[linear-gradient(to_right,#10b9810d_1px,transparent_1px),linear-gradient(to_bottom,#10b9810d_1px,transparent_1px)]"></div>
+    </div>
 
     <div class="container mx-auto max-w-5xl text-center relative z-10">
-      <span class="inline-block text-xs font-extrabold px-4 py-1.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/30 mb-4 shadow-sm">
+      <span class="inline-block text-xs font-black px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 mb-3 shadow-xs">
         📍 সরাসরি আসুন বা যোগাযোগ করুন
       </span>
-      <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black mb-3">
+      <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-3">
         আমাদের ঠিকানা ও যোগাযোগের বিবরণ
       </h1>
-      <p class="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
+      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
         যেকোনো ডিজিটাল সেবা, ভূমিসেবা পরামর্শ বা অনলাইন আবেদনের প্রয়োজনে সরাসরি আমাদের কেন্দ্রে আসুন অথবা ফোন/হোয়াটসঅ্যাপে যোগাযোগ করুন।
       </p>
     </div>
@@ -429,79 +433,102 @@
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer class="bg-slate-900 text-slate-400 border-t-4 border-emerald-600 pt-12 pb-8 text-xs">
-    <div class="container mx-auto max-w-6xl px-4">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 pb-8 border-b border-slate-800">
-        <div class="space-y-2">
-          <div class="text-base font-black text-white">
-            ফয়জার <span class="text-emerald-400">কম্পিউটার</span>
+    <!-- ========================================================================= -->
+  <!-- FOOTER                                                                    -->
+  <!-- ========================================================================= -->
+    <!-- ========================================================================= -->
+  <!-- FOOTER                                                                    -->
+  <!-- ========================================================================= -->
+  <footer class="bg-slate-900 text-slate-300 py-12 px-4 border-t border-slate-800 mt-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-8 border-b border-slate-800">
+        
+        <!-- Col 1: Brand & LSFC Authorization -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black">
+              <i class="fa-solid fa-landmark"></i>
+            </div>
+            <span class="text-base font-black text-white">ফয়জার কম্পিউটার</span>
           </div>
-          <p class="text-amber-400 font-bold">প্রোপ্রাইটর: মোঃ ফয়জার আলী</p>
-          <p class="text-[11px] text-slate-400 leading-relaxed">
-            সরকার অনুমোদিত ডিজিটাল ভূমিসেবা, সরকারি চাকরির আবেদন, টেলিটক ছবি রিসাইজ ও ইউনিকোড-বিজয় কনভার্টার কেন্দ্র।
+          <p class="text-xs text-slate-400 leading-relaxed mb-3" data-i18n="footer_desc">
+            সরকার অনুমোদিত ডিজিটাল ও উন্মুক্ত ভূমিসেবা কেন্দ্র (LSFC)। অনুমোদন নং: <strong class="text-emerald-400">দিনাজ/ফুল/এলএসএসএফসি-০৭/২০২৫</strong>।
           </p>
-        </div>
-        <div>
-          <div class="text-white font-bold mb-2">দ্রুত লিংক</div>
-          <ul class="space-y-1.5 text-[11px]">
-            <li><a href="index.html" class="hover:text-emerald-400">হোম</a></li>
-            <li><a href="services.html" class="hover:text-emerald-400">সার্ভিস</a></li>
-            <li><a href="portal.html" class="hover:text-emerald-400">জব</a></li>
-            <li><a href="converter.html" class="hover:text-emerald-400">কনভার্টার</a></li>
-            <li><a href="tools.html" class="hover:text-emerald-400">টুলস</a></li>
-            <li><a href="results.html" class="hover:text-emerald-400">রেজাল্ট</a></li>
-            <li><a href="contact.html" class="hover:text-emerald-400">কন্টাক্ট</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="text-white font-bold mb-2">জনপ্রিয় অনলাইন টুলস</div>
-          <ul class="space-y-1.5 text-[11px]">
-            <li><a href="converter.html" class="hover:text-emerald-400">ফয়জার সার্বজনীন কনভার্টার</a></li>
-            <li><a href="tools.html?tab=resizer" class="hover:text-emerald-400">টেলিটক ছবি ও স্বাক্ষর রিসাইজার</a></li>
-            <li><a href="tools.html?tab=age" class="hover:text-emerald-400">চাকরির বয়স ক্যালকুলেটর</a></li>
-            <li><a href="tools.html?tab=land" class="hover:text-emerald-400">দলিল রেজিস্ট্রি ফি ক্যালকুলেটর</a></li>
-          </ul>
-        </div>
-        <div>
-          <div class="text-white font-bold mb-2">যোগাযোগের ঠিকানা</div>
-          <div class="space-y-1.5 text-[11px] text-slate-400">
-            <p>ফুলবাড়ী সরকারি কলেজ গেটের পশ্চিম পার্শ্বে, ফুলবাড়ী, দিনাজপুর।</p>
-            <p class="text-emerald-400 font-bold">ফোন: 01717-101919</p>
-            <p>ইমেইল: fayzar.computer@gmail.com</p>
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-[11px] font-bold">
+            <i class="fas fa-shield-halved"></i> <span data-i18n="footer_approval">সরকারি নির্দেশিকা ও ফি তালিকাভুক্ত</span>
           </div>
         </div>
+
+        <!-- Col 2: Quick Links -->
+        <div>
+          <h4 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+            <i class="fas fa-link text-emerald-400"></i> দ্রুত নেভিগেশন
+          </h4>
+          <ul class="space-y-2 text-xs text-slate-400">
+            <li><a href="index.html" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> হোমপেজ</a></li>
+            <li><a href="services.html" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> সেবাসমূহ ও মূল্য তালিকা</a></li>
+            <li><a href="portal.html" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> জব ও চাকরির পোর্টাল</a></li>
+            <li><a href="converter.html" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> বিজয়-ইউনিকোড কনভার্টার</a></li>
+            <li><a href="tools.html" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> ছবি ও স্বাক্ষর রিসাইজার</a></li>
+            <li><a href="results.html" class="hover:text-white transition flex items-center gap-1.5"><i class="fas fa-chevron-right text-[10px] text-emerald-500"></i> পরীক্ষার ফলাফল পোর্টাল</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Work Timings & Proprietor -->
+        <div>
+          <h4 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+            <i class="fas fa-clock text-amber-400"></i> কাজের সময়সূচী
+          </h4>
+          <ul class="space-y-2 text-xs text-slate-400">
+            <li class="flex justify-between border-b border-slate-800/80 pb-1">
+              <span>শনিবার - বৃহস্পতিবার:</span>
+              <span class="font-bold text-emerald-400">সকাল ৮:০০ - রাত ৯:০০</span>
+            </li>
+            <li class="flex justify-between border-b border-slate-800/80 pb-1">
+              <span>শুক্রবার:</span>
+              <span class="font-bold text-amber-400">বিকাল ৪:০০ - রাত ৯:০০</span>
+            </li>
+            <li class="pt-2">
+              <span class="text-white font-bold block">স্বত্বাধিকারী:</span>
+              <span class="text-slate-300" data-i18n="footer_proprietor">মোঃ ফয়জার আলী</span>
+            </li>
+            <li>
+              <span class="text-white font-bold block">ইমেইল:</span>
+              <span class="text-slate-400">fayzar.computer@gmail.com</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Location & Contact -->
+        <div>
+          <h4 class="text-sm font-black text-white mb-3 flex items-center gap-2">
+            <i class="fas fa-location-dot text-rose-500"></i> দোকানের ঠিকানা
+          </h4>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">
+            ফুলবাড়ী সরকারি কলেজ গেটের পশ্চিম পার্শ্বে, ফুলবাড়ী, দিনাজপুর - ৫২৬০
+          </p>
+          <div class="space-y-2">
+            <a href="tel:01717101919" class="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-black flex items-center justify-center gap-2 transition border border-slate-700">
+              <i class="fas fa-phone-alt text-emerald-400"></i> 01717-101919
+            </a>
+            <a href="https://wa.me/8801717101919" target="_blank" rel="noopener" class="w-full py-2 px-3 rounded-xl bg-[#075e24] hover:bg-emerald-700 text-white text-xs font-black flex items-center justify-center gap-2 transition">
+              <i class="fab fa-whatsapp"></i> হোয়াটসঅ্যাপ বার্তা
+            </a>
+          </div>
+        </div>
+
       </div>
-      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500">
-        <div>© ২০২৫-২০২৬ ফয়জার কম্পিউটার এন্ড ফটোস্ট্যাট। সর্বস্বত্ব সংরক্ষিত।</div>
-        <div class="text-slate-400">অনুমোদন পত্র নং: দিনাজ/ফুল/এলএসএসএফসি-০৭/২০২৫</div>
+
+      <div class="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <div data-i18n="footer_rights">
+          © ২০২৬ ফয়জার কম্পিউটার এন্ড ফটোস্ট্যাট। সর্বস্বত্ব সংরক্ষিত।
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="admin.html" class="hover:text-slate-400 transition flex items-center gap-1"><i class="fas fa-lock text-[10px]"></i> এডমিন প্যানেল</a>
+        </div>
       </div>
     </div>
   </footer>
-
-  <!-- Mobile Bottom Nav Dock -->
-  <nav aria-label="মোবাইল দ্রুত নেভিগেশন" class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-300 dark:border-slate-800 px-3 py-2 flex items-center justify-around shadow-2xl">
-    <a href="index.html" class="flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400">
-      <i class="fas fa-home text-sm" aria-hidden="true"></i>
-      <span class="text-[10px] font-bold">হোম</span>
-    </a>
-    <a href="services.html" class="flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400">
-      <i class="fas fa-layer-group text-sm text-emerald-600" aria-hidden="true"></i>
-      <span class="text-[10px] font-bold">সার্ভিস</span>
-    </a>
-    <a href="portal.html" class="flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400">
-      <i class="fas fa-user-astronaut text-sm text-cyan-500" aria-hidden="true"></i>
-      <span class="text-[10px] font-bold">জব</span>
-    </a>
-    <a href="converter.html" class="flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400">
-      <i class="fas fa-wand-magic-sparkles text-sm text-amber-500" aria-hidden="true"></i>
-      <span class="text-[10px] font-bold">কনভার্টার</span>
-    </a>
-    <a href="tools.html" class="flex flex-col items-center gap-0.5 text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400">
-      <i class="fas fa-toolbox text-sm text-amber-500" aria-hidden="true"></i>
-      <span class="text-[10px] font-bold">টুলস</span>
-    </a>
-  </nav>
 
   <script src="js/fayzar-firebase-client.js" defer></script>
   <script src="js/main.js" defer></script>

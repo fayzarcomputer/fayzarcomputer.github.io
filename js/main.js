@@ -1359,6 +1359,9 @@ function initHeroMiniNoticeBoard() {
         `;
       }).join('');
       container.style.opacity = '1';
+      if (window.FayzarUI && window.FayzarUI.getLang() === 'en' && window.FayzarLang) {
+        window.FayzarLang.translateDOMTextNodes('en');
+      }
     }, 150);
   }
 
@@ -1575,6 +1578,9 @@ function initChecklistController() {
         </div>
       </div>
     `;
+    if (window.FayzarUI && window.FayzarUI.getLang() === 'en' && window.FayzarLang) {
+      window.FayzarLang.translateDOMTextNodes('en');
+    }
   }
 
   function startChecklistAutoTimer() {
@@ -2287,6 +2293,7 @@ function initUnifiedConverterEngine() {
 
   const wizardDlDocxBtn = document.getElementById('wizardDlDocxBtn');
   const wizardDlDocBtn = document.getElementById('wizardDlDocBtn');
+  const wizardDlUnicodeDocxBtn = document.getElementById('wizardDlUnicodeDocxBtn');
   const wizardDlXlsxBtn = document.getElementById('wizardDlXlsxBtn');
   const wizardDlPptxBtn = document.getElementById('wizardDlPptxBtn');
   const wizardConvertAnotherBtn = document.getElementById('wizardConvertAnotherBtn');
@@ -2307,10 +2314,52 @@ function initUnifiedConverterEngine() {
   const wizardPreviewToggleBtn = document.getElementById('wizardPreviewToggleBtn');
   const wizardPreviewToggleText = document.getElementById('wizardPreviewToggleText');
 
-  // --- Step 1 Events ---
-  wizardBrowseBtn?.addEventListener('click', () => wizardFileInput?.click());
+  // Live Upload Progress Overlay Elements
+  const wizardDropOverlay = document.getElementById('wizardDropOverlay');
+  const wizardDropOverlayTitle = document.getElementById('wizardDropOverlayTitle');
+  const wizardDropOverlayFile = document.getElementById('wizardDropOverlayFile');
+  const wizardDropProgressBar = document.getElementById('wizardDropProgressBar');
+  const wizardDropProgressStatus = document.getElementById('wizardDropProgressStatus');
+  const wizardDropProgressPct = document.getElementById('wizardDropProgressPct');
+
+  function showDropzoneProgress(fileName, pct = 0, statusText = 'ফাইল আপলোড হচ্ছে...') {
+    if (!wizardDropOverlay) return;
+    wizardDropOverlay.classList.remove('hidden');
+    if (wizardDropOverlayFile) wizardDropOverlayFile.textContent = fileName || 'ফাইল প্রসেস করা হচ্ছে';
+    updateDropzoneProgress(pct, statusText);
+  }
+
+  function updateDropzoneProgress(pct, statusText) {
+    if (wizardDropProgressBar) wizardDropProgressBar.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+    if (wizardDropProgressPct) {
+      const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+      const formatted = Math.round(pct).toString().replace(/\d/g, d => bnDigits[parseInt(d)]);
+      wizardDropProgressPct.textContent = `${formatted}%`;
+    }
+    if (wizardDropProgressStatus && statusText) wizardDropProgressStatus.textContent = statusText;
+  }
+
+  function hideDropzoneProgress() {
+    if (wizardDropOverlay) {
+      wizardDropOverlay.classList.add('hidden');
+      updateDropzoneProgress(0, 'আপলোড শুরু হচ্ছে...');
+    }
+  }
+
+  // --- Step 1 Events: Click anywhere on dropzone to upload ---
+  wizardBrowseBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    wizardFileInput?.click();
+  });
 
   if (wizardDropZone) {
+    wizardDropZone.addEventListener('click', (e) => {
+      // If clicking inside the dropzone (and not on the input itself)
+      if (e.target !== wizardFileInput) {
+        wizardFileInput?.click();
+      }
+    });
+
     ['dragenter', 'dragover'].forEach(name => {
       wizardDropZone.addEventListener(name, (e) => {
         e.preventDefault();
@@ -2342,6 +2391,7 @@ function initUnifiedConverterEngine() {
   wizardConvertAnotherBtn?.addEventListener('click', resetToStep1);
 
   function resetToStep1() {
+    hideDropzoneProgress();
     currentScanResult = null;
     step1Box?.classList.remove('hidden');
     step2Box?.classList.add('hidden');
@@ -2366,6 +2416,12 @@ function initUnifiedConverterEngine() {
     const firstFile = files[0];
     const ext = firstFile.name.split('.').pop().toLowerCase();
 
+    // Show live progress overlay immediately
+    showDropzoneProgress(firstFile.name, 15, 'ফাইল আপলোড হচ্ছে...');
+
+    await new Promise(r => setTimeout(r, 70));
+    updateDropzoneProgress(35, 'ফাইল রিড ও লোড হচ্ছে...');
+
     // Check if files are Images or PDF (AI OCR Route)
     const isImageOrPdf = files.some(f => {
       const fExt = f.name.split('.').pop().toLowerCase();
@@ -2373,9 +2429,15 @@ function initUnifiedConverterEngine() {
     });
 
     if (isImageOrPdf) {
+      updateDropzoneProgress(65, ext === 'pdf' ? 'পিডিএফ পেজ রেন্ডার ও প্রসেস হচ্ছে...' : 'ছবি অপটিমাইজ ও রেন্ডার হচ্ছে...');
       if (window.FayzarAiOcrEngine && typeof window.FayzarAiOcrEngine.handleFiles === 'function') {
         await window.FayzarAiOcrEngine.handleFiles(files);
       }
+      updateDropzoneProgress(95, 'স্ক্যান সম্পূর্ণ হচ্ছে...');
+      await new Promise(r => setTimeout(r, 60));
+      updateDropzoneProgress(100, 'সম্পন্ন!');
+      hideDropzoneProgress();
+
       const queueLen = window.FayzarAiOcrEngine?.state?.filesQueue?.length || files.length;
       currentScanResult = {
         file: firstFile,
@@ -2392,17 +2454,24 @@ function initUnifiedConverterEngine() {
     // Digital Office File Route (.docx, .doc, .xlsx, .pptx)
     const validExtensions = ['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'];
     if (!validExtensions.includes(ext)) {
+      hideDropzoneProgress();
       alert(`ফরম্যাট সমর্থিত নয়: ${firstFile.name}\n(শুধুমাত্র .docx, .doc, .xlsx, .xls, .pptx, .ppt, PDF অথবা ছবি সমর্থিত)`);
       return;
     }
 
     try {
+      updateDropzoneProgress(60, 'ডকুমেন্ট স্ট্রাকচার বিশ্লেষণ হচ্ছে...');
       const scanResult = await preScanDocumentFile(firstFile, ext);
+      updateDropzoneProgress(90, 'প্রস্তুত হচ্ছে...');
       scanResult.isAiOcr = false;
       scanResult.totalFiles = 1;
       currentScanResult = scanResult;
+      await new Promise(r => setTimeout(r, 50));
+      updateDropzoneProgress(100, 'সম্পন্ন!');
+      hideDropzoneProgress();
       renderStep2Options(scanResult);
     } catch (err) {
+      hideDropzoneProgress();
       console.error('File scan error', err);
       alert('ফাইলটি বিশ্লেষণ করতে সমস্যা হয়েছে: ' + err.message);
     }
@@ -2757,7 +2826,7 @@ function initUnifiedConverterEngine() {
 
     try {
       const res = await window.FayzarAiOcrEngine.startUnifiedOcr(
-        selectedAiTargetFormat,
+        'none',
         (statusText, pct) => {
           const pt = document.getElementById('wizardProgressTitle') || wizardProgressTitle;
           if (pt) pt.textContent = statusText;
@@ -2800,18 +2869,24 @@ function initUnifiedConverterEngine() {
       wizardResultCard?.classList.remove('hidden');
 
       const baseName = currentScanResult.file.name.replace(/\.[^/.]+$/, '');
-      const modeLabel = selectedAiTargetFormat === 'doc'
-        ? 'ওয়ার্ড ২০০৩ (.doc - সুতন্নিএমজে বিজয়)'
-        : (selectedAiTargetFormat === 'bijoy_docx' ? 'আধুনিক ওয়ার্ড (.docx - বিজয়)' : 'ইউনিকোড ওয়ার্ড (.docx)');
 
       if (wizardResultFileName) wizardResultFileName.textContent = `${baseName}_Converted`;
-      if (wizardResultStatsBadge) wizardResultStatsBadge.textContent = `${modeLabel} এ সফলভাবে রূপান্তর হয়েছে`;
+      if (wizardResultStatsBadge) wizardResultStatsBadge.textContent = `ডকুমেন্ট রূপান্তর সফলভাবে সম্পন্ন হয়েছে (৩টি ফরম্যাটেই প্রস্তুত)`;
 
       if (wizardDlDocBtn) {
+        wizardDlDocBtn.classList.remove('hidden');
         wizardDlDocBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('doc');
       }
       if (wizardDlDocxBtn) {
-        wizardDlDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument(selectedAiTargetFormat === 'unicode_docx' ? 'unicode_docx' : 'bijoy_docx');
+        wizardDlDocxBtn.classList.remove('hidden');
+        wizardDlDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('bijoy_docx');
+      }
+      if (wizardDlUnicodeDocxBtn) {
+        wizardDlUnicodeDocxBtn.classList.remove('hidden');
+        wizardDlUnicodeDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('unicode_docx');
+      }
+      if (wizardCopyTextBtn) {
+        wizardCopyTextBtn.classList.remove('hidden');
       }
       if (wizardVerifyBtn) {
         wizardVerifyBtn.onclick = () => {
@@ -2821,10 +2896,10 @@ function initUnifiedConverterEngine() {
         };
       }
 
-      // Show Instant Download Alert
+      // Show Instant Ready Alert
       if (instantDownloadAlert) {
-        if (instantDownloadTitle) instantDownloadTitle.textContent = `ফাইল কনভার্ট হয়ে ডাউনলোড সম্পন্ন হয়েছে!`;
-        if (instantDownloadSubtitle) instantDownloadSubtitle.textContent = `ব্রাউজারের ডাউনলোড অপশনে আপনার রূপান্তরিত ${selectedAiTargetFormat === 'doc' ? '.doc' : '.docx'} ফাইলটি সেভ হয়েছে`;
+        if (instantDownloadTitle) instantDownloadTitle.textContent = `ডকুমেন্ট রূপান্তর সফলভাবে সম্পন্ন হয়েছে!`;
+        if (instantDownloadSubtitle) instantDownloadSubtitle.textContent = `প্রয়োজনে পেজ সেটাপ পরিবর্তন করে নিচের যেকোনো ওয়ার্ড ফরম্যাটে ফাইলটি ডাউনলোড করুন`;
         instantDownloadAlert.classList.remove('hidden');
         if (alertTimeout) clearTimeout(alertTimeout);
         alertTimeout = setTimeout(() => instantDownloadAlert.classList.add('hidden'), 7000);
@@ -2912,7 +2987,7 @@ function initUnifiedConverterEngine() {
 
     const direction = selectedTargetDirection;
     const targetFont = selectedTargetDirection === 'all_unicode' ? selectedUnicodeFont : 'SutonnyMJ';
-    const preserveMath = wizardConvertMathCheckbox ? wizardConvertMathCheckbox.checked : true;
+    const preserveMath = true;
 
     const options = {
       direction,
@@ -2922,7 +2997,9 @@ function initUnifiedConverterEngine() {
       convertHeaders: true,
       convertFootnotes: true,
       convertComments: true,
-      preserveMath
+      preserveMath,
+      pageSize: document.getElementById('ai-target-page-size')?.value || 'a4',
+      margin: document.getElementById('ai-target-page-margin')?.value || 'normal'
     };
 
     try {
@@ -3084,7 +3161,7 @@ function initUnifiedConverterEngine() {
     }
 
     // Download Buttons Setup
-    [wizardDlDocxBtn, wizardDlDocBtn, wizardDlXlsxBtn, wizardDlPptxBtn].forEach(b => b?.classList.add('hidden'));
+    [wizardDlDocxBtn, wizardDlDocBtn, wizardDlUnicodeDocxBtn, wizardDlXlsxBtn, wizardDlPptxBtn].forEach(b => b?.classList.add('hidden'));
 
     if (scan.isWord) {
       if (docxBlob && (!wizardOutputFormat || wizardOutputFormat.value !== 'doc')) {
@@ -3224,8 +3301,10 @@ function initUnifiedConverterEngine() {
     if (!text.trim() || typeof DocxHandler === 'undefined') return;
     const isU2B = (currentTextMode === 'u2b') || (currentTextMode === 'auto' && BanglaConverter.hasBengaliText(sourceTextArea.value));
     const fontName = isU2B ? 'SutonnyMJ' : 'Kalpurush';
+    const pageSize = document.getElementById('ai-target-page-size')?.value || 'a4';
+    const margin = document.getElementById('ai-target-page-margin')?.value || 'normal';
     try {
-      const docxBlob = await DocxHandler.createDocxFromText(text, fontName, isU2B);
+      const docxBlob = await DocxHandler.createDocxFromText(text, { fontName, isBijoy: isU2B, pageSize, margin });
       downloadBlob(docxBlob, `Text_${isU2B ? 'Bijoy_SutonnyMJ' : 'Unicode'}_${Date.now()}.docx`);
     } catch(err) {
       console.error(err);
@@ -3238,7 +3317,9 @@ function initUnifiedConverterEngine() {
     if (!text.trim() || typeof DocxHandler === 'undefined') return;
     const isU2B = (currentTextMode === 'u2b') || (currentTextMode === 'auto' && BanglaConverter.hasBengaliText(sourceTextArea.value));
     const fontName = isU2B ? 'SutonnyMJ' : 'Kalpurush';
-    const docBlob = DocxHandler.createDocFromText(text, fontName, isU2B);
+    const pageSize = document.getElementById('ai-target-page-size')?.value || 'a4';
+    const margin = document.getElementById('ai-target-page-margin')?.value || 'normal';
+    const docBlob = DocxHandler.createDocFromText(text, fontName, isU2B, 12, { pageSize, margin });
     downloadBlob(docBlob, `Text_${isU2B ? 'SutonnyMJ' : 'Unicode'}_Word2003_${Date.now()}.doc`);
   });
 

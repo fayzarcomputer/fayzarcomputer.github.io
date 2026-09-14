@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- SEO Primary Meta Tags -->
-  <title>ফয়জার সার্বজনীন বাংলা কনভার্টার | ইউনিকোড ⇄ বিজয়, AI OCR ও গণিত সমীকরণ</title>
-  <meta name="title" content="ফয়জার সার্বজনীন বাংলা কনভার্টার | ইউনিকোড ⇄ বিজয়, AI OCR ও গণিত সমীকরণ">
+  <title>ফয়জার কনভার্টার | ইউনিকোড ⇄ বিজয় বাংলা কনভার্টার ও ল্যাটেক্স ওওসিআর</title>
+  <meta name="title" content="ফয়জার কনভার্টার | ইউনিকোড ⇄ বিজয় বাংলা কনভার্টার ও ল্যাটেক্স ওওসিআর">
   <meta name="description" content="ফ্রি অনলাইন ইউনিকোড থেকে বিজয় (SutonnyMJ) ও বিজয় থেকে ইউনিকোড কনভার্টার। ছবি ও পিডিএফ থেকে সরাসরি ওয়ার্ড ২০০৩ (.doc) ফাইল তৈরি এবং গণিত প্রশ্নপত্র নির্ভুল কনভার্ট করুন।">
   <meta name="keywords" content="ফয়জার কনভার্টার, ইউনিকোড টু বিজয়, বিজয় টু ইউনিকোড, বাংলা কনভার্টার অনলাইন, গণিত প্রশ্নপত্র কনভার্টার, bijoy to unicode, unicode to bijoy, docx to doc converter, bangla ocr, ai bangla converter">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -287,10 +287,9 @@
         <div>
           <h1 class="text-base sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 flex-wrap">
             <span data-i18n="converter_page_title">ফয়জার কনভার্টার</span>
-            <span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black">v4.5 AI OCR</span>
           </h1>
           <p class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5" data-i18n="converter_page_subtitle">
-            ইউনিকোড ⇄ বিজয় (SutonnyMJ), গণিত প্রশ্নপত্র, সমীকরণ ও অফিস ডকুমেন্ট (.docx, .doc, .xlsx, .pptx, PDF, Image) রূপান্তর
+            ইউনিকোড ⇄ বিজয় বাংলা কনভার্টার ও ল্যাটেক্স ওওসিআর
           </p>
         </div>
       </div>
@@ -298,7 +297,7 @@
       <div class="flex items-center gap-2 self-end sm:self-center">
         <a href="#converter-details" class="text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:underline flex items-center gap-1 bg-white/70 dark:bg-[#1a263d] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
           <i class="fa-solid fa-circle-question text-emerald-600"></i>
-          <span>ব্যবহার নির্দেশিকা ও FAQ</span>
+          <span>বিস্তারিত বিবরণ ও FAQ</span>
         </a>
       </div>
     </div>
@@ -343,9 +342,33 @@
         <div id="wizard-step-1" class="space-y-4 flex-1 flex flex-col justify-center">
           
           <!-- Clean Modern Dropzone Box -->
-          <div id="wizardDropZone" class="min-h-[380px] sm:min-h-[420px] flex flex-col items-center justify-center border-2 border-dashed border-emerald-400/90 dark:border-emerald-500/70 hover:border-emerald-500 rounded-3xl p-8 sm:p-12 text-center cursor-pointer bg-gradient-to-b from-emerald-50/40 via-white to-teal-50/20 dark:from-[#162238]/90 dark:via-[#131d31] dark:to-[#162238]/60 hover:bg-emerald-50/60 dark:hover:bg-[#1a2b47] transition-all shadow-inner group relative">
+          <div id="wizardDropZone" class="min-h-[380px] sm:min-h-[420px] flex flex-col items-center justify-center border-2 border-dashed border-emerald-400/90 dark:border-emerald-500/70 hover:border-emerald-500 rounded-3xl p-8 sm:p-12 text-center cursor-pointer bg-gradient-to-b from-emerald-50/40 via-white to-teal-50/20 dark:from-[#162238]/90 dark:via-[#131d31] dark:to-[#162238]/60 hover:bg-emerald-50/60 dark:hover:bg-[#1a2b47] transition-all shadow-inner group relative overflow-hidden">
             <input type="file" id="wizardFileInput" accept=".docx,.doc,.xlsx,.xls,.pptx,.ppt,.pdf,image/png,image/jpeg,image/webp,image/jpg" multiple class="hidden">
             
+            <!-- Live Uploading / Scanning Progress Overlay -->
+            <div id="wizardDropOverlay" class="hidden absolute inset-0 z-20 bg-white/95 dark:bg-[#131d31]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center transition-all duration-300">
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-4 shadow-xl shadow-emerald-500/30 animate-pulse">
+                <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+              </div>
+              <h4 id="wizardDropOverlayTitle" class="text-base sm:text-xl font-black text-slate-800 dark:text-white mb-1">
+                ফাইল আপলোড ও স্ক্যান হচ্ছে...
+              </h4>
+              <p id="wizardDropOverlayFile" class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-semibold mb-4 max-w-sm truncate">
+                ফাইল প্রসেস করা হচ্ছে
+              </p>
+              
+              <!-- Progress bar container -->
+              <div class="w-full max-w-xs sm:max-w-sm bg-slate-200 dark:bg-slate-700/80 rounded-full h-3.5 overflow-hidden shadow-inner mb-2.5 p-0.5">
+                <div id="wizardDropProgressBar" class="bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 h-full rounded-full transition-all duration-300 shadow-sm" style="width: 0%"></div>
+              </div>
+              
+              <!-- Live percentage and status -->
+              <div class="flex items-center justify-between w-full max-w-xs sm:max-w-sm text-xs font-bold text-slate-600 dark:text-slate-300">
+                <span id="wizardDropProgressStatus">আপলোড শুরু হচ্ছে...</span>
+                <span id="wizardDropProgressPct" class="font-mono text-emerald-600 dark:text-emerald-400 font-black text-sm">০%</span>
+              </div>
+            </div>
+
             <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-3.5 shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-transform duration-300">
               <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
             </div>
@@ -421,84 +444,22 @@
           <!-- -------------------------------------------------------------
                ব্রাঞ্চ ১: AI OCR পাইপলাইন (ছবি বা PDF ফাইলের জন্য অপশন কার্ড)
                ------------------------------------------------------------- -->
-          <div id="aiOcrOptionsBox" class="hidden bg-slate-50 dark:bg-[#162238] rounded-3xl p-5 sm:p-7 border border-indigo-200 dark:border-indigo-800 shadow-sm space-y-5">
-            <div class="border-b border-slate-200 dark:border-slate-700 pb-3 flex flex-wrap items-center justify-between gap-2">
+          <div id="aiOcrOptionsBox" class="hidden bg-slate-50 dark:bg-[#162238] rounded-3xl p-5 sm:p-7 border border-indigo-200 dark:border-indigo-800 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h4 class="text-sm sm:text-base font-black text-slate-800 dark:text-white flex items-center gap-2">
-                  <i class="fa-solid fa-wand-magic-sparkles text-indigo-600" aria-hidden="true"></i> আপনার পছন্দের আউটপুট নির্বাচন করুন:
+                  <i class="fa-solid fa-wand-magic-sparkles text-indigo-600" aria-hidden="true"></i> AI ওসিআর রূপান্তর:
                 </h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5">টার্গেট ফরম্যাট সিলেক্ট করে সরাসরি কনভার্ট বাটনে ক্লিক করুন</p>
+                <p class="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5">নিচের বাটনে ক্লিক করে সরাসরি কনভার্ট শুরু করুন (কনভার্ট শেষে ৩টি ওয়ার্ড ফরম্যাটেই ডাউনলোড করতে পারবেন)</p>
               </div>
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300">Gemini AI + ফয়জার ইঞ্জিন</span>
             </div>
 
-            <!-- Target Format Selector Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              
-              <!-- 1. Word 2003 (.doc - SutonnyMJ) -->
-              <button type="button" data-ai-target="doc" class="ai-target-btn p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-100 shadow-md transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer text-center group">
-                <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-file-lines text-emerald-600 text-lg" aria-hidden="true"></i>
-                  <span class="text-sm sm:text-base font-black">ওয়ার্ড ২০০৩ (.doc)</span>
-                </div>
-                <span class="text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-300">সুতন্নিএমজে বিজয় (প্রিন্ট রেডি)</span>
-              </button>
-
-              <!-- 2. Word (.docx - Bijoy) -->
-              <button type="button" data-ai-target="bijoy_docx" class="ai-target-btn p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a263d] text-slate-700 dark:text-slate-200 transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer text-center hover:border-emerald-500 group shadow-xs">
-                <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-file-word text-blue-600 text-lg" aria-hidden="true"></i>
-                  <span class="text-sm sm:text-base font-black">আধুনিক ওয়ার্ড (.docx)</span>
-                </div>
-                <span class="text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-300">সুতন্নিএমজে বিজয় ফন্ট</span>
-              </button>
-
-              <!-- 3. Word (.docx - Unicode) -->
-              <button type="button" data-ai-target="unicode_docx" class="ai-target-btn p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a263d] text-slate-700 dark:text-slate-200 transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer text-center hover:border-indigo-500 group shadow-xs">
-                <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-globe text-indigo-600 text-lg" aria-hidden="true"></i>
-                  <span class="text-sm sm:text-base font-black">ইউনিকোড ওয়ার্ড (.docx)</span>
-                </div>
-                <span class="text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-300">কালপুরুষ / নিকোশ ফন্ট</span>
-              </button>
-
-            </div>
-
-            <!-- Page Setup Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-2 border-t border-slate-200 dark:border-slate-700">
-              <div>
-                <label for="ai-target-page-size" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">পেজের সাইজ:</label>
-                <select id="ai-target-page-size" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#131d31] border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 text-xs font-bold outline-none focus:border-indigo-500">
-                  <option value="a4" selected>A4 (8.27" x 11.69" স্ট্যান্ডার্ড)</option>
-                  <option value="legal">Legal (8.5" x 14.0" দলিল/নোটিশ)</option>
-                  <option value="letter">Letter (8.5" x 11.0")</option>
-                </select>
-              </div>
-              <div>
-                <label for="ai-target-page-margin" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">মার্জিন:</label>
-                <select id="ai-target-page-margin" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#131d31] border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 text-xs font-bold outline-none focus:border-indigo-500">
-                  <option value="normal" selected>Normal (চারপাশে ১.০")</option>
-                  <option value="narrow">Narrow (০.৫" প্রশ্ন ও ফর্ম)</option>
-                  <option value="moderate">Moderate (০.৭৫" আদর্শ)</option>
-                  <option value="wide">Wide (১.২৫")</option>
-                </select>
-              </div>
-              <div>
-                <label for="ai-target-font-size" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">ফন্ট সাইজ:</label>
-                <select id="ai-target-font-size" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#131d31] border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 text-xs font-bold outline-none focus:border-indigo-500">
-                  <option value="12" selected>12 pt (অফিস স্ট্যান্ডার্ড)</option>
-                  <option value="14">14 pt (বাংলা টাইপিং আদর্শ)</option>
-                  <option value="11">11 pt (কমপ্যাক্ট প্রশ্ন)</option>
-                  <option value="16">16 pt (বড় হেডিং)</option>
-                </select>
-              </div>
-            </div>
-
             <!-- AI Execute Button -->
-            <div class="pt-2">
+            <div>
               <button type="button" id="executeAiConversionBtn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/25 transition cursor-pointer transform hover:-translate-y-0.5">
                 <i class="fa-solid fa-wand-magic-sparkles text-lg" aria-hidden="true"></i>
-                <span id="executeAiConversionBtnText">AI দিয়ে কনভার্ট ও ওয়ার্ড ফাইল তৈরি করুন</span>
+                <span id="executeAiConversionBtnText">AI দিয়ে সরাসরি কনভার্ট শুরু করুন</span>
               </button>
             </div>
           </div>
@@ -518,16 +479,6 @@
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300">ফয়জার হাই-স্পিড ইঞ্জিন (No AI Cost)</span>
             </div>
 
-            <!-- Math Checkbox -->
-            <div class="p-3.5 sm:p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800/80 flex items-center justify-between gap-3 transition">
-              <label class="inline-flex items-center gap-3 cursor-pointer select-none">
-                <input type="checkbox" id="wizardConvertMathCheckbox" checked class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer accent-indigo-600">
-                <span class="text-xs sm:text-sm font-black text-indigo-950 dark:text-indigo-200">সমীকরণ সহ সব টেক্সট কনভার্ট করুন</span>
-              </label>
-              <span class="text-[11px] text-slate-600 dark:text-slate-300 hidden sm:inline-flex items-center gap-1 font-semibold">
-                <i class="fa-solid fa-square-root-variable text-indigo-600" aria-hidden="true"></i> সমীকরণ অপরিবর্তিত রাখতে চাইলে আনচেক করুন
-              </span>
-            </div>
 
             <!-- Action Buttons Container -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
@@ -729,34 +680,87 @@
               <div id="wizardAuditNotesContent" class="text-slate-800 dark:text-slate-200 font-mono text-[11px] whitespace-pre-wrap leading-relaxed"></div>
             </div>
 
-            <!-- 1-Click Multi-Format Download Action Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Output Page Setup Row (Adjustable before download) -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 space-y-3 shadow-xs">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 dark:border-slate-700/70 pb-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                  </span>
+                  <div>
+                    <h5 class="text-xs sm:text-sm font-black text-slate-800 dark:text-white">ডকুমেন্ট পেজ ও মার্জিন সেটাপ:</h5>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">ডাউনলোডের পূর্বে পেজের সাইজ, মার্জিন বা ফন্ট সাইজ কাস্টমাইজ করতে পারেন</p>
+                  </div>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">অটো-কনফিগারড</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label for="ai-target-page-size" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">পেজের সাইজ:</label>
+                  <select id="ai-target-page-size" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#131d31] border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 text-xs font-bold outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    <option value="a4" selected>A4 (8.27" x 11.69" স্ট্যান্ডার্ড)</option>
+                    <option value="legal">Legal (8.5" x 14.0" দলিল/নোটিশ)</option>
+                    <option value="letter">Letter (8.5" x 11.0")</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="ai-target-page-margin" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">মার্জিন:</label>
+                  <select id="ai-target-page-margin" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#131d31] border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 text-xs font-bold outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    <option value="normal" selected>Normal (চারপাশে ১.০")</option>
+                    <option value="narrow">Narrow (০.৫" প্রশ্ন ও ফর্ম)</option>
+                    <option value="moderate">Moderate (০.৭৫" আদর্শ)</option>
+                    <option value="wide">Wide (১.২৫")</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="ai-target-font-size" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">ফন্ট সাইজ:</label>
+                  <select id="ai-target-font-size" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#131d31] border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 text-xs font-bold outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    <option value="12" selected>12 pt (অফিস স্ট্যান্ডার্ড)</option>
+                    <option value="14">14 pt (বাংলা টাইপিং আদর্শ)</option>
+                    <option value="11">11 pt (কমপ্যাক্ট প্রশ্ন)</option>
+                    <option value="16">16 pt (বড় হেডিং)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 1-Click Multi-Format Download Action Grid (3 Word Formats + Copy Text) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               
               <!-- 1. Download Word 2003 .DOC (SutonnyMJ) -->
-              <button type="button" id="wizardDlDocBtn" class="py-4 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition cursor-pointer transform hover:-translate-y-0.5">
+              <button type="button" id="wizardDlDocBtn" class="py-4 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition cursor-pointer transform hover:-translate-y-0.5 text-center">
                 <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-file-lines text-lg" aria-hidden="true"></i>
-                  <span>ওয়ার্ড ২০০৩ (.DOC) ডাউনলোড</span>
+                  <i class="fa-solid fa-file-lines text-lg text-emerald-100" aria-hidden="true"></i>
+                  <span>ওয়ার্ড ২০০৩ (.DOC)</span>
                 </div>
-                <span class="text-[10px] font-normal opacity-90">সুতন্নিএমজে বিজয় ফন্ট (প্রিন্ট রেডি)</span>
+                <span class="text-[10px] font-normal opacity-90">সুতন্নিএমজে বিজয় (প্রিন্ট রেডি)</span>
               </button>
 
               <!-- 2. Download Modern Word .DOCX (Bijoy) -->
-              <button type="button" id="wizardDlDocxBtn" class="py-4 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition cursor-pointer transform hover:-translate-y-0.5">
+              <button type="button" id="wizardDlDocxBtn" class="py-4 px-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition cursor-pointer transform hover:-translate-y-0.5 text-center">
                 <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-file-word text-lg" aria-hidden="true"></i>
-                  <span>ওয়ার্ড (.DOCX) ডাউনলোড</span>
+                  <i class="fa-solid fa-file-word text-lg text-blue-100" aria-hidden="true"></i>
+                  <span>আধুনিক বিজয় (.DOCX)</span>
                 </div>
-                <span class="text-[10px] font-normal opacity-90">আধুনিক ওয়ার্ড ফরম্যাট</span>
+                <span class="text-[10px] font-normal opacity-90">সুতন্নিএমজে বিজয় ফন্ট</span>
               </button>
 
-              <!-- 3. Copy Text & Preview -->
-              <button type="button" id="wizardCopyTextBtn" class="py-4 px-4 rounded-2xl bg-white dark:bg-[#1a263d] hover:bg-slate-100 dark:hover:bg-[#23324f] text-slate-800 dark:text-slate-100 border-2 border-slate-200 dark:border-slate-700 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 transition cursor-pointer shadow-xs">
+              <!-- 3. Download Modern Word .DOCX (Unicode) -->
+              <button type="button" id="wizardDlUnicodeDocxBtn" class="py-4 px-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition cursor-pointer transform hover:-translate-y-0.5 text-center">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-globe text-lg text-purple-100" aria-hidden="true"></i>
+                  <span>ইউনিকোড ওয়ার্ড (.DOCX)</span>
+                </div>
+                <span class="text-[10px] font-normal opacity-90">কালপুরুষ / নিকোশ ফন্ট</span>
+              </button>
+
+              <!-- 4. Copy Text & Preview -->
+              <button type="button" id="wizardCopyTextBtn" class="py-4 px-3 rounded-2xl bg-white dark:bg-[#1a263d] hover:bg-slate-100 dark:hover:bg-[#23324f] text-slate-800 dark:text-slate-100 border-2 border-slate-200 dark:border-slate-700 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 transition cursor-pointer shadow-xs text-center">
                 <div class="flex items-center gap-2">
                   <i class="fa-solid fa-copy text-indigo-500 text-lg" aria-hidden="true"></i>
                   <span>টেক্সট কপি করুন</span>
                 </div>
-                <span class="text-[10px] font-bold text-slate-600 dark:text-slate-300">ক্লিপবোর্ডে কপি হবে</span>
+                <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">ক্লিপবোর্ডে কপি হবে</span>
               </button>
 
             </div>
@@ -888,59 +892,172 @@
          ========================================================================= -->
     <section id="converter-details" class="mt-12 space-y-10 scroll-mt-24">
       
-      <!-- ৪-ধাপের সহজ ব্যবহার নির্দেশিকা -->
-      <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 dark:from-[#131d31] dark:via-[#162238] dark:to-[#131d31] border border-slate-200 dark:border-slate-700/80 shadow-md space-y-6">
-        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700/80 pb-4">
+      <!-- =====================================================================
+           ফয়জার কনভার্টার এর বিস্তারিত বিবরণ ও সক্ষমতা (Specifications)
+           ===================================================================== -->
+      <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#131d31] border border-slate-200 dark:border-slate-700/80 shadow-md space-y-8">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700/80 pb-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg shadow-sm">
-              <i class="fa-solid fa-list-check" aria-hidden="true"></i>
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-700 text-white flex items-center justify-center text-xl shadow-md">
+              <i class="fa-solid fa-circle-nodes" aria-hidden="true"></i>
             </div>
             <div>
-              <h3 class="text-base sm:text-xl font-black text-slate-900 dark:text-white">সহজ ৪-ধাপের ব্যবহার নির্দেশিকা (How to Use)</h3>
-              <p class="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">যেভাবে সবচেয়ে দ্রুত ও নির্ভুলভাবে বাংলা কনভার্ট করবেন</p>
+              <h3 class="text-base sm:text-xl font-black text-slate-900 dark:text-white">ফয়জার কনভার্টার এর বিস্তারিত বিবরণ ও সক্ষমতা</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">কোন কোন ফাইল কনভার্ট করা যায় এবং কী কী আউটপুট সুবিধা পাবেন তার পূর্ণাঙ্গ তালিকা</p>
             </div>
           </div>
-          <span class="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-600 text-white shadow-xs">১০০% ফ্রি</span>
+          <span class="px-3 py-1 rounded-full text-xs font-black bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 self-start sm:self-auto">
+            <i class="fa-solid fa-microchip mr-1"></i> আল্ট্রা-পাওয়ার্ড ইঞ্জিন
+          </span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+        <!-- 2-Column Grid: ইনপুট বনাম আউটপুট -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <div class="p-4 rounded-2xl bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700/80 shadow-2xs space-y-2 group hover:border-emerald-400 transition-all">
-            <div class="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-black text-xs">১</div>
-            <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">ইনপুট প্রদান করুন</h4>
-            <p class="text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-              সরাসরি ফাইল (<code class="text-emerald-600 font-bold">.docx</code>, <code class="text-emerald-600 font-bold">.xlsx</code>, <code class="text-emerald-600 font-bold">.pptx</code>, ছবি বা PDF) ড্রপ করুন অথবা টেক্সট বক্সে লিখুন।
-            </p>
+          <!-- Column 1: কোন কোন ফাইল কনভার্ট করা যায় -->
+          <div class="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center gap-2.5 text-emerald-700 dark:text-emerald-400 font-black text-sm border-b border-slate-200 dark:border-slate-700 pb-2.5">
+              <span class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-file-arrow-up"></i>
+              </span>
+              <span>যেসব ফাইল কনভার্ট করা যায় (Supported Inputs):</span>
+            </div>
+
+            <ul class="space-y-3.5 text-xs text-slate-700 dark:text-slate-200">
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-file-image text-emerald-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">ছবি ও স্ক্যান কপি (Image OCR):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">JPG, JPEG, PNG, WEBP, BMP — প্রশ্নপত্র, অফিশিয়াল দলিল, হ্যান্ডরিটেন নোট বা বইয়ের পাতার ছবি থেকে সরাসরি বাংলা লেখা ও গাণিতিক সমীকরণ নিখুঁতভাবে রূপান্তর।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-file-pdf text-rose-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">পিডিএফ ফাইল (PDF Documents):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">একক বা বহু-পাতার (Multi-page) স্ক্যান করা বা টাইপ করা যেকোনো PDF ফাইলকে সরাসরি সম্পাদনাযোগ্য মাইক্রোসফট ওয়ার্ড ফাইলে রূপান্তর।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-file-word text-blue-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">মাইক্রোসফট ওয়ার্ড ফাইল (.DOCX ও .DOC):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">আধুনিক .docx ফাইল আপলোড করে এক ক্লিকে পুরনো Word 2003 .doc বাইনারি ফরম্যাটে ফন্ট কনভার্টসহ সেভ করার সরাসরি সুবিধা (প্রেস কম্পোজের জন্য আদর্শ)।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-file-excel text-emerald-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">এক্সেল স্প্রেডশিট (.XLSX, .XLS):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">এক্সেল শিটের প্রতিটি টেবিল সেল, কলাম ও হেডার হুবহু অক্ষত রেখে সম্পূর্ণ বাংলা ফন্ট ইউনিকোড ⇄ বিজয় কনভার্সন।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-file-powerpoint text-amber-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">পাওয়ারপয়েন্ট স্লাইড (.PPTX, .PPT):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">প্রেজেন্টেশনের সকল টেক্সট বক্স, শেপ ও মূল স্লাইড ডিজাইন অক্ষত রেখে এক ক্লিকে বাংলা ফন্ট রূপান্তর।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-keyboard text-indigo-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">সরাসরি লাইভ টেক্সট (Text Area):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">ওয়েবসাইটে সরাসরি যেকোনো ইউনিকোড বা সুতন্নিএমজে বিজয় লেখা পেস্ট করে রিয়েলটাইমে স্বয়ংক্রিয় রূপান্তর ও সরাসরি ক্লিপবোর্ড কপি।</p>
+                </div>
+              </li>
+            </ul>
           </div>
 
-          <div class="p-4 rounded-2xl bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700/80 shadow-2xs space-y-2 group hover:border-blue-400 transition-all">
-            <div class="w-7 h-7 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 flex items-center justify-center font-black text-xs">২</div>
-            <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">মোড বা ফরম্যাট বাছুন</h4>
-            <p class="text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-              প্রয়োজন অনুযায়ী <strong>ওয়ার্ড ২০০৩ (.doc)</strong> অথবা <strong>আধুনিক ওয়ার্ড (.docx)</strong> বা বিজয়/ইউনিকোড সিলেক্ট করুন।
-            </p>
-          </div>
+          <!-- Column 2: কি কি আউটপুট সুবিধা পাওয়া যায় -->
+          <div class="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center gap-2.5 text-blue-700 dark:text-blue-400 font-black text-sm border-b border-slate-200 dark:border-slate-700 pb-2.5">
+              <span class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-file-arrow-down"></i>
+              </span>
+              <span>যেসব আউটপুট ফরম্যাট পাওয়া যায় (Available Outputs):</span>
+            </div>
 
-          <div class="p-4 rounded-2xl bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700/80 shadow-2xs space-y-2 group hover:border-purple-400 transition-all">
-            <div class="w-7 h-7 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 flex items-center justify-center font-black text-xs">৩</div>
-            <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">স্বয়ংক্রিয় প্রসেসিং</h4>
-            <p class="text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-              কনভার্ট বাটনে চাপ দিলে আমাদের স্মার্ট ইঞ্জিন কয়েক সেকেন্ডের মধ্যে যুক্তবর্ণ ও সমীকরণ সহ সম্পূর্ণ ফাইল প্রস্তুত করে।
-            </p>
-          </div>
-
-          <div class="p-4 rounded-2xl bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700/80 shadow-2xs space-y-2 group hover:border-cyan-400 transition-all">
-            <div class="w-7 h-7 rounded-xl bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 flex items-center justify-center font-black text-xs">৪</div>
-            <h4 class="font-extrabold text-slate-900 dark:text-white text-sm">১-ক্লিক ডাউনলোড</h4>
-            <p class="text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-              সরাসরি <strong>.doc</strong> বা <strong>.docx</strong> ডাউনলোড করুন যা যেকোনো প্রিন্টার বা প্রেসে নির্দ্বিধায় খোলা যায়।
-            </p>
+            <ul class="space-y-3.5 text-xs text-slate-700 dark:text-slate-200">
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-file-lines text-emerald-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">১. ওয়ার্ড ২০০৩ (.DOC - SutonnyMJ বিজয়):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">খাঁটি বাইনারি অফিস ২০০৩ কম্প্যাটিবল ফাইল। প্রেস প্রিন্টিং ও পুরনো কম্পিউটার সমূহে কোনো প্রকার ফন্ট মিসিং ছাড়াই সরাসরি ওপেন ও প্রিন্ট করা যায়।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-file-word text-blue-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">২. আধুনিক বিজয় (.DOCX - SutonnyMJ ফন্ট):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">লেটেস্ট মাইক্রোসফট ওয়ার্ড (২০১৩, ২০১৬, ২০১৯, ২০২১, ৩৬৫) উপযোগী SutonnyMJ বিজয় ফাইল। এডিটিং ও কাস্টম স্টাইলিংয়ের জন্য উপযুক্ত।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-globe text-purple-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">৩. ইউনিকোড ওয়ার্ড (.DOCX - Kalpurush/Nikosh):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">আন্তর্জাতিক স্ট্যান্ডার্ড কালপুরুষ ও নিকোশ ফন্টে সুবিন্যস্ত আধুনিক ফাইল। ওয়েবসাইট, ইমেইল ও ডিজিটাল আর্কাইভিংয়ের জন্য সর্বোৎকৃষ্ট।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-square-root-variable text-amber-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">৪. নিখুঁত গণিত ও ল্যাটেক্স সমীকরণ (LaTeX & Equations):</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">ভগ্নাংশ, সূচক, রুট, সমাকলন (Integral), ম্যাট্রিক্স ও জ্যামিতিক চিত্রসমূহ রূপান্তরের সময় বিকৃত না হয়ে স্বয়ংক্রিয়ভাবে উপযুক্ত সমীকরণ ফরম্যাটে সংরক্ষিত হয়।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-table-cells-large text-indigo-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">৫. বহুনির্বাচনী প্রশ্নে অপশন-ভিত্তিক একক ট্যাব:</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">MCQ প্রশ্নের প্রতিটি অপশনের (ক, খ, গ, ঘ) মাঝে সুষম দূরত্ব বজায় রাখার জন্য স্বয়ংক্রিয়ভাবে স্ট্যান্ডার্ড ১টি করে ট্যাব যুক্ত থাকে।</p>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fa-solid fa-copy text-teal-600 text-base mt-0.5 shrink-0"></i>
+                <div>
+                  <strong class="text-slate-900 dark:text-white font-bold text-xs sm:text-sm">৬. তাৎক্ষণিক টেক্সট কপি ও প্রিভিউ:</strong>
+                  <p class="text-slate-600 dark:text-slate-300 text-[11px] mt-0.5 leading-relaxed">ফাইল ডাউনলোড ছাড়াও রূপান্তরিত টেক্সট ১-ক্লিকে কপি করে যেকোনো সফটওয়্যার বা চ্যাটবক্সে তাৎক্ষণিক পেস্ট করার সুবিধা।</p>
+                </div>
+              </li>
+            </ul>
           </div>
 
         </div>
+
+        <!-- ৩টি অতিরিক্ত বিশেষ টেকনোলজি কার্ড -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <div class="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 flex items-start gap-3">
+            <i class="fa-solid fa-shield-halved text-emerald-600 text-lg mt-1 shrink-0"></i>
+            <div>
+              <h5 class="text-xs font-black text-slate-900 dark:text-white">১০০% অফলাইন ও নিরাপদ</h5>
+              <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">সাধারণ ফাইল কনভার্সন সম্পূর্ণ আপনার ব্রাউজারে ঘটে। কোনো ক্লাউড সার্ভারে ডেটা জমা রাখা হয় না।</p>
+            </div>
+          </div>
+          <div class="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/60 flex items-start gap-3">
+            <i class="fa-solid fa-sliders text-blue-600 text-lg mt-1 shrink-0"></i>
+            <div>
+              <h5 class="text-xs font-black text-slate-900 dark:text-white">ডাউনলোড পেজ ও মার্জিন কন্ট্রোল</h5>
+              <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">ডাউনলোড করার আগে সরাসরি রেজাল্ট কার্ড থেকে A4, Legal পেজ সাইজ ও Narrow, Normal মার্জিন সেট করা যায়।</p>
+            </div>
+          </div>
+          <div class="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 flex items-start gap-3">
+            <i class="fa-solid fa-bolt-lightning text-purple-600 text-lg mt-1 shrink-0"></i>
+            <div>
+              <h5 class="text-xs font-black text-slate-900 dark:text-white">জিরো-হ্যালুসিনেশন ও অডিট</h5>
+              <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">প্রশ্ন নম্বর, উদ্দীপক ও গাণিতিক চিহ্ন মূল ফাইলের সাথে মিলিয়ে নির্ভুল প্রশ্নপত্র প্রস্তুত করে।</p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- সাধারণ জিজ্ঞাসা (FAQ Section) -->
+      <!-- =====================================================================
+           ৩. সাধারণ জিজ্ঞাসা ও উত্তর (FAQ Section)
+           ===================================================================== -->
       <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#131d31] border border-slate-200 dark:border-slate-700/80 shadow-md space-y-5">
         <div class="flex items-center gap-3 border-b border-slate-200 dark:border-slate-700/80 pb-4">
           <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-sm">
@@ -955,37 +1072,313 @@
         <div class="space-y-3.5 text-xs">
           <details class="p-4 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 cursor-pointer group" open>
             <summary class="font-black text-slate-900 dark:text-white text-sm flex items-center justify-between list-none">
-              <span>১. ইউনিকোড থেকে বিজয়ে রূপান্তরের পর ফন্ট কেন অদ্ভুত দেখায়?</span>
+              <span>১. কোন কোন ফাইল ফয়জার কনভার্টারে রূপান্তর করা যায়?</span>
               <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
             </summary>
             <p class="mt-2.5 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-              বিজয় কি-বোর্ডের ক্যারেক্টার ম্যাপিং ইউনিকোড থেকে ভিন্ন। তাই ওয়ার্ড ফাইলে পেস্ট করার পর পুরো লেখার ফন্ট <strong>SutonnyMJ</strong> সিলেক্ট করতে হয়। তবে আপনি যদি আমাদের <strong>.doc</strong> বা <strong>.docx</strong> বাটন চেপে ফাইল ডাউনলোড করেন, তাহলে ফাইলটিতে স্বয়ংক্রিয়ভাবেই SutonnyMJ ফন্ট এমবেড থাকবে।
+              আপনি প্রশ্নপত্র বা ডকুমেন্টের ছবি (JPG, PNG, WEBP), পিডিএফ (PDF), মাইক্রোসফট ওয়ার্ড (.DOCX ও .DOC), এক্সেল (.XLSX) এবং পাওয়ারপয়েন্ট (.PPTX) ফাইল আপলোড করতে পারেন। এছাড়াও লাইভ টেক্সট বক্সে যেকোনো বাংলা লেখা সরাসরি পেস্ট করে কনভার্ট করা যায়।
             </p>
           </details>
 
           <details class="p-4 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 cursor-pointer group">
             <summary class="font-black text-slate-900 dark:text-white text-sm flex items-center justify-between list-none">
-              <span>২. ছবি বা প্রশ্নপত্রের PDF থেকে সরাসরি Word 2003 (.doc) ফাইল কিভাবে পাওয়া যাবে?</span>
+              <span>২. ছবি বা প্রশ্নপত্রের PDF থেকে সরাসরি Word 2003 (.doc) ফাইল কীভাবে পাওয়া যাবে?</span>
               <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
             </summary>
             <p class="mt-2.5 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-              প্রশ্নপত্রের ছবি বা PDF ড্রপজোনে আপলোড করে টার্গেট হিসেবে <strong>"ওয়ার্ড ২০০৩ (.doc)"</strong> সিলেক্ট করে <strong>"AI দিয়ে কনভার্ট"</strong> বাটনে ক্লিক করুন। আমাদের সিস্টেম Google Gemini 2.5 দিয়ে সকল বাংলা লেখা ও সমীকরণ নিখুঁতভাবে পড়ে সরাসরি SutonnyMJ ফন্টে সাজানো .doc ফাইল তৈরি করে দেবে।
+              প্রশ্নপত্রের ছবি বা PDF ড্রপজোনে আপলোড করে সরাসরি <strong>"AI দিয়ে সরাসরি কনভার্ট শুরু করুন"</strong> বাটনে চাপুন। কনভার্ট শেষে রেজাল্ট কার্ডে থাকা <strong>"ওয়ার্ড ২০০৩ (.DOC)"</strong> বাটনে ক্লিক করলেই স্বয়ংক্রিয়ভাবে সুতন্নিএমজে বিজয় ফন্টে সাজানো প্রিন্ট-রেডি .doc ফাইল ডাউনলোড হবে।
             </p>
           </details>
 
           <details class="p-4 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 cursor-pointer group">
             <summary class="font-black text-slate-900 dark:text-white text-sm flex items-center justify-between list-none">
-              <span>৩. আমার আপলোড করা ফাইল বা ডেটা কি নিরাপদ ও গোপনীয় থাকবে?</span>
+              <span>৩. গণিতের সমীকরণ বা ভগ্নাংশ কি কনভার্ট করার সময় নষ্ট হয়ে যাবে?</span>
               <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
             </summary>
             <p class="mt-2.5 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-              হ্যাঁ, শতভাগ নিরাপদ! সাধারণ টেক্সট, ওয়ার্ড, এক্সেল ও পাওয়ারপয়েন্ট ফাইল সম্পূর্ণ আপনার ব্রাউজারের ভেতর অফলাইনে প্রসেস হয়। কোনো ডেটা আমাদের সার্ভারে জমা রাখা হয় না।
+              একদমই না! ফয়জার কনভার্টারে ইন্টিগ্রেটেড রয়েছে বিশেষায়িত ল্যাটেক্স ও ম্যাথ ইঞ্জিন। ভগ্নাংশ, রুট, স্কয়ার, ইন্টিগ্রাল এবং গ্রিক প্রতীকসমূহ বাংলা অক্ষরের সাথে গুলিয়ে না গিয়ে সম্পূর্ণ নির্ভুল গাণিতিক সমীকরণ আকারে সংরক্ষিত থাকে।
+            </p>
+          </details>
+
+          <details class="p-4 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 cursor-pointer group">
+            <summary class="font-black text-slate-900 dark:text-white text-sm flex items-center justify-between list-none">
+              <span>৪. বহুনির্বাচনী (MCQ) প্রশ্নের অপশনগুলোতে কি দূরত্ব ঠিক থাকে?</span>
+              <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+            </summary>
+            <p class="mt-2.5 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+              হ্যাঁ। ফয়জার ইঞ্জিনে বহুনির্বাচনী প্রশ্নের প্রতিটি অপশনের (ক, খ, গ, ঘ) মাঝে সুষম দূরত্ব বজায় রাখার জন্য স্বয়ংক্রিয়ভাবে ১টি স্ট্যান্ডার্ড ট্যাব যুক্ত করে দেওয়া হয়, যাতে ওয়ার্ডে নেওয়ার পর অপশনগুলো এলোমেলো না হয়ে একদম সোজা সারিবদ্ধ থাকে।
+            </p>
+          </details>
+
+          <details class="p-4 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 cursor-pointer group">
+            <summary class="font-black text-slate-900 dark:text-white text-sm flex items-center justify-between list-none">
+              <span>৫. আমার আপলোড করা ফাইল বা তথ্যের নিরাপত্তা কেমন?</span>
+              <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+            </summary>
+            <p class="mt-2.5 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+              শতভাগ নিরাপদ ও সুরক্ষিত! সাধারণ টেক্সট, ওয়ার্ড, এক্সেল ও পাওয়ারপয়েন্ট ফাইল সম্পূর্ণ আপনার নিজস্ব ব্রাউজারে অফলাইনে প্রসেস হয়। কোনো ডেটা আমাদের লোকাল বা রিমোট ডাটাবেজে সংরক্ষণ করা হয় না।
+            </p>
+          </details>
+
+          <details class="p-4 rounded-2xl bg-slate-50 dark:bg-[#162238] border border-slate-200 dark:border-slate-700 cursor-pointer group">
+            <summary class="font-black text-slate-900 dark:text-white text-sm flex items-center justify-between list-none">
+              <span>৬. সুতন্নিএমজে বিজয় ও ইউনিকোড ওয়ার্ডের মধ্যে পার্থক্য কী?</span>
+              <i class="fa-solid fa-chevron-down text-slate-400 group-open:rotate-180 transition-transform"></i>
+            </summary>
+            <p class="mt-2.5 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+              সুতন্নিএমজে (SutonnyMJ) হলো বাংলাদেশের ঐতিহ্যবাহী ও জনপ্রিয় প্রেস প্রিন্টিং ফন্ট যা পুরনো ও নতুন যেকোনো ভার্সনের অফিস সফটওয়্যারে নির্বিঘ্নে প্রিন্ট হয়। অপরদিকে ইউনিকোড (Nikosh/Kalpurush) হলো আধুনিক স্ট্যান্ডার্ড যা ওয়েবসাইট ও ডিজিটাল ডিভাইসে সর্বত্র প্রদর্শন উপযোগী।
             </p>
           </details>
         </div>
       </div>
 
-    </div>
+      <!-- =====================================================================
+           এসইও সার্চ কিওয়ার্ড ও জনপ্রিয় ট্যাগ (Compact SEO Tags & Keywords)
+           ===================================================================== -->
+      <div id="converter-seo-tags" class="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-50 via-white to-indigo-50/20 dark:from-[#131d31] dark:via-[#162238] dark:to-[#131d31] border border-slate-200 dark:border-slate-700/80 shadow-xs space-y-4">
+        
+        <div class="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-700/60 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm shadow-2xs">
+              <i class="fa-solid fa-tags" aria-hidden="true"></i>
+            </span>
+            <div>
+              <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200 tracking-tight">জনপ্রিয় সার্চ কিওয়ার্ড ও এসইও ট্যাগ (SEO Search Keywords)</h4>
+              <p class="text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300 font-medium">গুগল ও সার্চ ইঞ্জিনের জন্য ফয়জার কনভার্টারের প্রাসঙ্গিক কিওয়ার্ডসমূহ</p>
+            </div>
+          </div>
+          <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300">SEO Optimized</span>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+          <!-- বাংলা ফন্ট ও কনভার্সন কিওয়ার্ড -->
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># ইউনিকোড টু বিজয় কনভার্টার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># বিজয় টু ইউনিকোড কনভার্টার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># SutonnyMJ to Unicode</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># Unicode to SutonnyMJ</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># Avro to Bijoy Converter</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># অভ্র থেকে বিজয় ৫০</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># বাংলা যুক্তবর্ণ ফিক্সার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># নিখুঁত সুতন্নিএমজে কনভার্টার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors"># বাংলা টাইপিং কনভার্টার অনলাইন</span>
+
+          <!-- ওয়ার্ড ও প্রিন্ট প্রসেসিং -->
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"># Word 2003 .doc কনভার্টার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"># DOCX to DOC 2003 Converter</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"># কম্পিউটার দোকান প্রিন্ট কনভার্টার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"># Word 2007 থেকে Word 2003</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"># Excel ও PowerPoint বাংলা কনভার্টার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-emerald-400 dark:hover:border-emerald-500 transition-colors"># প্রিন্ট-রেডি ওয়ার্ড ডকুমেন্ট</span>
+
+          <!-- গণিত ও ল্যাটেক্স সমীকরণ -->
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-purple-400 dark:hover:border-purple-500 transition-colors"># গণিত সমীকরণ ল্যাটেক্স কনভার্টার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-purple-400 dark:hover:border-purple-500 transition-colors"># LaTeX to Word Equation OMML</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-purple-400 dark:hover:border-purple-500 transition-colors"># ম্যাথ টাইপ থেকে ওয়ার্ড সমীকরণ</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-purple-400 dark:hover:border-purple-500 transition-colors"># পদার্থ ও রসায়ন সমীকরণ OCR</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-purple-400 dark:hover:border-purple-500 transition-colors"># Math Equation Bangla OCR</span>
+
+          <!-- এআই ওসিআর ও প্রশ্নপত্র -->
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"># বাংলা প্রশ্নপত্র OCR</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"># বহুনির্বাচনী MCQ প্রশ্ন কনভার্টার</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"># হাতের লেখা বাংলা OCR</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"># ছবি থেকে বাংলা লেখা কনভার্ট</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"># PDF to Word Bangla OCR</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"># Gemini AI Bangla Converter</span>
+          <span class="px-2.5 py-1 rounded-lg bg-white dark:bg-[#1a263d] border border-slate-200 dark:border-slate-700 shadow-2xs hover:border-cyan-400 dark:hover:border-cyan-500 transition-colors"># ফয়জার কম্পিউটার ফুলবাড়ী দিনাজপুর</span>
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           গ্রাহক মতামত ও মন্তব্য সেকশন (Customer Reviews & Comments Section)
+           ===================================================================== -->
+      <div class="space-y-8 pt-4">
+        
+        <!-- Section Header -->
+        <div class="text-center max-w-2xl mx-auto">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-3.5 py-1 rounded-full border border-amber-200 dark:border-amber-800" data-i18n="reviews_tag">
+            গ্রাহক মতামত
+          </span>
+          <h3 class="mt-3 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight" data-i18n="reviews_title">
+            আমাদের সম্মানিত গ্রাহকদের অভিজ্ঞতা
+          </h3>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 font-medium" data-i18n="reviews_subtitle">
+            নির্ভুল ও দ্রুত ডিজিটাল সেবায় ফুলবাড়ীবাসীর বিশ্বস্ত কেন্দ্র
+          </p>
+        </div>
+
+        <!-- 3-Card Reviews Grid from index.html -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Review 1 -->
+          <div class="bg-white dark:bg-[#16243d] rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-md hover:shadow-lg dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-1 text-amber-400 text-sm">
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                </div>
+                <i class="fa-solid fa-quote-right text-blue-200 dark:text-blue-900/60 text-2xl"></i>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-normal" data-i18n="review1_text">
+                চমৎকার ও আন্তরিক সেবা। চাকরির আবেদনের ছবি ও স্বাক্ষর নিখুঁতভাবে রিসাইজ করে সঠিক সময়ে সাবমিট করে দিয়েছেন।
+              </p>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                MH
+              </div>
+              <div class="grow">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm" data-i18n="review1_name">মাহমুদুল হাসান</h4>
+                  <i class="fa-solid fa-circle-check text-emerald-500 text-xs" title="Verified Customer"></i>
+                </div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                  <span data-i18n="review1_role">বিশ্ববিদ্যালয় শিক্ষার্থী</span>
+                  <span>•</span>
+                  <span class="text-blue-600 dark:text-blue-400 font-medium" data-i18n="review1_service">অনলাইন আবেদন ও ফরম</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Review 2 -->
+          <div class="bg-white dark:bg-[#16243d] rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-md hover:shadow-lg dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-1 text-amber-400 text-sm">
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                </div>
+                <i class="fa-solid fa-quote-right text-emerald-200 dark:text-emerald-900/60 text-2xl"></i>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-normal" data-i18n="review2_text">
+                খুবই দ্রুততম সময়ে জমির ই-নামজারি আবেদন ও ট্র্যাকিং করে দিয়েছেন। ফুলবাড়ীতে এমন নির্ভরযোগ্য সেবা পাওয়া সত্যি আনন্দের।
+              </p>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                AI
+              </div>
+              <div class="grow">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm" data-i18n="review2_name">মোঃ আনোয়ারুল ইসলাম</h4>
+                  <i class="fa-solid fa-circle-check text-emerald-500 text-xs" title="Verified Customer"></i>
+                </div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                  <span data-i18n="review2_role">ব্যবসায়ী ও ভূমির মালিক</span>
+                  <span>•</span>
+                  <span class="text-emerald-600 dark:text-emerald-400 font-medium" data-i18n="review2_service">ডিজিটাল ভূমিসেবা</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Review 3 -->
+          <div class="bg-white dark:bg-[#16243d] rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700/80 shadow-md hover:shadow-lg dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-1 text-amber-400 text-sm">
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                </div>
+                <i class="fa-solid fa-quote-right text-rose-200 dark:text-rose-900/60 text-2xl"></i>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-normal" data-i18n="review3_text">
+                প্রাথমিক শিক্ষক নিয়োগের আবেদন ও প্রবেশপত্র প্রিন্ট নির্ভুলভাবে পেয়েছি। ফয়জার ভাইয়ের সেবা অত্যন্ত আন্তরিক।
+              </p>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-rose-500 to-amber-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                RK
+              </div>
+              <div class="grow">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="font-bold text-slate-900 dark:text-white text-xs sm:text-sm" data-i18n="review3_name">রাবেয়া খাতুন</h4>
+                  <i class="fa-solid fa-circle-check text-emerald-500 text-xs" title="Verified Customer"></i>
+                </div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
+                  <span data-i18n="review3_role">চাকরিপ্রার্থী</span>
+                  <span>•</span>
+                  <span class="text-rose-600 dark:text-rose-400 font-medium" data-i18n="review3_service">অনলাইন আবেদন ও প্রিন্ট</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- গ্রাহক মতামত ও পরামর্শ ফর্ম (Customer Feedback Form from index.html) -->
+        <div id="contactFeedbackContainer" class="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-white to-emerald-50/40 dark:from-slate-800/95 dark:to-[#131d31] border-2 border-emerald-500/40 shadow-xl space-y-5">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center text-xl shrink-0 shadow-md">
+                <i class="fa-solid fa-comments"></i>
+              </div>
+              <div>
+                <h4 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  গ্রাহক মতামত, অভিজ্ঞতা ও পরামর্শ
+                </h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">আমাদের কনভার্টার ও সেবা সম্পর্কে আপনার মূল্যবান পরামর্শ, মন্তব্য বা অভিজ্ঞতা জানান</p>
+              </div>
+            </div>
+            <span class="bg-emerald-600 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full shadow-xs flex items-center gap-1.5 self-start sm:self-auto">
+              <i class="fas fa-shield-halved text-[10px]"></i> সরাসরি প্রোপ্রাইটর
+            </span>
+          </div>
+
+          <form id="converterFeedbackForm" class="space-y-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div>
+                <label for="fbUserName" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">আপনার নাম *</label>
+                <input type="text" id="fbUserName" required placeholder="উদাঃ মোঃ রফিকুল ইসলাম" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner">
+              </div>
+              <div>
+                <label for="fbUserContact" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">মোবাইল বা ইমেইল *</label>
+                <input type="text" id="fbUserContact" required placeholder="উদাঃ 017xxxxxxxx বা ইমেইল" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner">
+              </div>
+              <div>
+                <label for="fbCategory" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">সেবার বিষয় / ক্যাটাগরি</label>
+                <select id="fbCategory" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner">
+                  <option value="ফয়জার বাংলা কনভার্টার">ফয়জার বাংলা কনভার্টার ও AI OCR</option>
+                  <option value="ডিজিটাল ভূমিসেবা">ডিজিটাল ভূমিসেবা (নামজারি, খাজনা)</option>
+                  <option value="সরকারি চাকরির আবেদন">সরকারি চাকরির আবেদন ও সার্কুলার</option>
+                  <option value="কম্পিউটার ও স্টুডিও">কম্পিউটার টাইপিং, প্রিন্ট ও স্টুডিও</option>
+                  <option value="সাধারণ পরামর্শ ও মন্তব্য">সাধারণ পরামর্শ, মন্তব্য বা প্রশংসা</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="fbUserMessage" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">আপনার মূল্যবান মন্তব্য, অভিজ্ঞতা বা পরামর্শ *</label>
+              <textarea id="fbUserMessage" rows="3" required placeholder="কনভার্টার ব্যবহারের অভিজ্ঞতা কেমন ছিল বা সেবার মান আরও উন্নত করতে কী পরামর্শ দিতে চান বিস্তারিত লিখুন..." class="w-full p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-medium text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-emerald-500 resize-none shadow-inner"></textarea>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+              <span id="fbStatusMsg" class="text-xs font-bold text-emerald-700 dark:text-emerald-400 hidden flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-950/80 px-3 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i> ধন্যবাদ! আপনার মূল্যবান মতামত ও মন্তব্য গৃহীত হয়েছে।
+              </span>
+              <button type="submit" id="fbSubmitBtn" class="w-full sm:w-auto ml-auto px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-paper-plane"></i> মতামত পাঠান
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </section>
 
   </main>
 
@@ -1047,7 +1440,7 @@
       <div class="space-y-3 text-xs">
         <div>
           <label for="ai-ocr-settings-api-key" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">কাস্টম Gemini API Key (ঐচ্ছিক):</label>
-          <input type="password" id="ai-ocr-settings-api-key" placeholder="AIzaSy... (খালি রাখলে ফ্রি ক্রেডিট ব্যবহৃত হবে)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-[#1a263d] text-slate-800 dark:text-slate-100 text-xs font-mono outline-none focus:border-indigo-500">
+          <input type="password" id="ai-ocr-settings-api-key" placeholder="AIzaSy... অথবা AQ... (খালি রাখলে ১৬টি ভল্ট কি ব্যবহৃত হবে)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-[#1a263d] text-slate-800 dark:text-slate-100 text-xs font-mono outline-none focus:border-indigo-500">
           <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             আপনার নিজস্ব API Key দিলে আনলিমিটেড ফাস্ট স্পিডে ছবি/পিডিএফ কনভার্ট হবে।
           </p>
@@ -1056,14 +1449,14 @@
         <div>
           <label for="ai-ocr-settings-model-select" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">AI মডেল (ওসিআর প্রায়োরিটি):</label>
           <select id="ai-ocr-settings-model-select" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-[#1a263d] text-slate-800 dark:text-slate-100 text-xs font-bold outline-none focus:border-indigo-500">
-            <option value="auto" selected>⚡ অটো মোড (মডেল-ফার্স্ট প্রায়োরিটি + ১৪টি কি-এর স্বয়ংক্রিয় রোটেশন)</option>
-            <option value="gemini-3.5-flash">Gemini 3.5 Flash (১ নম্বর প্রধান ফ্ল্যাগশিপ — শতভাগ নির্ভুল বাংলা ও ম্যাথ)</option>
-            <option value="gemini-3.6-flash">Gemini 3.6 Flash (২ নম্বর অফিসিয়াল ফ্ল্যাগশিপ — গতি ও নির্ভুলতার সেরা ব্যালেন্স)</option>
-            <option value="gemini-3.8-flash">Gemini 3.8 Flash (৩ নম্বর আধুনিক সংস্করণ — মাল্টি-টাস্ক সক্ষমতা)</option>
-            <option value="gemini-3.7-flash">Gemini 3.7 Flash (৪ নম্বর হাইব্রিড রিজনিং মডেল)</option>
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash (৫ নম্বর লেগাসি সুপারফাস্ট — ১.২ সেকেন্ড স্পিড)</option>
-            <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (৬ নম্বর প্রো রিজনিং — ১M কনটেক্সট, জটিল হাতের লেখা)</option>
+            <option value="auto" selected>⚡ অটো মোড (১৬টি সক্রিয় কি-এর স্বয়ংক্রিয় রোটেশন + Gemini 3.5 &amp; 3.8 Flash)</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash (১ নম্বর প্রধান ফ্ল্যাগশিপ — দ্রুততম, শতভাগ নির্ভুল বাংলা ও ম্যাথ)</option>
+            <option value="gemini-3.6-flash">Gemini 3.6 Flash (২ নম্বর দ্রুততম ব্যালেন্সড সংস্করণ)</option>
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash (৩ নম্বর হাতের লেখা ও জটিল ম্যাথ স্পেশালিস্ট — আধুনিক সংস্করণ)</option>
+            <option value="gemini-3.7-flash">Gemini 3.7 Flash (৪ নম্বর হাইব্রিড ফ্ল্যাশ)</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (৫ নম্বর হাই-স্পিড অফিশিয়াল ব্যাকআপ)</option>
           </select>
+
         </div>
 
         <!-- Auto-Verify Setting Toggle -->
@@ -1195,6 +1588,7 @@
   <script src="js/bangla-converter-engine.js"></script>
   <script src="js/equation-converter.js"></script>
   <script src="js/docx-to-doc-engine.js"></script>
+  <script src="js/doc-binary-engine.js"></script>
   <script src="js/docx-handler.js"></script>
   <script src="js/xlsx-handler.js"></script>
   <script src="js/pptx-handler.js"></script>

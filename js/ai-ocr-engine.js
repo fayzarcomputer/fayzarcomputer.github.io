@@ -1989,7 +1989,16 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             rtf += `{${font}\\fs${fontSizeHalfPt} ${boldPrefix}${subPrefix}${encodeRtfText(seg.text)}${subSuffix}${boldSuffix}}`;
           } else {
             const bijoyText = window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(seg.text) : seg.text;
-            rtf += `{\\f0\\fs${fontSizeHalfPt} ${boldPrefix}${subPrefix}${encodeRtfText(bijoyText)}${subSuffix}${boldSuffix}}`;
+            if (isBijoy && /[-–—−‒―]/.test(bijoyText)) {
+              const dParts = bijoyText.split(/([-–—−‒―]+)/);
+              for (const dp of dParts) {
+                if (!dp) continue;
+                const font = /[-–—−‒―]/.test(dp) ? '\\f1' : '\\f0';
+                rtf += `{${font}\\fs${fontSizeHalfPt} ${boldPrefix}${subPrefix}${encodeRtfText(dp)}${subSuffix}${boldSuffix}}`;
+              }
+            } else {
+              rtf += `{\\f0\\fs${fontSizeHalfPt} ${boldPrefix}${subPrefix}${encodeRtfText(bijoyText)}${subSuffix}${boldSuffix}}`;
+            }
           }
         }
       }
@@ -2139,10 +2148,28 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
           ${boldTag}
           ${vertAlignTag}
         </w:rPr>`;
+            const engRpr = `        <w:rPr>
+          <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
+          <w:sz w:val="${fontSizeHalfPt}"/>
+          <w:szCs w:val="${fontSizeHalfPt}"/>
+          ${boldTag}
+          ${vertAlignTag}
+        </w:rPr>`;
             const bParts = targetText.split('\t');
             for (let bp = 0; bp < bParts.length; bp++) {
               if (bp > 0) runsXml += `      <w:r>\n${bnRpr}\n        <w:tab/>\n      </w:r>\n`;
-              if (bParts[bp]) runsXml += `      <w:r>\n${bnRpr}\n        <w:t xml:space="preserve">${escapeXml(bParts[bp])}</w:t>\n      </w:r>\n`;
+              if (bParts[bp]) {
+                if (isBijoy && /[-–—−‒―]/.test(bParts[bp])) {
+                  const dParts = bParts[bp].split(/([-–—−‒―]+)/);
+                  for (let dp of dParts) {
+                    if (!dp) continue;
+                    const rprToUse = /[-–—−‒―]/.test(dp) ? engRpr : bnRpr;
+                    runsXml += `      <w:r>\n${rprToUse}\n        <w:t xml:space="preserve">${escapeXml(dp)}</w:t>\n      </w:r>\n`;
+                  }
+                } else {
+                  runsXml += `      <w:r>\n${bnRpr}\n        <w:t xml:space="preserve">${escapeXml(bParts[bp])}</w:t>\n      </w:r>\n`;
+                }
+              }
             }
           }
         }

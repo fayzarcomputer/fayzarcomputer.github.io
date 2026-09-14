@@ -93,10 +93,10 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
 10. ROMAN NUMERALS & MCQ FORMATTING (রোমান সংখ্যা ও বহুনির্বাচনী প্রশ্ন):
     - CRITICAL: MCQ প্রশ্নের ক্রমিক নম্বর ১।, ২।, ৩।, ... ৩০। সতন্ত্রভাবে ১ থেকে শুরু করতে হবে (সৃজনশীল প্রশ্নের ক্রমিকের সাথে মিলিয়ে নয়)।
     - CRITICAL: NEVER wrap roman numerals in asterisks (*i.*, *ii.*, *iii.*, *i* ও *ii* etc. are strictly forbidden ❌).
-    - Write clean plain roman numerals without any asterisks:
-      i. A, B ও C একই সরলরেখায় অবস্থিত
-      ii. CP \perp BC
-      iii. AB = AC - BC
+    - বহুনির্বাচনীর ক্ষেত্রে ক্রমিক নম্বরের নিচে রোমান সংখ্যা বা স্টেটমেন্টের (i., ii., iii., iv. অথবা ১., ২., ৩.) প্রতিটি লাইনের শুরুতে অবশ্যই ১টি করে ট্যাব (\t) যুক্ত করবেন:
+      \ti. সোডিয়াম
+      \tii. ক্যালসিয়াম
+      \tiii. ক্লোরিন
       নিচের কোনটি সঠিক?
       	ক. i ও ii	খ. i ও iii	গ. ii ও iii	ঘ. i, ii ও iii ✅
     - CRITICAL MANDATE FOR MCQ OPTIONS (বহুনির্বাচনী অপশনে ডট 'ক.' ও শুরুর ট্যাব \t):
@@ -106,8 +106,9 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
       * (তবে ইংরেজি প্রশ্নপত্রের ক্ষেত্রে স্বাভাবিক ইংরেজি বিকল্প (a), (b) ইত্যাদি বহাল থাকবে)।
 
 11. CREATIVE QUESTIONS (সৃজনশীল প্রশ্নপত্র):
-    - CRITICAL: সৃজনশীল প্রশ্নের ক্রমিক নম্বর ১., ২., ৩., ... সতন্ত্রভাবে ১ থেকে শুরু করতে হবে।
-    - Format sub-questions (উদ্দীপক, ১., ক., খ., গ., ঘ.) cleanly and beautifully.
+    - CRITICAL: সৃজনশীল প্রশ্নের ক্রমিক নম্বর ১।, ২।, ৩।, ... সতন্ত্রভাবে ১ থেকে শুরু করতে হবে।
+    - CRITICAL MANDATE: সৃজনশীল প্রশ্নের ক্ষেত্রে উপ-প্রশ্ন (ক., খ., গ., ঘ.)-এর পূর্বে কখনোই কোনো ট্যাব (\t) যুক্ত করবেন না! এগুলো মার্জিন থেকে স্বাভাবিকভাবে (যেমন: ক. ...\nখ. ...) শুরু হবে, যাতে ব্যবহারকারী সুবিধাজনকভাবে ম্যানুয়ালি সাজাতে পারেন।
+    - Format sub-questions (উদ্দীপক, ১।, ক., খ., গ., ঘ.) cleanly and beautifully.
     - CRITICAL: NEVER attach marks or scores at the end of questions (যেমন: [১], [২], [৩], [৪], [৮], [১০], (১), (২), মান: ১ ইত্যাদি সম্পূর্ণ বাদ দিন). Output ONLY the clean question text without score brackets.
 
 12. SHORT QUESTIONS (সংক্ষিপ্ত ও অতি সংক্ষিপ্ত প্রশ্নপত্র):
@@ -116,7 +117,9 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
 13. TABLES & GRIDS (টেবিল ও ছক):
     - Transcribe all tables into complete, standard Markdown tables.
 
-14. MATHEMATICAL & SCIENTIFIC NOTATION (লেটেক্স ও সমীকরণ ফরম্যাটিং):
+14. MATHEMATICAL & SCIENTIFIC NOTATION (লেটেক্স, তীর চিহ্ন ও রাসায়নিক সমীকরণ):
+    - রাসায়নিক বিক্রিয়া ও তীর চিহ্ন (Chemical Arrows): বিক্রিয়ার তীর চিহ্নের জন্য \\xrightarrow বা ভাঙা LaTeX কমান্ড এড়িয়ে সরাসরি স্ট্যান্ডার্ড তীর চিহ্ন '→' বা '──[উপাদান/প্রভাবক]──>' লিখুন (যেমন: কার্বন ডাইঅক্সাইড + পানি ──[ আলো / ক্লোরোফিল ]──> গ্লুকোজ + অক্সিজেন)।
+    - রাসায়নিক সংকেত ও প্রতীক (Chemical Formulas & Symbols): বিজ্ঞানের সকল রাসায়নিক সংকেত ও যৌগ (যেমন: $KNO_3$, $KO_2$, $KOH$, $H_2O$, $HO_2$, $H_2O_2$, $CO_2$, $NaCl$, $O_2$, $C_6H_{12}O_6$ ইত্যাদি) এবং একক বা প্রতীক (pH, LED, RAM, CPU, DNA, RNA) বাধ্যতামূলকভাবে ১০০% খাঁটি ইংরেজিতে রাখবেন। কোনো অবস্থাতেই এগুলোকে বাংলায় (যেমন: 'কও', 'কঘ', '২ঞও') রূপান্তর বা অনুবাদ করা সম্পূর্ণ নিষিদ্ধ!
     - Write mathematical formulas, algebraic equations, variables, sets, and expressions in LaTeX ($...$).
     - CRITICAL: DO NOT wrap plain numbers, lists of numbers, counts, or simple measurements in $...$!
       - Plain numbers & counts: 50 জন (NOT $50$ জন), 30 জন (NOT $30$ জন), 65, 62.5 (NOT $65$, $62.5$)
@@ -137,7 +140,7 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
     - DO NOT get trapped in repetitive dot loops. Continue transcribing the rest of the letter/form (বরাবর, বিষয়, জনাব, বিবরণ, আবেদনকারী, স্বাক্ষর ইত্যাদি) completely and faithfully!
 
 16. ACCURATE BENGALI TYPOGRAPHY:
-    - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output) clean in English.
+    - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output, KNO3, H2O) clean in English.
 
 17. ENGLISH LANGUAGE QUESTION PAPERS (ইংরেজি বিষয়ের প্রশ্নপত্র - সম্পূর্ণ স্বাভাবিক কার্যক্রম):
     - CRITICAL EXCEPTION & MANDATE: The formatting rules for Bengali Dari ('।'), Bengali dot options ('ক.', 'খ.', 'গ.', 'ঘ.') with leading tabs, and CQ dot sub-questions apply ONLY to Bengali, Mathematics, Physics, Chemistry, Biology, and other Bengali-medium subjects!
@@ -176,9 +179,10 @@ SPECIFIC DEFECTS YOU MUST AUDIT AND FIX:
 4. ক্রমিক নম্বর ও ফরম্যাটিং নিয়ম বজায় রাখা:
    - Separate sequential numbering starting from ১ for each question category:
      * বাংলা, গণিত ও বিজ্ঞান বিষয়ের ক্ষেত্রে প্রশ্নের ক্রমিক নম্বর এর পর অবশ্যই '।' (দাড়ি) ব্যবহার করবেন (যেমন: ১।, ২।, ৩।, ... ১০।)। (তবে ইংরেজি বিষয়ের ক্ষেত্রে স্বাভাবিক ইংরেজি ফরম্যাট '1.', '2.' অপরিবর্তিত রাখবেন)।
-     * সৃজনশীল প্রশ্ন: ১।, ২।, ৩।, ... প্রতিটি উপ-প্রশ্ন ডট ফরম্যাটে ক., খ., গ., ঘ. (বন্ধনী ছাড়া)।
-     * বহুনির্বাচনী প্রশ্ন: সতন্ত্রভাবে ১।, ২।, ৩।, ... (সৃজনশীলের সাথে মিলিয়ে নয়)। প্রতিটি অপশন লাইনে শুরুতে \t এবং মাঝে \t সহ ডট ফরম্যাট \tক. ...\tখ. ...\tগ. ...\tঘ. ...।
+     * সৃজনশীল প্রশ্ন: ১।, ২।, ৩।, ... প্রতিটি উপ-প্রশ্ন ডট ফরম্যাটে ক., খ., গ., ঘ. (বন্ধনী ছাড়া, শুরুতে কোনো ট্যাব থাকবে না)।
+     * বহুনির্বাচনী প্রশ্ন: সতন্ত্রভাবে ১।, ২।, ৩।, ... (সৃজনশীলের সাথে মিলিয়ে নয়)। ক্রমিক নম্বরের নিচে রোমান সংখ্যা বা তালিকার শুরুতে \t সহ \ti. ..., \tii. ...। প্রতিটি অপশন লাইনে শুরুতে \t এবং মাঝে \t সহ ডট ফরম্যাট \tক. ...\tখ. ...\tগ. ...\tঘ. ...।
      * সংক্ষিপ্ত প্রশ্ন: সতন্ত্রভাবে ১।, ২।, ৩।, ...
+     * রাসায়নিক সংকেত ও প্রতীক: বিজ্ঞানের সকল রাসায়নিক সংকেত (যেমন: KNO3, KO, KOH, H2O, CO2 ইত্যাদি) বাধ্যতামূলকভাবে খাঁটি ইংরেজিতে রাখবেন; কোনো অবস্থাতেই বাংলায় লিখবেন না। বিক্রিয়ার তীর চিহ্ন সরাসরি '→' বা '──[...]──>' লিখবেন।
    - No board tags/references (e.g., omit [ঢাকা বোর্ড-২০২৩]).
    - For diagrams/images, simply write: [ছবি আছে-পৃ:০১].
    - No markdown bold asterisks (**). No asterisks on roman numerals (*i.* -> i.).
@@ -1007,15 +1011,16 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
         let currentPayload = buildModelPayload(model, false);
 
+        const CONNECT_TIMEOUT_MS = 25000; // 25s fast initial connect timeout to prevent stalls
         try {
           let res = await fetchWithTimeout(streamEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(currentPayload)
-          }, REQUEST_TIMEOUT_MS);
+          }, CONNECT_TIMEOUT_MS);
 
           if (res.status === 404) {
-            // Model not supported on this endpoint/key -> try next model/key
+            // Model not supported on this endpoint/key -> try next key
             continue;
           }
 
@@ -1027,6 +1032,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
               if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyInvalid === 'function') {
                 FayzarOcrConfig.markKeyInvalid(currentKey);
               }
+              const nextKeyNum = (k + 2 <= keyPool.length) ? (k + 2) : 1;
+              setLoading(true, `[অবৈধ কি সনাক্ত: পরবর্তী ব্যাকআপ কি নেওয়া হচ্ছে...] কি #${nextKeyNum}-এ রূপান্তর শুরু হচ্ছে...`, 50 + Math.min(40, (k + 1) * 3));
               continue;
             }
 
@@ -1037,7 +1044,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(currentPayload)
-              }, REQUEST_TIMEOUT_MS);
+              }, CONNECT_TIMEOUT_MS);
               if (retryRes.ok) {
                 res = retryRes;
               } else {
@@ -1046,16 +1053,23 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             } else if (res.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('Quota')) {
               isRateLimited = true;
               if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyCooldown === 'function') {
-                FayzarOcrConfig.markKeyCooldown(currentKey, 60);
+                FayzarOcrConfig.markKeyCooldown(currentKey, 30);
               }
-              const nextModelDesc = candidateModels[i + 1] || 'বিকল্প মডেল';
-              setLoading(true, `[সার্ভার ব্যস্ততা এড়াতে ব্যাকআপ কি সংযোগ নেওয়া হচ্ছে...] অবিলম্বে পরবর্তী মডেল (${nextModelDesc}) বা কি-তে রূপান্তর শুরু হচ্ছে...`, 50 + (i * 4));
+              const nextKeyNum = (k + 2 <= keyPool.length) ? (k + 2) : 1;
+              setLoading(true, `[কোটা পূর্ণ: অতি-দ্রুত ব্যাকআপ কি সংযোগ নেওয়া হচ্ছে...] কি #${nextKeyNum}-এ অবিলম্বে রূপান্তর শুরু হচ্ছে...`, 50 + Math.min(40, (k + 1) * 3));
               continue;
             } else if (res.status === 503) {
-              // High demand spike -> try next key/model
+              // High demand spike on this key -> immediately rotate to next key
+              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyCooldown === 'function') {
+                FayzarOcrConfig.markKeyCooldown(currentKey, 15);
+              }
+              const nextKeyNum = (k + 2 <= keyPool.length) ? (k + 2) : 1;
+              setLoading(true, `[সার্ভার ব্যস্ততা এড়াতে দ্রুত ব্যাকআপ কি সংযোগ নেওয়া হচ্ছে...] কি #${nextKeyNum}-এ অবিলম্বে রূপান্তর শুরু হচ্ছে...`, 50 + Math.min(40, (k + 1) * 3));
               continue;
             } else {
               lastError = new Error(errMsg);
+              const nextKeyNum = (k + 2 <= keyPool.length) ? (k + 2) : 1;
+              setLoading(true, `[সংযোগ পুনঃচেষ্টা...] ব্যাকআপ কি #${nextKeyNum}-এ স্থানান্তর হচ্ছে...`, 50 + Math.min(40, (k + 1) * 3));
               continue;
             }
           }
@@ -1619,6 +1633,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     // 3. Clean leading bullet asterisks on numbered lists: * i. -> i., * 1. -> 1.
     text = text.replace(/^[\*\-•]\s*([iIvVxX0-9\u0980-\u09FF]+\.)/gm, '$1');
+
+    // 3a. Format reaction arrows (\xrightarrow, \rightarrow, etc.) into clean standard symbols
+    if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.formatReactionArrows === 'function') {
+      text = DocxHandler.formatReactionArrows(text);
+    }
 
     const rawLines = text.split('\n');
     const cleanedLines = [];

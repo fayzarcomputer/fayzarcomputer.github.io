@@ -17,6 +17,8 @@
   // Complete List of 250+ Conjuncts (যুক্তবর্ণ) sorted by length descending
   const UNICODE_TO_BIJOY_CONJUNCTS = [
     // 5 & 4-character clusters
+    { u: "অ্যা", b: "A¨v" },
+    { u: "অ্য", b: "A¨" },
     { u: "চ্ছ্ব", b: "”Q¡" },
     { u: "চ্ছ্র", b: "”Qª" },
     { u: "ন্ত্র্য", b: "š¿¨" },
@@ -412,6 +414,10 @@
 
   // Inverse Mapping Table for Bijoy -> Unicode, sorted longest first
   const BIJOY_TO_UNICODE_CONJUNCTS = [
+    { b: "Av¨v", u: "অ্যা" },
+    { b: "A¨v", u: "অ্যা" },
+    { b: "Av¨", u: "অ্য" },
+    { b: "A¨", u: "অ্য" },
     { b: "Av", u: "আ" }, // Essential independent Aa vowel
     { b: "”P", u: "চ্চ" },
     { b: "”", u: "চ্চ" },
@@ -751,6 +757,13 @@
   function extractCluster(str, startIndex) {
     let i = startIndex;
     let cluster = "";
+
+    // Check multi-character conjuncts first (including অ্যা and অ্য)
+    for (let item of UNICODE_TO_BIJOY_CONJUNCTS) {
+      if (str.startsWith(item.u, i)) {
+        return { cluster: item.u, nextIndex: i + item.u.length };
+      }
+    }
 
     const first = str[i];
     if (UNICODE_TO_BIJOY_SINGLE[first] && !isBengaliConsonant(first)) {
@@ -1159,14 +1172,14 @@
     }
     // Check if has no Latin letters, no Greek / Math symbols, and no dashes
     if (!/[A-Za-z\u0370-\u03FF\u1F00-\u1FFF]/.test(text) && 
-        !/[+\-*\/=<>±×÷≠≤≥≈∞→⇒√∫∑°\^]/.test(text) &&
+        !/[+\-*\/=<>±×÷≠≤≥≈∞→⇒←⇄↔√∫∑°\^─]/.test(text) &&
         !/[-–—−‒―]/.test(text)) {
       return [{ type: 'bengali', text: text }];
     }
 
     const segments = [];
-    // Tokenizer matching Bengali vs English/Math/Greek/Symbols/Dashes
-    const tokenRegex = /([\u0980-\u09FF\u0964\u0965]+)|([A-Za-z0-9\u0370-\u03FF\u1F00-\u1FFF\\_+\-*\/=<>±×÷≠≤≥≈∞→⇒√∫∑°\^\$\#\%\&\~\(\)\[\]\{\}\u2013\u2014\u2212\u2012\u2015-]+)|([^\s\u0980-\u09FFA-Za-z0-9\u0370-\u03FF\u2013\u2014\u2212\u2012\u2015-]+|\s+)/g;
+    // Tokenizer matching Bengali vs English/Math/Greek/Symbols/Dashes/Arrows
+    const tokenRegex = /([\u0980-\u09FF\u0964\u0965]+)|([A-Za-z0-9\u0370-\u03FF\u1F00-\u1FFF\\_+\-*\/=<>±×÷≠≤≥≈∞→⇒←⇄↔√∫∑°\^\$\#\%\&\~\(\)\[\]\{\}\u2013\u2014\u2212\u2012\u2015─-]+)|([^\s\u0980-\u09FFA-Za-z0-9\u0370-\u03FF\u2013\u2014\u2212\u2012\u2015─-]+|\s+)/g;
     
     let match;
     while ((match = tokenRegex.exec(text)) !== null) {

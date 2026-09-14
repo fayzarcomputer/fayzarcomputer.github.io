@@ -774,6 +774,9 @@
       const effectiveAsciiFont = isSutonnyRun ? 'SutonnyMJ' : (fontFamily || 'Times New Roman');
       const effectiveBidiFont = isSutonnyRun ? 'SutonnyMJ' : (fontFamily || 'Kalpurush');
 
+      // Check for Drawings / Images inside Run (both DrawingML and VML)
+      const imagesHtml = this._extractImagesFromNode(rNode, mediaMap);
+
       // Check if SutonnyMJ run contains hyphens/dashes - if so, isolate them to Times New Roman
       if (isSutonnyRun && /[-–—−‒―]/.test(htmlContent)) {
         const dParts = htmlContent.split(/([-–—−‒―]+)/);
@@ -813,9 +816,6 @@
       if (isBold) rStyles.push(`font-weight:bold;mso-bidi-font-weight:bold`);
       if (isItalic) rStyles.push(`font-style:italic;mso-bidi-font-style:italic`);
       if (isUnderline) rStyles.push(`text-decoration:underline`);
-
-      // Check for Drawings / Images inside Run (both DrawingML and VML)
-      const imagesHtml = this._extractImagesFromNode(rNode, mediaMap);
 
       let escapedText = htmlContent;
 

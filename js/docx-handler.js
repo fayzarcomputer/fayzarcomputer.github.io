@@ -764,9 +764,20 @@
       if (DocxHandler.isEnglishQuestionLine(line)) return line;
 
       // 1. Multi-option MCQ line check (e.g. \tক. ...\tখ. ...)
-      const mcqFormatted = DocxHandler.formatMcqLineTabs(line, isBijoy);
-      if (mcqFormatted !== line) {
-        return mcqFormatted;
+      const hasBnKa = /[\(（\[]?\s*[ক]\s*[\)）\]\.]/.test(line);
+      const hasBnKha = /[\(（\[]?\s*[খ]\s*[\)）\]\.]/.test(line);
+      const hasBnGa = /[\(（\[]?\s*[গ]\s*[\)）\]\.]/.test(line);
+      const hasBnGha = /[\(（\[]?\s*[ঘ]\s*[\)）\]\.]/.test(line);
+      const isMultiBn = (hasBnKa && hasBnKha) || (hasBnGa && hasBnGha) || (hasBnKa && (hasBnGa || hasBnGha));
+
+      const hasBijoyK = /[\(（\[]?\s*[K]\s*[\)）\]\.]/.test(line);
+      const hasBijoyL = /[\(（\[]?\s*[L]\s*[\)）\]\.]/.test(line);
+      const hasBijoyM = /[\(（\[]?\s*[M]\s*[\)）\]\.]/.test(line);
+      const hasBijoyN = /[\(（\[]?\s*[N]\s*[\)）\]\.]/.test(line);
+      const isMultiBijoy = (hasBijoyK && hasBijoyL) || (hasBijoyM && hasBijoyN) || (hasBijoyK && (hasBijoyM || hasBijoyN));
+
+      if (isMultiBn || isMultiBijoy) {
+        return DocxHandler.formatMcqLineTabs(line, isBijoy);
       }
 
       // 2. Question number check (e.g. ১. ... -> ১। ...)
@@ -775,32 +786,51 @@
         return qNumFormatted;
       }
 
-      // 3. Single option or CQ sub-question check
-      // Unicode: (ক) or ক) or [ক]
-      const bnMatch = line.match(/^[ \t]*[\(（\[]?\s*([কখগঘ])\s*[\)）\]\.]\s*(.*)$/);
-      if (bnMatch) {
-        const letter = bnMatch[1];
-        const rest = bnMatch[2] || '';
-        const isCq = /\?/.test(rest) || /(?:উদ্দীপক|কাকে বলে|কী\?|কীভাবে|কেন\?|ব্যাখ্যা|বর্ণনা|নির্ণয়|পার্থক্য|চিহ্নিত|বিশ্লেষণ|আলোচনা|মূলভাব)/.test(rest);
-        if (isCq) {
-          return `${letter}. ${rest}`;
-        } else {
-          return `\t${letter}. ${rest}`;
-        }
+      // 2.5 Roman numeral statements under MCQ stem (e.g. i. সোডিয়াম, ii. ক্যালসিয়াম, iii. ক্লোরিন)
+      const romanMatch = line.match(/^[ \t]*[\(（\[]?\s*(i{1,3}|iv|v|vi{0,3}|ix|x)\s*[\)）\]\.]\s*(.*)$/i);
+      if (romanMatch) {
+        return `\t${romanMatch[1].toLowerCase()}. ${romanMatch[2]}`;
       }
 
-      // Bijoy: (K) or K) or [K]
+      // 3. Single option or CQ sub-question check
+      // Unicode: ক., খ., গ., ঘ.
+      const bnMatch = line.match(/^([ \t]*)[\(（\[]?\s*([কখগঘ])\s*[\)）\]\.]\s*(.*)$/);
+      if (bnMatch) {
+        const leadingWs = bnMatch[1];
+        const letter = bnMatch[2];
+        const rest = bnMatch[3] || '';
+        
+        // If line already had a leading tab, keep it (MCQ vertical option)
+        if (leadingWs.includes('\t')) {
+          return `\t${letter}. ${rest}`;
+        }
+
+        // Check if this looks like a CQ sub-question (typically contains question keywords or ends with ?)
+        const isCq = /[\?？]|কাকে বলে|কী|কি|কেন|ব্যাখ্যা|বর্ণনা|লিখ|লেখ|চিহ্নিত|নির্ণয়|নির্ণয়|প্রমাণ|মূল্যায়ন|মূল্যায়ন|বিশ্লেষণ|উৎস|উদ্দীপক/i.test(rest);
+        if (isCq) {
+          // CQ sub-questions must NOT have a leading tab (handled manually by user)
+          return `${letter}. ${rest}`;
+        }
+
+        // Vertical MCQ option without initial tab gets a leading tab
+        return `\t${letter}. ${rest}`;
+      }
+
+      // Bijoy: K., L., M., N.
       if (isBijoy || /[\u0080-\u00FF‡‰†Š&]/.test(line)) {
-        const bjMatch = line.match(/^[ \t]*[\(（\[]?\s*([KLMN])\s*[\)）\]\.]\s*(.*)$/);
+        const bjMatch = line.match(/^([ \t]*)[\(（\[]?\s*([KLMN])\s*[\)）\]\.]\s*(.*)$/);
         if (bjMatch) {
-          const letter = bjMatch[1];
-          const rest = bjMatch[2] || '';
-          const isCq = /\?/.test(rest) || /(?:DÏxcK|Kv‡K e‡j|e¨vL¨v|eY©bv|wbY©q|cv_©K¨|we‡kølY)/.test(rest);
-          if (isCq) {
-            return `${letter}. ${rest}`;
-          } else {
+          const leadingWs = bjMatch[1];
+          const letter = bjMatch[2];
+          const rest = bjMatch[3] || '';
+          if (leadingWs.includes('\t')) {
             return `\t${letter}. ${rest}`;
           }
+          const isCq = /\?|Kv‡K e‡j|Kx|wK|‡Kb|e¨vL¨v|eY©bv|wjL|‡jL|wPý|wbY©q|cÖgvY|we‡kølY|DÏxcK/i.test(rest);
+          if (isCq) {
+            return `${letter}. ${rest}`;
+          }
+          return `\t${letter}. ${rest}`;
         }
       }
 
@@ -808,11 +838,43 @@
     }
 
     /**
+     * Converts LaTeX chemical / reaction arrows into standard Word-compatible symbols
+     */
+    static formatReactionArrows(text) {
+      if (!text) return text;
+      // 1. \xrightarrow[sub]{sup} or xrightarrow[sub]{sup}
+      text = text.replace(/\\?xrightarrow\s*\[([^\]]*)\]\s*\{([^}]*)\}/gi, (m, sub, sup) => {
+        const s1 = (sup || '').trim();
+        const s2 = (sub || '').trim();
+        const label = s1 && s2 ? `${s1} / ${s2}` : (s1 || s2);
+        return label ? ` ──[ ${label} ]──> ` : ' ──> ';
+      });
+
+      // 2. \xrightarrow{sup} or xrightarrow{sup}
+      text = text.replace(/\\?xrightarrow\s*\{([^}]*)\}/gi, (m, sup) => {
+        const s = (sup || '').trim();
+        return s ? ` ──[ ${s} ]──> ` : ' ──> ';
+      });
+
+      // 3. \rightarrow, \longrightarrow, \to
+      text = text.replace(/\\(?:rightarrow|longrightarrow|to)\b/g, ' → ');
+
+      // 4. \leftarrow, \longleftarrow
+      text = text.replace(/\\(?:leftarrow|longleftarrow)\b/g, ' ← ');
+
+      // 5. \rightleftharpoons, \longleftrightarrow, \leftrightarrow
+      text = text.replace(/\\(?:rightleftharpoons|longleftrightarrow|leftrightarrow)\b/g, ' ⇄ ');
+
+      return text;
+    }
+
+    /**
      * Unified full-document question paper formatter
      */
     static formatQuestionPaper(text, isBijoy = false) {
       if (!text) return text;
-      const lines = text.split(/\r?\n/);
+      const arrowNormalized = DocxHandler.formatReactionArrows(text);
+      const lines = arrowNormalized.split(/\r?\n/);
       return lines.map(line => DocxHandler.formatQuestionPaperLine(line, isBijoy)).join('\n');
     }
 
@@ -1256,7 +1318,7 @@
             const trailSp = trailSpMatch ? DocxHandler.renderWordWhitespace(trailSpMatch[0]) : "";
             const formattedEn = escaped.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
             // Single math variable letter (e.g. x, y, n, a, b, N) -> render in italic!
-            if (/^[a-zA-Z]$/.test(trimmedEn)) {
+            if (/^[a-hj-zA-HJ-Z]$/.test(trimmedEn)) {
               out += `${leadSp}<i style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${escaped.trim()}</i>${trailSp}`;
             } else if (/^\d+[a-zA-Z]$/.test(trimmedEn)) { // e.g. 3n
               const numPart = trimmedEn.slice(0, -1);

@@ -774,6 +774,36 @@
       const effectiveAsciiFont = isSutonnyRun ? 'SutonnyMJ' : (fontFamily || 'Times New Roman');
       const effectiveBidiFont = isSutonnyRun ? 'SutonnyMJ' : (fontFamily || 'Kalpurush');
 
+      // Check if SutonnyMJ run contains hyphens/dashes - if so, isolate them to Times New Roman
+      if (isSutonnyRun && /[-–—−‒―]/.test(htmlContent)) {
+        const dParts = htmlContent.split(/([-–—−‒―]+)/);
+        let splitHtml = imagesHtml;
+        for (let dp of dParts) {
+          if (!dp) continue;
+          const isDash = /[-–—−‒―]/.test(dp);
+          const fAscii = isDash ? 'Times New Roman' : 'SutonnyMJ';
+          const fBidi = isDash ? 'Times New Roman' : 'SutonnyMJ';
+          const partStyles = [
+            `font-family:'${fAscii}',Arial,sans-serif`,
+            `mso-ascii-font-family:'${fAscii}'`,
+            `mso-hansi-font-family:'${fAscii}'`,
+            `mso-bidi-font-family:'${fBidi}'`
+          ];
+          if (isBold) partStyles.push(`font-weight:bold;mso-bidi-font-weight:bold`);
+          if (isItalic) partStyles.push(`font-style:italic;mso-bidi-font-style:italic`);
+          if (isUnderline) partStyles.push(`text-decoration:underline`);
+          if (isDash) {
+            splitHtml += `<span lang="EN-US" style="${partStyles.join(';')}">${dp}</span>`;
+          } else {
+            splitHtml += `<span style="${partStyles.join(';')}">${dp}</span>`;
+          }
+        }
+        return {
+          html: splitHtml,
+          text: textContent
+        };
+      }
+
       // Font family declarations with proper dual-font binding
       rStyles.push(`font-family:'${effectiveAsciiFont}',Arial,sans-serif`);
       rStyles.push(`mso-ascii-font-family:'${effectiveAsciiFont}'`);

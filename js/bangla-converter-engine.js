@@ -617,14 +617,14 @@
   function _convertUnicodeToBijoyRaw(text, options = {}) {
     if (!text || typeof text !== 'string') return text || '';
 
-    // Normalize curly quotes & punctuation
+    // Normalize curly quotes & punctuation & dashes
     let str = text;
-    str = str.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+    str = str.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[\u2014\u2013\u2212\u2012\u2015]/g, '-');
 
     if (!hasBengaliText(str)) {
       let out = str;
       out = out.replace(/[\u09E6-\u09EF]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0x09E6 + 0x30));
-      out = out.replace(/\u0964/g, '|').replace(/\u0965/g, '||');
+      out = out.replace(/\u0964/g, '|').replace(/\u0965/g, '||').replace(/[\u2014\u2013\u2212\u2012\u2015]/g, '-');
       return out;
     }
 
@@ -847,8 +847,8 @@
   }
 
   // Recognized English patterns in Bijoy documents to prevent corrupting genuine English words into Bijoy glyphs
-  // Strictly matches URLs, emails, uppercase acronyms, or distinct multi-word English terms
-  const BIJOY_ENGLISH_TOKEN_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|\b(?:UNO|DC|ADC|SP|ASP|AC|NID|SSC|HSC|JSC|PSC|BSc|MSc|BA|MA|BBA|MBA|MBBS|BEd|BCS|ICT|PDF|DOC|DOCX|XLS|XLSX|PPT|PPTX|SMS|OTP|PIN|GPA|CGPA|URL|HTTP|HTTPS|WWW|COM|BD|ORG|GOV|CDAP|NGO|USA|UK|UN|WHO|UNDP|UNICEF|BBS|BRAC|BUET|DU|RU|CU|KU|SUST|BAPEX|WASA|DESCO|DPDC|NESCO|BREB|PDB|BPDB|BTRC|BRTC|BIWTA|RTHD|LGD|LGED|PWD|RHD|BWDB|BEPZA|BIDA|EPZ|NBR|ACC|DUDOK|RAB|BGB|DGFI|NSI|CID|DB|SB|PBI|IEEE|ISO|AI|ML)\b|\b(?:Email|Phone|Mobile|Tel|Fax|Web|Website|Name|Date|Roll|Reg|Section|Class|Room|Total|Page|Mark|Marks|Pass|Fail|Grade|Subject|Code|Bangla|English|Math|Physics|Chemistry|Biology|Exam|Test|Week|Month|Year|Notice|Official|Department|Ministry|Office|Officer|Director|Manager|Chairman|Secretary|Principal|Teacher|Teachers|Student|Students|Father|Mother|Village|Post|Thana|Upazila|District|Division|Bangladesh|Community|Development|Action|Plan|Study|Project|Report|Summary|Activity|Activities|Responsible|Stakeholders|Resources|Needed|Timeline|Meeting|Awareness|Addiction|Classes|During|Introduce|Sports|Cultural|Support|Group|Organize|Workshop|Setting|Rules|Launch|Reward|System|Reduce|Involve|Clinic|Counseling|Approximate)\b(?::|\b))/g;
+  // Strictly matches URLs, emails, uppercase acronyms, or distinct multi-word English terms and isolated/trailing dashes
+  const BIJOY_ENGLISH_TOKEN_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|\b(?:UNO|DC|ADC|SP|ASP|AC|NID|SSC|HSC|JSC|PSC|BSc|MSc|BA|MA|BBA|MBA|MBBS|BEd|BCS|ICT|PDF|DOC|DOCX|XLS|XLSX|PPT|PPTX|SMS|OTP|PIN|GPA|CGPA|URL|HTTP|HTTPS|WWW|COM|BD|ORG|GOV|CDAP|NGO|USA|UK|UN|WHO|UNDP|UNICEF|BBS|BRAC|BUET|DU|RU|CU|KU|SUST|BAPEX|WASA|DESCO|DPDC|NESCO|BREB|PDB|BPDB|BTRC|BRTC|BIWTA|RTHD|LGD|LGED|PWD|RHD|BWDB|BEPZA|BIDA|EPZ|NBR|ACC|DUDOK|RAB|BGB|DGFI|NSI|CID|DB|SB|PBI|IEEE|ISO|AI|ML)\b|\b(?:Email|Phone|Mobile|Tel|Fax|Web|Website|Name|Date|Roll|Reg|Section|Class|Room|Total|Page|Mark|Marks|Pass|Fail|Grade|Subject|Code|Bangla|English|Math|Physics|Chemistry|Biology|Exam|Test|Week|Month|Year|Notice|Official|Department|Ministry|Office|Officer|Director|Manager|Chairman|Secretary|Principal|Teacher|Teachers|Student|Students|Father|Mother|Village|Post|Thana|Upazila|District|Division|Bangladesh|Community|Development|Action|Plan|Study|Project|Report|Summary|Activity|Activities|Responsible|Stakeholders|Resources|Needed|Timeline|Meeting|Awareness|Addiction|Classes|During|Introduce|Sports|Cultural|Support|Group|Organize|Workshop|Setting|Rules|Launch|Reward|System|Reduce|Involve|Clinic|Counseling|Approximate)\b(?::|\b)|[-–—−‒―]|\s*[-–—−‒―]\s*)/g;
 
   /**
    * Token-Based Robust Bijoy (SutonnyMJ) to Unicode Converter
@@ -1157,14 +1157,16 @@
     if (isPureEnglish(text)) {
       return [{ type: 'english', text: text }];
     }
-    // Check if has no Latin letters and no Greek / Math symbols
-    if (!/[A-Za-z\u0370-\u03FF\u1F00-\u1FFF]/.test(text) && !/[+\-*\/=<>±×÷≠≤≥≈∞→⇒√∫∑°\^]/.test(text)) {
+    // Check if has no Latin letters, no Greek / Math symbols, and no dashes
+    if (!/[A-Za-z\u0370-\u03FF\u1F00-\u1FFF]/.test(text) && 
+        !/[+\-*\/=<>±×÷≠≤≥≈∞→⇒√∫∑°\^]/.test(text) &&
+        !/[-–—−‒―]/.test(text)) {
       return [{ type: 'bengali', text: text }];
     }
 
     const segments = [];
-    // Tokenizer matching Bengali vs English/Math/Greek/Symbols
-    const tokenRegex = /([\u0980-\u09FF\u0964\u0965]+)|([A-Za-z0-9\u0370-\u03FF\u1F00-\u1FFF\\_+\-*\/=<>±×÷≠≤≥≈∞→⇒√∫∑°\^\$\#\%\&\~\(\)\[\]\{\}]+)|([^\s\u0980-\u09FFA-Za-z0-9\u0370-\u03FF]+|\s+)/g;
+    // Tokenizer matching Bengali vs English/Math/Greek/Symbols/Dashes
+    const tokenRegex = /([\u0980-\u09FF\u0964\u0965]+)|([A-Za-z0-9\u0370-\u03FF\u1F00-\u1FFF\\_+\-*\/=<>±×÷≠≤≥≈∞→⇒√∫∑°\^\$\#\%\&\~\(\)\[\]\{\}\u2013\u2014\u2212\u2012\u2015-]+)|([^\s\u0980-\u09FFA-Za-z0-9\u0370-\u03FF\u2013\u2014\u2212\u2012\u2015-]+|\s+)/g;
     
     let match;
     while ((match = tokenRegex.exec(text)) !== null) {
@@ -1177,7 +1179,9 @@
       } else if (enMatch) {
         segments.push({ type: 'english', text: enMatch });
       } else if (neutralMatch) {
-        if (segments.length > 0) {
+        if (/[-–—−‒―]/.test(neutralMatch)) {
+          segments.push({ type: 'english', text: neutralMatch });
+        } else if (segments.length > 0) {
           segments[segments.length - 1].text += neutralMatch;
         } else {
           segments.push({ type: 'bengali', text: neutralMatch });

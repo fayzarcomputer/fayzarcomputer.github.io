@@ -623,8 +623,9 @@
       // Question serial pattern e.g. 1. "Honesty is...", 1. Karim went..., Question 1. ...
       if (/^[ \t]*(?:question|q)?\s*[0-9]+[\.\):]\s*["'A-Za-z]/i.test(line)) return true;
 
-      // Sub-question pattern e.g. (a) What is..., a. Dhaka
-      if (/^[ \t]*[\(（]?[a-zA-Z][\)）\.]\s+[A-Za-z]/.test(line)) return true;
+      // Sub-question pattern e.g. (a) What is..., a. Dhaka (excluding roman numerals i, ii, iii, iv, v...)
+      const isRomanNum = /^[ \t]*[\(（\[]?\s*(?:i{1,3}|iv|v|vi{0,3}|ix|x)\s*[\)）\]\.]/i.test(line);
+      if (!isRomanNum && /^[ \t]*[\(（]?[a-zA-Z][\)）\.]\s+[A-Za-z]/.test(line)) return true;
 
       // English options on line e.g. (a) Dhaka (b) Chittagong or a. Dhaka b. Chittagong
       if (/[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(line)) return true;
@@ -709,13 +710,13 @@
         l = l.replace(/[\(（\[]?\s*গ\s*[\)）\]\.]\s*/g, 'গ. ');
         l = l.replace(/[\(（\[]?\s*ঘ\s*[\)）\]\.]\s*/g, 'ঘ. ');
 
-        // Insert tab before খ., গ., ঘ.
-        l = l.replace(/[ \t]*\t*[ \t]*(খ\.)/g, '\t$1');
-        l = l.replace(/[ \t]*\t*[ \t]*(গ\.)/g, '\t$1');
-        l = l.replace(/[ \t]*\t*[ \t]*(ঘ\.)/g, '\t$1');
+        // Insert tab before খ., গ., ঘ. even if concatenated or separated by space
+        l = l.replace(/(?:\s+|\t+)?(খ\.)/g, '\t$1');
+        l = l.replace(/(?:\s+|\t+)?(গ\.)/g, '\t$1');
+        l = l.replace(/(?:\s+|\t+)?(ঘ\.)/g, '\t$1');
 
         // Ensure leading tab before first option (ক. or গ.)
-        l = l.replace(/^[ \t]*\t*[ \t]*(ক\.|গ\.)/, '\t$1');
+        l = l.replace(/^[ \t]*(ক\.|গ\.)/, '\t$1');
         if (!l.startsWith('\t')) l = '\t' + l;
 
         return l.replace(/\t+/g, '\t');
@@ -842,18 +843,22 @@
      */
     static formatReactionArrows(text) {
       if (!text) return text;
+      // Clean any existing disjointed dash arrows: ──[ label ]──> -> → (label)
+      text = text.replace(/──\[\s*([^\]]+)\s*\]──>/g, ' → ($1) ');
+      text = text.replace(/──>/g, ' → ');
+
       // 1. \xrightarrow[sub]{sup} or xrightarrow[sub]{sup}
       text = text.replace(/\\?xrightarrow\s*\[([^\]]*)\]\s*\{([^}]*)\}/gi, (m, sub, sup) => {
         const s1 = (sup || '').trim();
         const s2 = (sub || '').trim();
         const label = s1 && s2 ? `${s1} / ${s2}` : (s1 || s2);
-        return label ? ` ──[ ${label} ]──> ` : ' ──> ';
+        return label ? ` → (${label}) ` : ' → ';
       });
 
       // 2. \xrightarrow{sup} or xrightarrow{sup}
       text = text.replace(/\\?xrightarrow\s*\{([^}]*)\}/gi, (m, sup) => {
         const s = (sup || '').trim();
-        return s ? ` ──[ ${s} ]──> ` : ' ──> ';
+        return s ? ` → (${s}) ` : ' → ';
       });
 
       // 3. \rightarrow, \longrightarrow, \to
@@ -1005,18 +1010,12 @@
           return `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>${runsXml}</w:p>`;
         }
 
-        let processedLine = line;
-        if (isBijoy && typeof BanglaConverter !== 'undefined' && BanglaConverter.hasBengaliText(processedLine)) {
-          processedLine = BanglaConverter.unicodeToBijoy(processedLine);
-        }
-
-        const segments = isBijoy
-          ? (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.splitBijoyAndEnglish === 'function'
-              ? BanglaConverter.splitBijoyAndEnglish(processedLine)
-              : [{ type: 'bengali', text: processedLine }])
-          : (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.splitMixedBengaliAndEnglish === 'function'
-              ? BanglaConverter.splitMixedBengaliAndEnglish(processedLine)
-              : [{ type: 'bengali', text: processedLine }]);
+        const isInputBijoy = Boolean(options.inputIsBijoy || options.isInputBijoy);
+        const segments = (typeof BanglaConverter !== 'undefined')
+          ? (isInputBijoy && typeof BanglaConverter.splitBijoyAndEnglish === 'function'
+              ? BanglaConverter.splitBijoyAndEnglish(line)
+              : BanglaConverter.splitMixedBengaliAndEnglish(line))
+          : [{ type: 'bengali', text: line }];
 
         let runsXml = "";
         for (let seg of segments) {
@@ -1031,19 +1030,25 @@
             const escaped = pText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             if (seg.type === 'english') {
               runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
-            } else if (isBijoy && /[-–—−‒―]/.test(pText)) {
-              const dParts = pText.split(/([-–—−‒―]+)/);
-              for (let dp of dParts) {
-                if (!dp) continue;
-                const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                if (/[-–—−‒―]/.test(dp)) {
-                  runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
-                } else {
-                  runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+            } else if (isBijoy) {
+              const targetText = (typeof BanglaConverter !== 'undefined' && !isInputBijoy) ? BanglaConverter.unicodeToBijoy(pText) : pText;
+              if (/[-–—−‒―]/.test(targetText)) {
+                const dParts = targetText.split(/([-–—−‒―]+)/);
+                for (let dp of dParts) {
+                  if (!dp) continue;
+                  const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                  if (/[-–—−‒―]/.test(dp)) {
+                    runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+                  } else {
+                    runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+                  }
                 }
+              } else {
+                const escTarget = targetText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escTarget}</w:t></w:r>`;
               }
             } else {
-              runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" ${isBijoy ? 'w:hint="ascii"' : 'w:hint="cs"'}/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
+              runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="cs"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
             }
           }
         }
@@ -1171,6 +1176,14 @@
       sanitizedText = sanitizedText.replace(/["']\s*(cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)\s*["']/gi, '$1');
       // Convert e.g. "cm 3", "cm 2", "cm^3", "m 3", "m^3" to superscripts
       sanitizedText = sanitizedText.replace(/\b(cm|mm|m|km)\s*(\^?([23]))\b/gi, '$1<sup>$3</sup>');
+
+      // 1b. Auto-format common chemical formulas (e.g. KNO3, KNO2, H2O, HO2, 2H2O, H2O2, CO2, O2, SO4, CaCO3) to have proper HTML subscripts
+      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
+      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?[A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
+      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?[A-Z][a-z]?[A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
+      sanitizedText = sanitizedText.replace(/\b([0-9]*[A-Z][a-z]?)([0-9]+)([A-Z][a-z]?)([0-9]+)?\b/g, (m, g1, g2, g3, g4) => {
+        return `${g1}<sub>${g2}</sub>${g3}${g4 ? `<sub>${g4}</sub>` : ''}`;
+      });
 
       // 2. UNWRAP comma-separated lists of numbers (e.g. 75, 65, 80... in Q11)
       // These must NEVER be treated as EQ fields, which cause Word's "!Syntax Error" / "Error!"
@@ -1300,7 +1313,7 @@
         if (/^\s+$/.test(str)) {
           return DocxHandler.renderWordWhitespace(str);
         }
-        const isInputBijoy = isBijoy && (typeof BanglaConverter === 'undefined' || !BanglaConverter.hasBengaliText(str));
+        const isInputBijoy = Boolean(opts.inputIsBijoy || opts.isInputBijoy);
         const mixedParts = (typeof BanglaConverter !== 'undefined')
           ? (isInputBijoy && typeof BanglaConverter.splitBijoyAndEnglish === 'function'
               ? BanglaConverter.splitBijoyAndEnglish(str)

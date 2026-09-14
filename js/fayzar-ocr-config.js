@@ -32,15 +32,46 @@
       "a3sEa0gSeGQcYxhkE2xBRxNEfnVjWERnWH11Xk5yW3BrWWJGW0hjcxxienBvRE9uHm9QRU0=",
       "a2NQS3lTaRsdS39edXBfc21ZZllhE2J5a0xIRXtnTxl+XV5+H30e",
       "a2NQS3lTaFt5XVgefn9QThsdZR5EcxtlSEkdH0QeQGlBZx91aU9F",
-      "a3sEa0gSeGQcYX0aH15SSGlPeHNDX2ZuQ3xQYhp/aWxkfX9zYkcfWn5dHx9QTVpYRVlgcE0="
+      "a3sEa0gSeGQcYX0aH15SSGlPeHNDX2ZuQ3xQYhp/aWxkfX9zYkcfWn5dHx9QTVpYRVlgcE0=",
+      // New Verified System Vault Keys (Keys 17-19)
+      "a3sEa0gSeGQcYEBbXXl+S2kSWhNZeWRTHXVQbmtwY34fSGZfB2RwT2ddfmJoHklebGgZUGs=",
+      "a3sEa0gSeGQcZkxNU39nZQcTaHt4fnVvek1lbkwSRVNJc2ISQGZLc1NofwdBZkNmXUNSbl0=",
+      "a2NQS3lTaxsSSWt9ekF7GmYfU0F+entwRExJEltHYWJCa2doUFMa"
     ],
     MASK_SALT: 42
   };
 
   /**
-   * Key health and cooldown tracker
+   * Key health and cooldown tracker with sessionStorage persistence
    */
   const keyStatusMap = new Map(); // key -> { state: 'active' | 'cooldown' | 'invalid', until: timestamp }
+
+  // Restore active cooldowns from sessionStorage on startup
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const savedCooldowns = JSON.parse(sessionStorage.getItem('fayzar_key_cooldowns') || '{}');
+      const now = Date.now();
+      for (const [k, until] of Object.entries(savedCooldowns)) {
+        if (typeof until === 'number' && until > now) {
+          keyStatusMap.set(k, { state: 'cooldown', until });
+        }
+      }
+    }
+  } catch (e) {}
+
+  function _syncCooldownsToStorage() {
+    try {
+      if (typeof sessionStorage === 'undefined') return;
+      const obj = {};
+      const now = Date.now();
+      for (const [k, status] of keyStatusMap.entries()) {
+        if (status.state === 'cooldown' && status.until > now) {
+          obj[k] = status.until;
+        }
+      }
+      sessionStorage.setItem('fayzar_key_cooldowns', JSON.stringify(obj));
+    } catch (e) {}
+  }
 
   /**
    * Internal string deobfuscator
@@ -61,6 +92,12 @@
   }
 
   let roundRobinIndex = 0;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const savedIdx = parseInt(localStorage.getItem('fayzar_key_rr_index') || '0', 10);
+      if (!isNaN(savedIdx) && savedIdx >= 0) roundRobinIndex = savedIdx;
+    }
+  } catch (e) {}
 
   const FayzarOcrConfig = {
     /**
@@ -73,16 +110,18 @@
       return (clean.startsWith('AIzaSy') || clean.startsWith('AQ.')) && clean.length >= 35 && /^[A-Za-z0-9_.-]+$/.test(clean);
     },
 
-
     /**
      * Mark a key as temporarily on cooldown (e.g. 429 quota exhaustion)
      */
     markKeyCooldown: function (key, seconds = 60) {
       if (!key) return;
-      keyStatusMap.set(key.trim(), {
+      const cleanKey = key.trim();
+      keyStatusMap.set(cleanKey, {
         state: 'cooldown',
         until: Date.now() + (seconds * 1000)
       });
+      _syncCooldownsToStorage();
+      this.logAudit('KEY_COOLDOWN', { keyMask: cleanKey.slice(0, 8) + '...', cooldownSec: seconds });
     },
 
     /**
@@ -90,10 +129,12 @@
      */
     markKeyInvalid: function (key) {
       if (!key) return;
-      keyStatusMap.set(key.trim(), {
+      const cleanKey = key.trim();
+      keyStatusMap.set(cleanKey, {
         state: 'invalid',
         until: Infinity
       });
+      this.logAudit('KEY_INVALID', { keyMask: cleanKey.slice(0, 8) + '...' });
     },
 
     /**
@@ -135,17 +176,39 @@
     },
 
     /**
+     * Get keys rotated by round-robin index so the next fresh key is always at index 0
+     */
+    getRotatedSystemKeys: function (includeCooldown = false) {
+      const systemKeys = this.getAllSystemKeys(includeCooldown);
+      if (systemKeys.length <= 1) return systemKeys;
+      const offset = roundRobinIndex % systemKeys.length;
+      return systemKeys.slice(offset).concat(systemKeys.slice(0, offset));
+    },
+
+    /**
+     * Advance the round-robin queue, shifting the recently used key to the back
+     */
+    advanceRoundRobin: function () {
+      const total = VAULT.KEYS.length || 16;
+      roundRobinIndex = (roundRobinIndex + 1) % total;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('fayzar_key_rr_index', String(roundRobinIndex));
+        }
+      } catch (e) {}
+    },
+
+    /**
      * Get next key via round-robin distribution to balance quota load
      */
     getNextRoundRobinKey: function () {
       let keys = this.getAllSystemKeys(false);
       if (keys.length === 0) {
-        // If all are cooling down, fall back to any valid system key
         keys = this.getAllSystemKeys(true);
       }
       if (keys.length === 0) return '';
       const key = keys[roundRobinIndex % keys.length];
-      roundRobinIndex = (roundRobinIndex + 1) % keys.length;
+      this.advanceRoundRobin();
       return key;
     },
 
@@ -157,6 +220,41 @@
         return userCustomKey.trim();
       }
       return this.getNextRoundRobinKey();
+    },
+
+    /**
+     * Internal Diagnostic & Audit Logger
+     * Records all key rotation events, latency, model status for easy offline troubleshooting
+     */
+    logAudit: function (event, details = {}) {
+      try {
+        if (typeof localStorage === 'undefined') return;
+        const logs = JSON.parse(localStorage.getItem('fayzar_ocr_audit_logs') || '[]');
+        const entry = {
+          timestamp: new Date().toISOString(),
+          timeStr: new Date().toLocaleTimeString(),
+          event: event || 'INFO',
+          ...details
+        };
+        logs.unshift(entry);
+        if (logs.length > 200) logs.length = 200; // retain last 200 events
+        localStorage.setItem('fayzar_ocr_audit_logs', JSON.stringify(logs));
+      } catch (e) {}
+    },
+
+    getAuditLogs: function () {
+      try {
+        if (typeof localStorage === 'undefined') return [];
+        return JSON.parse(localStorage.getItem('fayzar_ocr_audit_logs') || '[]');
+      } catch (e) { return []; }
+    },
+
+    clearAuditLogs: function () {
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('fayzar_ocr_audit_logs');
+        }
+      } catch (e) {}
     }
   };
 

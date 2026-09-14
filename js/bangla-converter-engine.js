@@ -22,6 +22,7 @@
     { u: "চ্ছ্ব", b: "”Q¡" },
     { u: "চ্ছ্র", b: "”Qª" },
     { u: "ন্ত্র্য", b: "š¿¨" },
+    { u: "ন্ত্র", b: "š¿" },
     { u: "ক্ষ্ম", b: "¶¥" },
     { u: "ক্ষ্য", b: "¶¨" },
     { u: "ক্ষ্ণ", b: "ÿè" },
@@ -1126,11 +1127,21 @@
     if (fontName && /sutonny|bijoy/i.test(fontName)) return false;
     if (isBijoyText(text, fontName)) return false;
 
+    // Explicit English fonts
+    if (fontName && /times new roman|calibri|arial|cambria|georgia|verdana|tahoma|segoe|consolas|courier|helvetica/i.test(fontName)) {
+      return true;
+    }
+
     // Acronyms (DC, UNO, CDAP, etc.) or URLs / Emails
     if (BIJOY_ENGLISH_TOKEN_REGEX.test(text)) return true;
 
     // Match standard English words
     if (/\b(?:Dear|Sir|Please|Take|Necessary|Steps|Action|Signature|Dinajpur|Activity|Activities|Survey|Student|Students|Teacher|Teachers|Parent|Parents|School|Hold|Meeting|Explain|Problem|Start|Awareness|Classes|Effects|Phone|Addiction|Hours|During|Introduce|Sports|Cultural|Train|Spot|Signs|Peer|Support|Group|Among|Organize|Workshop|Setting|Rules|Home|Launch|Reward|System|Reduce|Involve|Clinic|Counseling|Responsible|Stakeholders|Resources|Needed|Timeline|Month|Year|Date|Name|Total|Page|Section|Class|Room|Mark|Marks|Pass|Fail|Grade|Subject|Report|Summary|Community|Development|Action|Plan|Study|Project|Approximate)\b/i.test(text)) {
+      return true;
+    }
+
+    // Pure Latin / English letters, numbers, and math symbols
+    if (!fontName && /^[A-Za-z0-9\s.,;:!?()\[\]{}'"\/\\+\-*=<>±×÷≠≤≥≈∞→⇒←⇄↔√∫∑°\^─–—−‒#%&@$_]+$/.test(text)) {
       return true;
     }
 
@@ -1170,14 +1181,15 @@
     if (isPureEnglish(text)) {
       return [{ type: 'english', text: text }];
     }
-    // Check if has no Latin letters, no Greek / Math symbols, and no dashes
-    if (!/[A-Za-z\u0370-\u03FF\u1F00-\u1FFF]/.test(text) && 
+    // Check if has no Latin letters, no ASCII English digits, no Greek / Math symbols, and no dashes
+    if (!/[A-Za-z0-9\u0370-\u03FF\u1F00-\u1FFF]/.test(text) && 
         !/[+\-*\/=<>±×÷≠≤≥≈∞→⇒←⇄↔√∫∑°\^─]/.test(text) &&
         !/[-–—−‒―]/.test(text)) {
       return [{ type: 'bengali', text: text }];
     }
 
     const segments = [];
+    let leadingNeutral = "";
     // Tokenizer matching Bengali vs English/Math/Greek/Symbols/Dashes/Arrows
     const tokenRegex = /([\u0980-\u09FF\u0964\u0965]+)|([A-Za-z0-9\u0370-\u03FF\u1F00-\u1FFF\\_+\-*\/=<>±×÷≠≤≥≈∞→⇒←⇄↔√∫∑°\^\$\#\%\&\~\(\)\[\]\{\}\u2013\u2014\u2212\u2012\u2015─-]+)|([^\s\u0980-\u09FFA-Za-z0-9\u0370-\u03FF\u2013\u2014\u2212\u2012\u2015─-]+|\s+)/g;
     
@@ -1188,18 +1200,31 @@
       const neutralMatch = match[3];
 
       if (bnMatch) {
-        segments.push({ type: 'bengali', text: bnMatch });
+        if (leadingNeutral) {
+          segments.push({ type: 'bengali', text: leadingNeutral + bnMatch });
+          leadingNeutral = "";
+        } else {
+          segments.push({ type: 'bengali', text: bnMatch });
+        }
       } else if (enMatch) {
-        segments.push({ type: 'english', text: enMatch });
+        if (leadingNeutral) {
+          segments.push({ type: 'english', text: leadingNeutral + enMatch });
+          leadingNeutral = "";
+        } else {
+          segments.push({ type: 'english', text: enMatch });
+        }
       } else if (neutralMatch) {
         if (/[-–—−‒―]/.test(neutralMatch)) {
           segments.push({ type: 'english', text: neutralMatch });
         } else if (segments.length > 0) {
           segments[segments.length - 1].text += neutralMatch;
         } else {
-          segments.push({ type: 'bengali', text: neutralMatch });
+          leadingNeutral += neutralMatch;
         }
       }
+    }
+    if (leadingNeutral) {
+      segments.push({ type: 'bengali', text: leadingNeutral });
     }
 
     const merged = [];

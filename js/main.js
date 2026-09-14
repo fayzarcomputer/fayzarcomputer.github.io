@@ -2865,6 +2865,10 @@ function initUnifiedConverterEngine() {
         }
       );
 
+      if (wizardPreviewContent) {
+        wizardPreviewContent.value = (res && res.unicode) || (window.FayzarAiOcrEngine && window.FayzarAiOcrEngine.state && window.FayzarAiOcrEngine.state.unicodeText) || wizardPreviewContent.value || '';
+      }
+
       wizardProgressCard?.classList.add('hidden');
       wizardResultCard?.classList.remove('hidden');
 
@@ -2930,18 +2934,7 @@ function initUnifiedConverterEngine() {
     await executeWizardConversion(currentScanResult, 'generic');
   });
 
-  // Preview Toggle and Copy Handlers
-  wizardPreviewToggleBtn?.addEventListener('click', () => {
-    if (!wizardPreviewBox) return;
-    const isHidden = wizardPreviewBox.classList.contains('hidden');
-    if (isHidden) {
-      wizardPreviewBox.classList.remove('hidden');
-      if (wizardPreviewToggleText) wizardPreviewToggleText.textContent = 'টেক্সট প্রিভিউ লুকান';
-    } else {
-      wizardPreviewBox.classList.add('hidden');
-      if (wizardPreviewToggleText) wizardPreviewToggleText.textContent = 'টেক্সট প্রিভিউ দেখুন';
-    }
-  });
+  // Copy Handlers (Preview toggle is managed exclusively by ai-ocr-engine)
 
   wizardCopyTextBtn?.addEventListener('click', async () => {
     const text = (window.FayzarAiOcrEngine && window.FayzarAiOcrEngine.state && window.FayzarAiOcrEngine.state.unicodeText) 
@@ -3304,9 +3297,9 @@ function initUnifiedConverterEngine() {
 
   // Direct DOCX download
   downloadTextDocxBtn?.addEventListener('click', async () => {
-    const text = targetTextArea ? targetTextArea.value : '';
-    if (!text.trim() || typeof DocxHandler === 'undefined') return;
     const isU2B = (currentTextMode === 'u2b') || (currentTextMode === 'auto' && BanglaConverter.hasBengaliText(sourceTextArea.value));
+    const text = (isU2B && sourceTextArea && sourceTextArea.value.trim()) ? sourceTextArea.value : (targetTextArea ? targetTextArea.value : '');
+    if (!text.trim() || typeof DocxHandler === 'undefined') return;
     const fontName = isU2B ? 'SutonnyMJ' : 'Kalpurush';
     const pageSize = document.getElementById('ai-target-page-size')?.value || 'a4';
     const margin = document.getElementById('ai-target-page-margin')?.value || 'normal';
@@ -3320,9 +3313,9 @@ function initUnifiedConverterEngine() {
 
   // Direct Word 2003 DOC download
   downloadTextDocBtn?.addEventListener('click', () => {
-    const text = targetTextArea ? targetTextArea.value : '';
-    if (!text.trim() || typeof DocxHandler === 'undefined') return;
     const isU2B = (currentTextMode === 'u2b') || (currentTextMode === 'auto' && BanglaConverter.hasBengaliText(sourceTextArea.value));
+    const text = (isU2B && sourceTextArea && sourceTextArea.value.trim()) ? sourceTextArea.value : (targetTextArea ? targetTextArea.value : '');
+    if (!text.trim() || typeof DocxHandler === 'undefined') return;
     const fontName = isU2B ? 'SutonnyMJ' : 'Kalpurush';
     const pageSize = document.getElementById('ai-target-page-size')?.value || 'a4';
     const margin = document.getElementById('ai-target-page-margin')?.value || 'normal';

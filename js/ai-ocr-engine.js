@@ -52,10 +52,10 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
 3. CATEGORY & SECTION-BASED INDEPENDENT SEQUENTIAL NUMBERING (ক্যাটাগরি ও বিভাগ অনুযায়ী আলাদা ক্রমিক নম্বর):
    - CRITICAL MANDATE: NEVER merge all questions into a single continuous global serial number across different question categories or sections!
    - You MUST assign separate, independent sequential numbering starting from ১ (1) for each distinct question category / section:
-     * সৃজনশীল প্রশ্ন (Creative Questions / CQ): এর জন্য সম্পূর্ণ আলাদা ক্রমিক নম্বর হবে (১., ২., ৩., ...)। প্রতিটি সৃজনশীল প্রশ্নের অধীনে উপ-প্রশ্নগুলো ছবিতে যেভাবে আছে ঠিক সেভাবেই থাকবে (ক., খ., গ. অথবা ক., খ., গ., ঘ.)।
-     * বহুনির্বাচনী প্রশ্ন (Multiple Choice Questions / MCQ): এর জন্য সম্পূর্ণ আলাদা ক্রমিক নম্বর হবে এবং এটি পুনরায় ১ থেকে শুরু হবে (১., ২., ৩., ৪., ... ৩০.)। কখনোই সৃজনশীল প্রশ্নের ক্রমিকের সাথে মিলিয়ে একটানা ক্রমিক দেওয়া যাবে না।
-     * সংক্ষিপ্ত প্রশ্ন / অতি সংক্ষিপ্ত প্রশ্ন / শূন্যস্থান পূরণ (Short Questions): এর জন্য সম্পূর্ণ আলাদা ক্রমিক নম্বর হবে এবং এটিও পুনরায় ১ থেকে শুরু হবে (১., ২., ৩., ৪., ৫., ...)।
-     * বিভাগ ভিত্তিক কাঠামো (Section-wise): প্রশ্নপত্রে যদি বিভিন্ন বিভাগ বা অংশ থাকে (যেমন: 'ক-বিভাগ: বহুনির্বাচনী', 'খ-বিভাগ: সৃজনশীল'), তবে প্রতিটি বিভাগে ক্রমিক নম্বর সতন্ত্রভাবে ১., ২., ৩., ... থেকে শুরু হবে।
+     * বাংলা, গণিত, বিজ্ঞান ইত্যাদি বিষয়ের প্রশ্নের ক্রমিক নম্বর এর পর অবশ্যই '।' (দাড়ি) ব্যবহার করবেন (যেমন: ১।, ২।, ৩।, ... ১০।)। কখনো '১.' বা '১)' ব্যবহার করবেন না। (তবে ইংরেজি বিষয়ের ক্ষেত্রে স্বাভাবিক ইংরেজি ফরম্যাট '1.', '2.' বজায় রাখবেন)।
+     * সৃজনশীল প্রশ্ন (Creative Questions / CQ): এর জন্য সম্পূর্ণ আলাদা ক্রমিক নম্বর হবে (১।, ২।, ৩।, ...)। প্রতিটি সৃজনশীল প্রশ্নের অধীনে উপ-প্রশ্নগুলো অবশ্যই ডট ফরম্যাটে ক., খ., গ., ঘ. থাকবে (কখনো ব্রাকেট যেমন (ক), ক) দেওয়া যাবে না)।
+     * বহুনির্বাচনী প্রশ্ন (Multiple Choice Questions / MCQ): এর জন্য সম্পূর্ণ আলাদা ক্রমিক নম্বর হবে এবং এটি পুনরায় ১ থেকে শুরু হবে (১।, ২।, ৩।, ৪।, ... ৩০।)। কখনোই সৃজনশীল প্রশ্নের ক্রমিকের সাথে মিলিয়ে একটানা ক্রমিক দেওয়া যাবে না।
+     * বিভাগ ভিত্তিক কাঠামো (Section-wise): প্রশ্নপত্রে যদি বিভিন্ন বিভাগ বা অংশ থাকে (যেমন: 'ক-বিভাগ: বহুনির্বাচনী', 'খ-বিভাগ: সৃজনশীল'), তবে প্রতিটি বিভাগে ক্রমিক নম্বর সতন্ত্রভাবে ১।, ২।, ৩।, ... থেকে শুরু হবে।
 
 4. UNTRUNCATED, FULL EXTRACTION OF ALL VISIBLE CONTENT ACROSS ALL PAGES (পৃষ্ঠার সকল লেখার সম্পূর্ণ রূপান্তর):
    - Transcribe every single visible question and line from Page 1 to the very last page across all provided images/pages in order.
@@ -90,16 +90,20 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
    - CRITICAL: DO NOT insert empty blank lines or double Enters between questions, sub-questions, or lines.
    - Each question, sub-question, and option must follow immediately on the next line without empty blank lines in between.
 
-10. ROMAN NUMERALS & MCQ FORMATTING (রোমান সংখ্যা ও বহুপদী বহুনির্বাচনী প্রশ্ন):
-    - CRITICAL: MCQ প্রশ্নের ক্রমিক নম্বর ১., ২., ৩., ... ৩০. সতন্ত্রভাবে ১ থেকে শুরু করতে হবে (সৃজনশীল প্রশ্নের ক্রমিকের সাথে মিলিয়ে নয়)।
+10. ROMAN NUMERALS & MCQ FORMATTING (রোমান সংখ্যা ও বহুনির্বাচনী প্রশ্ন):
+    - CRITICAL: MCQ প্রশ্নের ক্রমিক নম্বর ১।, ২।, ৩।, ... ৩০। সতন্ত্রভাবে ১ থেকে শুরু করতে হবে (সৃজনশীল প্রশ্নের ক্রমিকের সাথে মিলিয়ে নয়)।
     - CRITICAL: NEVER wrap roman numerals in asterisks (*i.*, *ii.*, *iii.*, *i* ও *ii* etc. are strictly forbidden ❌).
     - Write clean plain roman numerals without any asterisks:
       i. A, B ও C একই সরলরেখায় অবস্থিত
       ii. CP \perp BC
       iii. AB = AC - BC
       নিচের কোনটি সঠিক?
-      (ক) i ও ii	(খ) i ও iii	(গ) ii ও iii	(ঘ) i, ii ও iii ✅
-    - CRITICAL MANDATE FOR MCQ OPTIONS (বহুনির্বাচনী অপশনের মাঝে ট্যাব \t): প্রতিটি বহুনির্বাচনী অপশনের মাঝে বা পূর্বে অবশ্যই একটি করে ট্যাব (Tab character \t) ব্যবহার করবেন (যেমন: (ক) অপশন ১\t(খ) অপশন ২\t(গ) অপশন ৩\t(ঘ) অপশন ৪)। কখনোই অপশনগুলোর মাঝে শুধুমাত্র স্পেস (Space) ব্যবহার করবেন না, যাতে মাইক্রোসফট ওয়ার্ডে পেস্ট করলে অপশনগুলো স্বয়ংক্রিয়ভাবে সোজা কলামে এলাইন হয়ে যায়।
+      	ক. i ও ii	খ. i ও iii	গ. ii ও iii	ঘ. i, ii ও iii ✅
+    - CRITICAL MANDATE FOR MCQ OPTIONS (বহুনির্বাচনী অপশনে ডট 'ক.' ও শুরুর ট্যাব \t):
+      * বাংলা, গণিত, বিজ্ঞান ইত্যাদি বিষয়ের বিকল্পগুলোর ক্ষেত্রে কোনো প্রকার বন্ধনী যেমন: (ক), ক), (খ), খ) ব্যবহার করা সম্পূর্ণ নিষেধ ❌! প্রতিটি বিকল্প অবশ্যই 'ক.', 'খ.', 'গ.', 'ঘ.' ডট ফরম্যাটে উপস্থাপন করতে হবে।
+      * প্রতিটি অপশন লাইনের শুরুতে (ক-এর পূর্বে) অবশ্যই ১টি ট্যাব (\t) এবং প্রতিটি বিকল্পের মাঝে ১টি করে ট্যাব (\t) ব্যবহার করবেন (যেমন: \tক. অপশন ১\tখ. অপশন ২\tগ. অপশন ৩\tঘ. অপশন ৪)।
+      * দ্বি-সারি বিকল্পের ক্ষেত্রে দ্বিতীয় লাইনের শুরুতেও ১টি ট্যাব থাকবে (যেমন: \tগ. অপশন ৩\tঘ. অপশন ৪)।
+      * (তবে ইংরেজি প্রশ্নপত্রের ক্ষেত্রে স্বাভাবিক ইংরেজি বিকল্প (a), (b) ইত্যাদি বহাল থাকবে)।
 
 11. CREATIVE QUESTIONS (সৃজনশীল প্রশ্নপত্র):
     - CRITICAL: সৃজনশীল প্রশ্নের ক্রমিক নম্বর ১., ২., ৩., ... সতন্ত্রভাবে ১ থেকে শুরু করতে হবে।
@@ -133,7 +137,15 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
     - DO NOT get trapped in repetitive dot loops. Continue transcribing the rest of the letter/form (বরাবর, বিষয়, জনাব, বিবরণ, আবেদনকারী, স্বাক্ষর ইত্যাদি) completely and faithfully!
 
 16. ACCURATE BENGALI TYPOGRAPHY:
-    - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output) clean in English.`;
+    - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output) clean in English.
+
+17. ENGLISH LANGUAGE QUESTION PAPERS (ইংরেজি বিষয়ের প্রশ্নপত্র - সম্পূর্ণ স্বাভাবিক কার্যক্রম):
+    - CRITICAL EXCEPTION & MANDATE: The formatting rules for Bengali Dari ('।'), Bengali dot options ('ক.', 'খ.', 'গ.', 'ঘ.') with leading tabs, and CQ dot sub-questions apply ONLY to Bengali, Mathematics, Physics, Chemistry, Biology, and other Bengali-medium subjects!
+    - This rule DOES NOT apply to English (English 1st Paper, English 2nd Paper, etc.).
+    - For English Question Papers, run in standard/normal manner:
+      * Question numbers must remain standard English format: 1. , 2. , 3. , etc. (DO NOT convert to '১।' or '1|').
+      * Sub-questions and items must remain standard English format: (a), (b), (c), (d) or (i), (ii), (iii), (iv) or a. , b. , c. , d. as written in the source document.
+      * Options must remain standard English format without forcing 'ক.', 'খ.', 'গ.', 'ঘ.' or Bengali letters.`;
 
   const GEMINI_VERIFY_PROMPT = `You are the Chief Examination Paper Auditor, Proofreader, and Senior Bengali Question Typist.
 You are given:
@@ -1647,50 +1659,74 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         let p = pageNum ? toBengaliNumber(pageNum.replace(/[^\d০-৯]/g, '').padStart(2, '0')) : '০১';
         return `[ছবি আছে-পৃ:${p}]`;
       });
-      // 4c. MCQ Options Tab Formatting: Ensure strictly 1 literal Tab (\t) between options for Word alignment
-      l = l.replace(/[ \t]*\t+[ \t]*/g, '\t');
-
-      const hasKa = /[\(（][কaA][\)）]/.test(l);
-      const hasKha = /[\(（][খbB][\)）]/.test(l);
-      const hasGa = /[\(（][গcC][\)）]/.test(l);
-      const hasGha = /[\(（][ঘdD][\)）]/.test(l);
-
-      const hasBijoyK = /[\(（][K][\)）]/.test(l);
-      const hasBijoyL = /[\(（][L][\)）]/.test(l);
-      const hasBijoyM = /[\(（][M][\)）]/.test(l);
-      const hasBijoyN = /[\(（][N][\)）]/.test(l);
-
-      if (hasKa && hasKha) {
-        // If (ক) is preceded by non-whitespace text (question on same line), add 1 tab before (ক)
-        l = l.replace(/(?<=[^\s\r\n])[ \t]*\t*[ \t]*([\(（][কaA][\)）])/g, '\t$1');
-        // If (ক) is at start of line, remove any leading tabs/spaces so (ক) starts flush
-        l = l.replace(/^[ \t]*\t*[ \t]*([\(（][কaA][\)）])/, '$1');
-        // Strictly single tab before (খ), (গ), (ঘ)
-        l = l.replace(/[ \t]*\t*[ \t]*([\(（][খগঘbcdBCD][\)）])/g, '\t$1');
-      } else if (hasGa && hasGha && !hasKa) {
-        // Line with 2 options on second line (গ) and (ঘ)
-        l = l.replace(/^[ \t]*\t*[ \t]*([\(（][গcC][\)）])/, '$1');
-        l = l.replace(/[ \t]*\t*[ \t]*([\(（][ঘdD][\)）])/g, '\t$1');
-      } else if (hasBijoyK && hasBijoyL) {
-        // Bijoy options (K) and (L)
-        l = l.replace(/(?<=[^\s\r\n])[ \t]*\t*[ \t]*([\(（][K][\)）])/g, '\t$1');
-        l = l.replace(/^[ \t]*\t*[ \t]*([\(（][K][\)）])/, '$1');
-        l = l.replace(/[ \t]*\t*[ \t]*([\(（][LMNlmn][\)）])/g, '\t$1');
-      } else if (hasBijoyM && hasBijoyN && !hasBijoyK) {
-        // Bijoy options (M) and (N) on second line
-        l = l.replace(/^[ \t]*\t*[ \t]*([\(（][M][\)）])/, '$1');
-        l = l.replace(/[ \t]*\t*[ \t]*([\(（][N][\)）])/g, '\t$1');
-      } else if (!hasKa && /^[ \t]*[কaA][\.\)]/.test(l) && /[ \t]+[খbB][\.\)]/.test(l)) {
-        // Line with unbracketed options: ক. ... খ. ...
-        l = l.replace(/^[ \t]*\t*[ \t]*([কaA][\.\)])/, '$1');
-        l = l.replace(/[ \t]*\t*[ \t]*([খগঘbcdBCD][\.\)])/g, '\t$1');
-      } else if (!hasBijoyK && /^[ \t]*[K][\.\)]/.test(l) && /[ \t]+[L][\.\)]/.test(l)) {
-        // Bijoy options without brackets: K. ... L. ...
-        l = l.replace(/^[ \t]*\t*[ \t]*([K][\.\)])/, '$1');
-        l = l.replace(/[ \t]*\t*[ \t]*([LMN][\.\)])/g, '\t$1');
+      // 4c. Question Numbering: Format Bengali question numbers with Dari (।) e.g. ১।, ২।
+      // Preserves English questions as 1. What... (Normal operation for English)
+      const hasEnglishWords = /\b(what|which|where|when|who|whom|whose|why|how|read|write|fill|choose|correct|answer|following|passage|poem|story|change|transform|rewrite|complete|narrate|voice|sentence|paragraph|dialogue|table|column|true|false|match|blank|blanks|question|questions|section|marks|time)\b/i.test(l);
+      const isEnglishLine = hasEnglishWords || (/^[ \t]*[0-9]+[\.\)]\s*["'A-Za-z]/.test(l) && !/[\u0980-\u09FF]/.test(l) && !/[\u0080-\u00FF‡‰†Š&|]/.test(l));
+      if (!isEnglishLine) {
+        if (/[\u0980-\u09FF]/.test(l) && /^[ \t]*([০-৯0-9]+)[\.\)]\s*/.test(l)) {
+          l = l.replace(/^[ \t]*([০-৯0-9]+)[\.\)]\s*/, (match, p1) => {
+            const bnDigits = p1.replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+            return `${bnDigits}। `;
+          });
+        } else if (/^[ \t]*([0-9]+)[\.\)]\s*/.test(l)) {
+          l = l.replace(/^[ \t]*([0-9]+)[\.\)]\s*/, '$1| ');
+        }
       }
 
-      l = l.replace(/\t+/g, '\t');
+      // 4d. CQ Sub-Questions: Format as ক., খ., গ., ঘ. (or K., L., M., N.)
+      // Preserves English sub-questions like (a), (b), (c)
+      const isEnglishSubQ = /^[ \t]*[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(l) && !/[\u0980-\u09FF]/.test(l);
+      if (!isEnglishSubQ) {
+        if (/^[ \t]*[\(（]?([কখগঘ])[\)）\.]\s*/.test(l) && !/[\(（]?[খগঘ][\)）\.]/.test(l.slice(5))) {
+          l = l.replace(/^[ \t]*[\(（]?([কখগঘ])[\)）\.]\s*/, '$1. ');
+        } else if (/^[ \t]*[\(（]?([KLMN])[\)）\.]\s*/.test(l) && !/[\(（]?[LMN][\)）\.]/.test(l.slice(5)) && (/[\u0080-\u00FF‡‰†Š&]/.test(l) || !hasEnglishWords)) {
+          l = l.replace(/^[ \t]*[\(（]?([KLMN])[\)）\.]\s*/, '$1. ');
+        }
+      }
+
+      // 4e. MCQ Options Tab & Dot Formatting: Ensure \tক. ...\tখ. ...
+      if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.formatMcqLineTabs === 'function') {
+        l = DocxHandler.formatMcqLineTabs(l);
+      } else {
+        l = l.replace(/[ \t]*\t+[ \t]*/g, '\t');
+        const hasBnKa = /[\(（]?[ক][\)）\.]/.test(l);
+        const hasBnKha = /[\(（]?[খ][\)）\.]/.test(l);
+        const hasBnGa = /[\(（]?[গ][\)）\.]/.test(l);
+        const hasBnGha = /[\(（]?[ঘ][\)）\.]/.test(l);
+
+        if ((hasBnKa && hasBnKha) || (hasBnGa && hasBnGha) || (hasBnKa && (hasBnGa || hasBnGha))) {
+          l = l.trim()
+            .replace(/[\(（]?\s*ক\s*[\)）\.]\s*/g, 'ক. ')
+            .replace(/[\(（]?\s*খ\s*[\)）\.]\s*/g, 'খ. ')
+            .replace(/[\(（]?\s*গ\s*[\)）\.]\s*/g, 'গ. ')
+            .replace(/[\(（]?\s*ঘ\s*[\)）\.]\s*/g, 'ঘ. ')
+            .replace(/[ \t]*\t*[ \t]*(খ\.)/g, '\t$1')
+            .replace(/[ \t]*\t*[ \t]*(গ\.)/g, '\t$1')
+            .replace(/[ \t]*\t*[ \t]*(ঘ\.)/g, '\t$1')
+            .replace(/^[ \t]*\t*[ \t]*(ক\.|গ\.)/, '\t$1');
+          if (!l.startsWith('\t')) l = '\t' + l;
+        }
+
+        const hasBijoyK = /[\(（]?[K][\)）\.]/.test(l);
+        const hasBijoyL = /[\(（]?[L][\)）\.]/.test(l);
+        const hasBijoyM = /[\(（]?[M][\)）\.]/.test(l);
+        const hasBijoyN = /[\(（]?[N][\)）\.]/.test(l);
+
+        if ((hasBijoyK && hasBijoyL) || (hasBijoyM && hasBijoyN) || (hasBijoyK && (hasBijoyM || hasBijoyN))) {
+          l = l.trim()
+            .replace(/[\(（]?\s*K\s*[\)）\.]\s*/g, 'K. ')
+            .replace(/[\(（]?\s*L\s*[\)）\.]\s*/g, 'L. ')
+            .replace(/[\(（]?\s*M\s*[\)）\.]\s*/g, 'M. ')
+            .replace(/[\(（]?\s*N\s*[\)）\.]\s*/g, 'N. ')
+            .replace(/[ \t]*\t*[ \t]*(L\.)/g, '\t$1')
+            .replace(/[ \t]*\t*[ \t]*(M\.)/g, '\t$1')
+            .replace(/[ \t]*\t*[ \t]*(N\.)/g, '\t$1')
+            .replace(/^[ \t]*\t*[ \t]*(K\.|M\.)/, '\t$1');
+          if (!l.startsWith('\t')) l = '\t' + l;
+        }
+        l = l.replace(/\t+/g, '\t');
+      }
 
       cleanedLines.push(l);
     }

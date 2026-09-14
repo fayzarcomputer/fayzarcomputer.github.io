@@ -118,33 +118,142 @@
 
     async _loadMediaFiles(zip, relsMap) {
       const mediaMap = {};
+      const allZipKeys = Object.keys(zip.files || {});
+
       for (let id in relsMap) {
         const rel = relsMap[id];
-        if (rel.type && rel.type.includes('/image')) {
-          let targetPath = rel.target;
-          if (targetPath.startsWith('/')) {
-            targetPath = targetPath.substring(1);
-          } else if (!targetPath.startsWith('word/')) {
-            targetPath = 'word/' + targetPath;
+        const isImageRel = (rel.type && rel.type.toLowerCase().includes('/image')) ||
+                           (rel.target && /\.(png|jpe?g|gif|bmp|wmf|emf|webp|svg|tiff?)$/i.test(rel.target));
+        if (isImageRel) {
+          let rawTarget = (rel.target || '').replace(/\\/g, '/');
+          let cleanPath = rawTarget.replace(/^(\.\.\/)+/, '').replace(/^\//, '');
+          let wordPath = cleanPath.startsWith('word/') ? cleanPath : 'word/' + cleanPath;
+          let filenameOnly = cleanPath.split('/').pop().toLowerCase();
+
+          let imgFile = zip.file(wordPath) || zip.file(cleanPath) || zip.file(rawTarget);
+          if (!imgFile) {
+            const foundKey = allZipKeys.find(k => {
+              const lower = k.toLowerCase().replace(/\\/g, '/');
+              return lower.endsWith('/' + filenameOnly) || lower === filenameOnly;
+            });
+            if (foundKey) imgFile = zip.file(foundKey);
           }
 
-          const imgFile = zip.file(targetPath);
           if (imgFile) {
             try {
               const base64Data = await imgFile.async("base64");
+              const lowerName = (imgFile.name || cleanPath).toLowerCase();
               let mime = "image/png";
-              if (targetPath.endsWith('.jpg') || targetPath.endsWith('.jpeg')) mime = "image/jpeg";
-              else if (targetPath.endsWith('.gif')) mime = "image/gif";
-              else if (targetPath.endsWith('.bmp')) mime = "image/bmp";
-              
-              mediaMap[id] = `data:${mime};base64,${base64Data}`;
+              if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) mime = "image/jpeg";
+              else if (lowerName.endsWith('.gif')) mime = "image/gif";
+              else if (lowerName.endsWith('.bmp')) mime = "image/bmp";
+              else if (lowerName.endsWith('.webp')) mime = "image/webp";
+              else if (lowerName.endsWith('.svg')) mime = "image/svg+xml";
+
+              const dataUri = `data:${mime};base64,${base64Data}`;
+              mediaMap[id] = dataUri;
+              mediaMap[rawTarget] = dataUri;
+              mediaMap[cleanPath] = dataUri;
+              mediaMap[filenameOnly] = dataUri;
             } catch (e) {
-              console.warn("Failed to load image:", targetPath, e);
+              console.warn("Failed to load image:", rawTarget, e);
             }
           }
         }
       }
+
+      // Direct Archive-Wide Indexing: Ensure 100% of images anywhere in the docx zip are catalogued
+      for (const filePath of allZipKeys) {
+        if (/\.(png|jpe?g|gif|bmp|wmf|emf|webp|svg|tiff?)$/i.test(filePath)) {
+          const filename = filePath.split('/').pop().toLowerCase();
+          if (!mediaMap[filename]) {
+            try {
+              const f = zip.file(filePath);
+              if (f) {
+                const b64 = await f.async("base64");
+                const lower = filePath.toLowerCase();
+                let mime = "image/png";
+                if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) mime = "image/jpeg";
+                else if (lower.endsWith('.gif')) mime = "image/gif";
+                else if (lower.endsWith('.bmp')) mime = "image/bmp";
+                else if (lower.endsWith('.webp')) mime = "image/webp";
+                else if (lower.endsWith('.svg')) mime = "image/svg+xml";
+
+                const uri = `data:${mime};base64,${b64}`;
+                mediaMap[filePath] = uri;
+                mediaMap[filename] = uri;
+                mediaMap['word/' + filename] = uri;
+                mediaMap['media/' + filename] = uri;
+              }
+            } catch (e) {}
+          }
+        }
+      }
+
       return mediaMap;
+    }
+
+    _extractImagesFromNode(node, mediaMap) {
+      if (!node || !mediaMap) return "";
+      let html = "";
+      const foundImages = [];
+
+      const elements = [node, ...(node.getElementsByTagName ? Array.from(node.getElementsByTagName('*')) : [])];
+      let currentWidth = null;
+      let currentHeight = null;
+
+      for (let el of elements) {
+        const elName = (el.localName || el.nodeName || '').split(':').pop();
+        if (elName === 'extent') {
+          const cx = parseInt(el.getAttribute("cx") || "0", 10);
+          const cy = parseInt(el.getAttribute("cy") || "0", 10);
+          if (cx > 0 && cy > 0) {
+            currentWidth = (cx / 12700).toFixed(1) + 'pt';
+            currentHeight = (cy / 12700).toFixed(1) + 'pt';
+          }
+        }
+        const style = el.getAttribute("style");
+        if (style && !currentWidth) {
+          const wMatch = style.match(/width:\s*([\d.]+)\s*(pt|in|px)?/i);
+          const hMatch = style.match(/height:\s*([\d.]+)\s*(pt|in|px)?/i);
+          if (wMatch) currentWidth = wMatch[1] + (wMatch[2] || 'pt');
+          if (hMatch) currentHeight = hMatch[1] + (hMatch[2] || 'pt');
+        }
+
+        const blipEmbed = el.getAttribute("r:embed") || el.getAttribute("embed") || el.getAttribute("r:link") || el.getAttribute("link");
+        if (blipEmbed && mediaMap[blipEmbed]) foundImages.push({ id: blipEmbed, w: currentWidth, h: currentHeight });
+
+        const vmlId = el.getAttribute("r:id") || el.getAttribute("id") || el.getAttribute("src") || el.getAttribute("href");
+        if (vmlId && mediaMap[vmlId]) foundImages.push({ id: vmlId, w: currentWidth, h: currentHeight });
+
+        if (typeof el.getAttributeNS === 'function') {
+          const relNs = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+          const nsEmbed = el.getAttributeNS(relNs, "embed");
+          const nsId = el.getAttributeNS(relNs, "id");
+          if (nsEmbed && mediaMap[nsEmbed]) foundImages.push({ id: nsEmbed, w: currentWidth, h: currentHeight });
+          if (nsId && mediaMap[nsId]) foundImages.push({ id: nsId, w: currentWidth, h: currentHeight });
+        }
+      }
+
+      if (foundImages.length === 0 && node.outerHTML) {
+        const matches = node.outerHTML.match(/(?:embed|id|src)=["']([^"']+)["']/gi);
+        if (matches) {
+          for (let m of matches) {
+            const val = m.replace(/^(?:embed|id|src)=["']/i, '').replace(/["']$/, '');
+            if (mediaMap[val]) foundImages.push({ id: val, w: currentWidth, h: currentHeight });
+          }
+        }
+      }
+
+      const seen = new Set();
+      for (let img of foundImages) {
+        if (seen.has(img.id)) continue;
+        seen.add(img.id);
+        const wAttr = img.w ? `width:${img.w};` : '';
+        const hAttr = img.h ? `height:${img.h};` : '';
+        html += `<img src="${mediaMap[img.id]}" style="${wAttr}${hAttr}max-width:100%;height:auto;display:inline-block;margin:3pt 0;vertical-align:middle;" alt="Image" />`;
+      }
+      return html;
     }
 
     _buildStyleResolver(stylesXmlStr) {
@@ -325,6 +434,21 @@
         height = "11in";
       }
 
+      const MARGIN_MAP = {
+        'normal': { top: '1.0in', right: '1.0in', bottom: '1.0in', left: '1.0in' },
+        'narrow': { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' },
+        'moderate': { top: '0.75in', right: '0.75in', bottom: '0.75in', left: '0.75in' },
+        'wide': { top: '1.25in', right: '1.25in', bottom: '1.25in', left: '1.25in' }
+      };
+
+      const selectedMargin = opts.margin || opts.pageMargin;
+      if (selectedMargin && MARGIN_MAP[selectedMargin]) {
+        marginTop = MARGIN_MAP[selectedMargin].top;
+        marginRight = MARGIN_MAP[selectedMargin].right;
+        marginBottom = MARGIN_MAP[selectedMargin].bottom;
+        marginLeft = MARGIN_MAP[selectedMargin].left;
+      }
+
       if (sectPr) {
         const pgSz = sectPr.querySelector("pgSz");
         if (pgSz) {
@@ -334,17 +458,19 @@
           if (hTwips) height = (hTwips / 1440).toFixed(2) + "in";
         }
 
-        const pgMar = sectPr.querySelector("pgMar");
-        if (pgMar) {
-          const topTwips = parseInt(pgMar.getAttribute("w:top") || pgMar.getAttribute("top"), 10);
-          const bottomTwips = parseInt(pgMar.getAttribute("w:bottom") || pgMar.getAttribute("bottom"), 10);
-          const leftTwips = parseInt(pgMar.getAttribute("w:left") || pgMar.getAttribute("left"), 10);
-          const rightTwips = parseInt(pgMar.getAttribute("w:right") || pgMar.getAttribute("right"), 10);
+        if (!selectedMargin) {
+          const pgMar = sectPr.querySelector("pgMar");
+          if (pgMar) {
+            const topTwips = parseInt(pgMar.getAttribute("w:top") || pgMar.getAttribute("top"), 10);
+            const bottomTwips = parseInt(pgMar.getAttribute("w:bottom") || pgMar.getAttribute("bottom"), 10);
+            const leftTwips = parseInt(pgMar.getAttribute("w:left") || pgMar.getAttribute("left"), 10);
+            const rightTwips = parseInt(pgMar.getAttribute("w:right") || pgMar.getAttribute("right"), 10);
 
-          if (topTwips) marginTop = (topTwips / 1440).toFixed(2) + "in";
-          if (bottomTwips) marginBottom = (bottomTwips / 1440).toFixed(2) + "in";
-          if (leftTwips) marginLeft = (leftTwips / 1440).toFixed(2) + "in";
-          if (rightTwips) marginRight = (rightTwips / 1440).toFixed(2) + "in";
+            if (topTwips) marginTop = (topTwips / 1440).toFixed(2) + "in";
+            if (bottomTwips) marginBottom = (bottomTwips / 1440).toFixed(2) + "in";
+            if (leftTwips) marginLeft = (leftTwips / 1440).toFixed(2) + "in";
+            if (rightTwips) marginRight = (rightTwips / 1440).toFixed(2) + "in";
+          }
         }
 
         const colsEl = sectPr.querySelector("cols");
@@ -485,6 +611,12 @@
             const rData = this._parseRun(r, inheritedStyle, styleResolver, mediaMap, opts);
             runsHtml.push(rData.html);
             textContent += rData.text;
+            runCount++;
+          }
+        } else if (childName === 'drawing' || childName === 'pict' || childName === 'shape') {
+          const imgs = this._extractImagesFromNode(child, mediaMap);
+          if (imgs) {
+            runsHtml.push(imgs);
             runCount++;
           }
         }
@@ -632,16 +764,18 @@
 
       // Ensure SutonnyMJ / Bijoy font family is preserved with full fidelity for Word 2003 (.doc)
       if (!fontFamily) {
-        fontFamily = opts.preserveSutonny ? 'SutonnyMJ' : 'Times New Roman';
+        fontFamily = opts.direction === 'all_unicode' ? 'Nikosh' : (opts.preserveSutonny ? 'SutonnyMJ' : 'Times New Roman');
       }
 
-      // Check if run is SutonnyMJ/Bijoy vs English/Math
-      const isSutonnyRun = (fontFamily && (fontFamily.includes('Sutonny') || fontFamily.includes('Bijoy') || fontFamily.includes('Bangla'))) || (opts.preserveSutonny && fontFamily !== 'Times New Roman' && fontFamily !== 'Cambria Math');
-      const effectiveAsciiFont = isSutonnyRun ? 'SutonnyMJ' : 'Times New Roman';
+      // Check if run is SutonnyMJ/Bijoy vs English/Math/Unicode
+      const isSutonnyRun = opts.direction === 'all_bijoy' || 
+        (fontFamily && (fontFamily.includes('Sutonny') || fontFamily.includes('Bijoy') || fontFamily.includes('Bangla')));
+
+      const effectiveAsciiFont = isSutonnyRun ? 'SutonnyMJ' : (fontFamily || 'Times New Roman');
       const effectiveBidiFont = isSutonnyRun ? 'SutonnyMJ' : (fontFamily || 'Kalpurush');
 
       // Font family declarations with proper dual-font binding
-      rStyles.push(`font-family:'${effectiveAsciiFont}',SutonnyMJ,Arial,sans-serif`);
+      rStyles.push(`font-family:'${effectiveAsciiFont}',Arial,sans-serif`);
       rStyles.push(`mso-ascii-font-family:'${effectiveAsciiFont}'`);
       rStyles.push(`mso-hansi-font-family:'${effectiveAsciiFont}'`);
       rStyles.push(`mso-bidi-font-family:'${effectiveBidiFont}'`);
@@ -650,15 +784,8 @@
       if (isItalic) rStyles.push(`font-style:italic;mso-bidi-font-style:italic`);
       if (isUnderline) rStyles.push(`text-decoration:underline`);
 
-      // Check for Drawings / Images inside Run
-      let imagesHtml = "";
-      const blips = rNode.querySelectorAll("blip, [r\\:embed]");
-      for (let blip of blips) {
-        const embedId = blip.getAttribute("r:embed") || blip.getAttribute("embed");
-        if (embedId && mediaMap[embedId]) {
-          imagesHtml += `<img src="${mediaMap[embedId]}" style="max-width:100%;height:auto;display:inline-block;margin:3pt 0;" alt="Question Image" />`;
-        }
-      }
+      // Check for Drawings / Images inside Run (both DrawingML and VML)
+      const imagesHtml = this._extractImagesFromNode(rNode, mediaMap);
 
       let escapedText = htmlContent;
 
@@ -772,7 +899,12 @@
           }
 
           if (cellInnerHtml.length === 0) {
-            cellInnerHtml.push('<p class="MsoNormal">&nbsp;</p>');
+            const cellImgs = this._extractImagesFromNode(tcNode, mediaMap);
+            if (cellImgs) {
+              cellInnerHtml.push(`<p class="MsoNormal">${cellImgs}</p>`);
+            } else {
+              cellInnerHtml.push('<p class="MsoNormal">&nbsp;</p>');
+            }
           }
 
           cellsHtml.push(`<td${colSpanAttr}${rowSpanAttr} style="${tcStyles.join(';')}">${cellInnerHtml.join('')}</td>`);

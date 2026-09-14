@@ -130,6 +130,7 @@
   <script src="js/bangla-converter-engine.js"></script>
   <script src="js/docx-handler.js"></script>
   <script src="js/docx-to-doc-engine.js"></script>
+  <script src="js/doc-binary-engine.js"></script>
 </head>
 
 <body class="bg-slate-50 dark:bg-[#111a2e] text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-emerald-200 selection:text-emerald-900 min-h-screen flex flex-col transition-colors duration-300">
@@ -536,6 +537,13 @@
   <!-- Toast Notification Container -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
+  <!-- Core Conversion Engines -->
+  <script src="js/jszip.min.js"></script>
+  <script src="js/bangla-converter-engine.js"></script>
+  <script src="js/docx-to-doc-engine.js"></script>
+  <script src="js/doc-binary-engine.js"></script>
+  <script src="js/docx-handler.js"></script>
+
   <!-- App Controller Script -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -648,9 +656,9 @@
       });
 
       async function processDocxFiles(files) {
-        const docxFiles = files.filter(f => f.name.toLowerCase().endsWith('.docx'));
+        const docxFiles = files.filter(f => f.name.toLowerCase().endsWith('.docx') || f.name.toLowerCase().endsWith('.doc'));
         if (docxFiles.length === 0) {
-          showToast("দয়া করে শুধুমাত্র .docx ফাইল নির্বাচন করুন।", "error");
+          showToast("দয়া করে .docx অথবা .doc ফাইল নির্বাচন করুন।", "error");
           return;
         }
 
@@ -672,24 +680,41 @@
           const file = docxFiles[i];
           const fileNum = i + 1;
           const totalCount = docxFiles.length;
+          const isDoc = file.name.toLowerCase().endsWith('.doc');
 
           try {
-            const result = await handler.convertDocx(file, {
-              direction: direction,
-              targetFont: targetFont,
-              convertHeadersFooters: chkHeaders.checked,
-              convertFootnotes: chkFootnotes.checked,
-              convertComments: chkComments.checked,
-              convertNumbers: convertNumbers,
-              numberFormat: numberFormat,
-              onProgress: (percent, msg) => {
-                const totalProgress = Math.floor(((i + (percent / 100)) / totalCount) * 85);
-                progressBar.style.width = totalProgress + '%';
-                progressPctText.textContent = totalProgress + '%';
-                progressTitle.textContent = `ফাইল প্রসেস হচ্ছে (${fileNum}/${totalCount}): ${file.name}`;
-                progressStatus.textContent = msg;
+            let result;
+            const progressCallback = (percent, msg) => {
+              const totalProgress = Math.floor(((i + (percent / 100)) / totalCount) * 85);
+              progressBar.style.width = totalProgress + '%';
+              progressPctText.textContent = totalProgress + '%';
+              progressTitle.textContent = `ফাইল প্রসেস হচ্ছে (${fileNum}/${totalCount}): ${file.name}`;
+              progressStatus.textContent = msg;
+            };
+
+            if (isDoc) {
+              if (typeof DocBinaryEngine === 'undefined') {
+                throw new Error('DocBinaryEngine লোড হয়নি');
               }
-            });
+              result = await DocBinaryEngine.convertDocFile(file, {
+                direction: direction,
+                targetFont: targetFont,
+                convertNumbers: convertNumbers,
+                numberFormat: numberFormat,
+                onProgress: progressCallback
+              });
+            } else {
+              result = await handler.convertDocx(file, {
+                direction: direction,
+                targetFont: targetFont,
+                convertHeadersFooters: chkHeaders.checked,
+                convertFootnotes: chkFootnotes.checked,
+                convertComments: chkComments.checked,
+                convertNumbers: convertNumbers,
+                numberFormat: numberFormat,
+                onProgress: progressCallback
+              });
+            }
 
             // Also generate Word 2003 (.doc) full-fidelity version
             progressStatus.textContent = "Word 2003 (.doc) প্রশ্নপত্র ফরম্যাট প্রস্তুত হচ্ছে...";
@@ -705,7 +730,7 @@
               docBlob = result.convertedBlob;
             }
 
-            const baseName = file.name.replace(/\.docx$/i, '');
+            const baseName = file.name.replace(/\.(docx|doc)$/i, '');
             result.outputFileNameDocx = `${baseName}_converted.docx`;
             result.outputFileNameDoc = `${baseName}_Word2003.doc`;
             result.docBlob = docBlob;

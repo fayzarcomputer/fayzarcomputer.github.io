@@ -1271,6 +1271,14 @@
     return CUSTOM_DICT_U2B.slice();
   }
 
+  function formatQuestionPaper(text, isBijoy = false) {
+    if (!text) return text;
+    if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.formatQuestionPaper === 'function') {
+      return DocxHandler.formatQuestionPaper(text, isBijoy);
+    }
+    return text;
+  }
+
   const BanglaConverter = {
     unicodeToBijoy,
     bijoyToUnicode,
@@ -1285,7 +1293,8 @@
     splitBijoyAndEnglish,
     convertDigits,
     setCustomDictionary,
-    getCustomDictionary
+    getCustomDictionary,
+    formatQuestionPaper
   };
 
   if (typeof window !== 'undefined') {

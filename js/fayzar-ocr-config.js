@@ -11,8 +11,14 @@
   'use strict';
 
   // Obfuscated credential vault (XOR bit-shifted + Base64 encoded)
+  // All 16 verified, active Google AI Studio Gemini API keys (including 2 new high-quota premium keys)
   const VAULT = {
     KEYS: [
+      // Primary High-Quota Key 1
+      "a3sEa0gSeGQcYG1AZxJdZ0kaZWh7ZnB8W05tfh5AXhNLXVJTfnJhUnxsRX9CH2JrGm9+GF0=",
+      // Primary High-Quota Key 2
+      "a3sEa0gSeGQcYU8daFkYcl9dE10aTRMYZGgSUGNtcEleblJkWB1HaFpzaUFOXkdcWQdAHXs=",
+      // Verified System Vault Keys (Keys 3-16)
       "a3sEa0gSeGQcYXBpZ1lMex4HWGJhfW8SHnUdW1pbUk1tYXpmGUZSGXtQb1prQVMSB2BEHU0=",
       "a2NQS3lTaU9NUElzQ2d1bUleaWl8Xlh8Z2ZAfW9zbEIfZVNae0Zd",
       "a3sEa0gSeGQcYGN9XUwYSFlMHhxGaQdTextiYklzfn1sRHx9QxNlBxxueWdzcE4fUk1+Wns=",
@@ -30,6 +36,11 @@
     ],
     MASK_SALT: 42
   };
+
+  /**
+   * Key health and cooldown tracker
+   */
+  const keyStatusMap = new Map(); // key -> { state: 'active' | 'cooldown' | 'invalid', until: timestamp }
 
   /**
    * Internal string deobfuscator
@@ -53,24 +64,85 @@
 
   const FayzarOcrConfig = {
     /**
-     * Get Primary Default API Key
+     * Strict validation for Google AI Studio Gemini API Key format
+     * Supports both classic Google AI Studio keys (AIzaSy...) and modern keys (AQ.Ab8RN...)
      */
-    getPrimaryApiKey: function () {
-      return _unpack(VAULT.KEYS[0]);
+    isValidApiKey: function (key) {
+      if (!key || typeof key !== 'string') return false;
+      const clean = key.trim();
+      return (clean.startsWith('AIzaSy') || clean.startsWith('AQ.')) && clean.length >= 35 && /^[A-Za-z0-9_.-]+$/.test(clean);
+    },
+
+
+    /**
+     * Mark a key as temporarily on cooldown (e.g. 429 quota exhaustion)
+     */
+    markKeyCooldown: function (key, seconds = 60) {
+      if (!key) return;
+      keyStatusMap.set(key.trim(), {
+        state: 'cooldown',
+        until: Date.now() + (seconds * 1000)
+      });
     },
 
     /**
-     * Get all active system keys from the secure pool in priority order
+     * Mark a key as permanently invalid for current session (e.g. 400 API_KEY_INVALID)
      */
-    getAllSystemKeys: function () {
-      return VAULT.KEYS.map(k => _unpack(k)).filter(k => k && k.length > 10);
+    markKeyInvalid: function (key) {
+      if (!key) return;
+      keyStatusMap.set(key.trim(), {
+        state: 'invalid',
+        until: Infinity
+      });
+    },
+
+    /**
+     * Check if key is currently healthy and available for requests
+     */
+    isKeyAvailable: function (key) {
+      if (!this.isValidApiKey(key)) return false;
+      const status = keyStatusMap.get(key.trim());
+      if (!status) return true;
+      if (status.state === 'invalid') return false;
+      if (status.state === 'cooldown' && Date.now() < status.until) return false;
+      return true;
+    },
+
+    /**
+     * Get Primary Default API Key
+     */
+    getPrimaryApiKey: function () {
+      const all = this.getAllSystemKeys();
+      return all.length > 0 ? all[0] : _unpack(VAULT.KEYS[0]);
+    },
+
+    /**
+     * Get all active system keys from the secure pool in priority order (filtering out invalid/cooling keys)
+     */
+    getAllSystemKeys: function (includeCooldown = false) {
+      const now = Date.now();
+      return VAULT.KEYS
+        .map(k => _unpack(k))
+        .filter(k => {
+          if (!this.isValidApiKey(k)) return false;
+          if (includeCooldown) return true;
+          const status = keyStatusMap.get(k);
+          if (!status) return true;
+          if (status.state === 'invalid') return false;
+          if (status.state === 'cooldown' && now < status.until) return false;
+          return true;
+        });
     },
 
     /**
      * Get next key via round-robin distribution to balance quota load
      */
     getNextRoundRobinKey: function () {
-      const keys = this.getAllSystemKeys();
+      let keys = this.getAllSystemKeys(false);
+      if (keys.length === 0) {
+        // If all are cooling down, fall back to any valid system key
+        keys = this.getAllSystemKeys(true);
+      }
       if (keys.length === 0) return '';
       const key = keys[roundRobinIndex % keys.length];
       roundRobinIndex = (roundRobinIndex + 1) % keys.length;
@@ -81,12 +153,13 @@
      * Resolve the most appropriate active API key taking user custom keys into account
      */
     getActiveApiKey: function (userCustomKey = '') {
-      if (userCustomKey && userCustomKey.trim().length > 10) {
+      if (userCustomKey && this.isValidApiKey(userCustomKey)) {
         return userCustomKey.trim();
       }
       return this.getNextRoundRobinKey();
     }
   };
+
 
   // Expose globally
   global.FayzarOcrConfig = FayzarOcrConfig;

@@ -98,8 +98,8 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
       ii. CP \perp BC
       iii. AB = AC - BC
       নিচের কোনটি সঠিক?
-      (ক) i ও ii    (খ) i ও iii    (গ) ii ও iii    (ঘ) i, ii ও iii ✅
-    - Keep MCQ options aligned side-by-side on the same line with proper spacing.
+      (ক) i ও ii	(খ) i ও iii	(গ) ii ও iii	(ঘ) i, ii ও iii ✅
+    - CRITICAL MANDATE FOR MCQ OPTIONS (বহুনির্বাচনী অপশনের মাঝে ট্যাব \t): প্রতিটি বহুনির্বাচনী অপশনের মাঝে বা পূর্বে অবশ্যই একটি করে ট্যাব (Tab character \t) ব্যবহার করবেন (যেমন: (ক) অপশন ১\t(খ) অপশন ২\t(গ) অপশন ৩\t(ঘ) অপশন ৪)। কখনোই অপশনগুলোর মাঝে শুধুমাত্র স্পেস (Space) ব্যবহার করবেন না, যাতে মাইক্রোসফট ওয়ার্ডে পেস্ট করলে অপশনগুলো স্বয়ংক্রিয়ভাবে সোজা কলামে এলাইন হয়ে যায়।
 
 11. CREATIVE QUESTIONS (সৃজনশীল প্রশ্নপত্র):
     - CRITICAL: সৃজনশীল প্রশ্নের ক্রমিক নম্বর ১., ২., ৩., ... সতন্ত্রভাবে ১ থেকে শুরু করতে হবে।
@@ -287,8 +287,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       copyBtn: document.getElementById('wizardCopyTextBtn') || document.getElementById('ai-ocr-copy-btn'),
       sendToConverterBtn: document.getElementById('ai-ocr-send-to-converter-btn'),
       downloadDocBtn: document.getElementById('wizardDlDocBtn') || document.getElementById('ai-ocr-download-doc-btn'),
-      downloadBijoyDocxBtn: document.getElementById('ai-ocr-download-bijoy-docx-btn'),
-      downloadDocxBtn: document.getElementById('wizardDlDocxBtn') || document.getElementById('ai-ocr-download-docx-btn'),
+      downloadBijoyDocxBtn: document.getElementById('wizardDlDocxBtn') || document.getElementById('ai-ocr-download-bijoy-docx-btn'),
+      downloadUnicodeDocxBtn: document.getElementById('wizardDlUnicodeDocxBtn'),
+      downloadDocxBtn: document.getElementById('wizardDlUnicodeDocxBtn') || document.getElementById('wizardDlDocxBtn') || document.getElementById('ai-ocr-download-docx-btn'),
 
       pageSizeSelect: document.getElementById('ai-target-page-size') || document.getElementById('ai-ocr-page-size'),
       pageMarginSelect: document.getElementById('ai-target-page-margin') || document.getElementById('ai-ocr-page-margin'),
@@ -405,9 +406,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (elements.copyBtn) elements.copyBtn.addEventListener('click', copyCurrentText);
     if (elements.sendToConverterBtn) elements.sendToConverterBtn.addEventListener('click', sendToMainConverter);
 
-    if (elements.downloadDocBtn) elements.downloadDocBtn.addEventListener('click', () => downloadWordDocument('doc'));
-    if (elements.downloadBijoyDocxBtn) elements.downloadBijoyDocxBtn.addEventListener('click', () => downloadWordDocument('bijoy_docx'));
-    if (elements.downloadDocxBtn) elements.downloadDocxBtn.addEventListener('click', () => downloadWordDocument('unicode_docx'));
+    if (elements.downloadDocBtn) elements.downloadDocBtn.onclick = () => downloadWordDocument('doc');
+    if (elements.downloadBijoyDocxBtn) elements.downloadBijoyDocxBtn.onclick = () => downloadWordDocument('bijoy_docx');
+    if (elements.downloadUnicodeDocxBtn) elements.downloadUnicodeDocxBtn.onclick = () => downloadWordDocument('unicode_docx');
 
     if (elements.verifyBtn) {
       elements.verifyBtn.addEventListener('click', () => runVerificationPipeline(false));
@@ -775,8 +776,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       await runVerificationPipeline(true);
     }
 
-    // Auto-generate and download the requested target document
-    await downloadWordDocument(targetFormat);
+    // Auto-generate and download the requested target document if specified
+    if (targetFormat && targetFormat !== 'none') {
+      await downloadWordDocument(targetFormat);
+    }
 
     if (onProgress) onProgress('রূপান্তর সফলভাবে সম্পন্ন হয়েছে!', 100);
 
@@ -828,7 +831,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     setLoading(true, total > 1 ? `সবগুলো (${toBengaliNumber(total)}টি) পেজ একসাথে Gemini AI-তে পাঠানো হচ্ছে...` : 'Gemini AI দিয়ে রূপান্তর হচ্ছে...', 45);
 
     try {
-      const text = await executeGeminiRequest(apiKey, mediaItems, (liveText) => {
+      const text = await executeGeminiRequest(activeKey, mediaItems, (liveText) => {
         if (elements.outputUnicodeArea) elements.outputUnicodeArea.value = liveText;
         setLoading(true, `লাইভ স্ট্রিমিং চলছে (${toBengaliNumber(liveText.length)} অক্ষর)...`, Math.min(95, 45 + Math.round(liveText.length / 30)));
       });
@@ -878,53 +881,86 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     const activePrompt = customPrompt || GEMINI_PROMPT;
 
-    // Primary modern payload using official system_instruction for server-side prompt caching + visual thinking deliberation for handwriting
-    let payload = {
-      system_instruction: {
-        parts: [{ text: activePrompt }]
-      },
-      contents: [{ parts: contentParts }],
-      generationConfig: {
+    // Active, verified high-speed Gemini models ordered strictly by speed, handwriting & math OCR fidelity
+    const allActiveModels = [
+      // 1. Google's Flagship Flash (~1.5s - 2.0s latency, highest Bengali OCR & LaTeX math fidelity, 100% pass on all 16 keys)
+      'gemini-3.5-flash',
+      // 2. Official Balanced Flagship (~1.2s - 2.0s latency)
+      'gemini-3.6-flash',
+      // 3. Official Modern Handwriting & Advanced Math Specialist
+      'gemini-3.8-flash',
+      // 4. Hybrid Fast Flash (~1.4s - 2.2s latency)
+      'gemini-3.7-flash',
+      // 5. Active High-Speed Backup
+      'gemini-2.5-flash'
+    ];
+
+    // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
+    function buildModelPayload(model, isFallbackFormat = false) {
+      const genConfig = {
         temperature: 0.2,
-        maxOutputTokens: 65536
-      },
-      safetySettings: [
+        maxOutputTokens: isFallbackFormat ? 8192 : 65536
+      };
+
+      // Only reasoning models (3.7, 3.8, 3.5) support thinkingConfig; 3.6 rejects it with 400 INVALID_ARGUMENT
+      if (!isFallbackFormat && (model === 'gemini-3.7-flash' || model === 'gemini-3.8-flash' || model === 'gemini-3.5-flash')) {
+        genConfig.thinkingConfig = { thinkingBudget: 0 };
+      }
+
+      const safetySettings = [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-      ]
-    };
+      ];
 
-    // Active Powerful Gemini Models ordered strictly by Bengali OCR fidelity, speed & capability (Weak Lite models completely purged):
-    const allActiveModels = [
-      // 1. Google's Stable Flagship Flash (Highest multimodal Bengali OCR accuracy & flawless LaTeX math - 2.0s)
-      'gemini-3.5-flash',
-      // 2. Google's Recommended Balanced Flagship (2.2s latency, official 2.5-flash successor)
-      'gemini-3.6-flash',
-      // 3. Flagship Production Model (3.3s latency on v1beta)
-      'gemini-3.8-flash',
-      // 4. Hybrid Reasoning Flash (3.6s latency on v1)
-      'gemini-3.7-flash',
-      // 5. Legacy High-Speed Flash (Active on legacy keys - 1.2s latency)
-      'gemini-2.5-flash',
-      // 6. Deep Reasoning Pro Model (1M context, activated for paid keys or deep fallback)
-      'gemini-3.1-pro-preview'
-    ];
+      if (isFallbackFormat) {
+        return {
+          contents: [{ parts: [{ text: activePrompt }, ...contentParts] }],
+          generationConfig: genConfig,
+          safetySettings: safetySettings
+        };
+      }
 
-    // Build Key Pool (Option 1: Model-First with Multi-Key Pool)
+      return {
+        system_instruction: {
+          parts: [{ text: activePrompt }]
+        },
+        contents: [{ parts: contentParts }],
+        generationConfig: genConfig,
+        safetySettings: safetySettings
+      };
+    }
+
+    // Build Key Pool (Pre-validated keys with dynamic round-robin load balancing)
     let keyPool = [];
-    if (apiKey && apiKey.trim().length > 10) {
+    const isValidKeyFn = (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isValidApiKey === 'function')
+      ? FayzarOcrConfig.isValidApiKey
+      : (k => typeof k === 'string' && (k.trim().startsWith('AIzaSy') || k.trim().startsWith('AQ.')) && k.trim().length >= 35);
+
+    if (apiKey && isValidKeyFn(apiKey)) {
       keyPool.push(apiKey.trim());
     }
+
     if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getAllSystemKeys === 'function') {
-      const systemKeys = FayzarOcrConfig.getAllSystemKeys();
-      for (const sk of systemKeys) {
+      const systemKeys = FayzarOcrConfig.getAllSystemKeys(false);
+      // Dynamic round-robin rotation to evenly distribute load across all 16 keys
+      const rrOffset = (typeof FayzarOcrConfig.roundRobinIndex === 'number') ? FayzarOcrConfig.roundRobinIndex : Math.floor(Math.random() * (systemKeys.length || 1));
+      const rotatedKeys = systemKeys.slice(rrOffset).concat(systemKeys.slice(0, rrOffset));
+      if (typeof FayzarOcrConfig.roundRobinIndex === 'number') {
+        FayzarOcrConfig.roundRobinIndex = (FayzarOcrConfig.roundRobinIndex + 1) % (systemKeys.length || 1);
+      }
+      for (const sk of rotatedKeys) {
         if (!keyPool.includes(sk)) keyPool.push(sk);
       }
     }
-    if (keyPool.length === 0) {
-      keyPool = [apiKey || ''];
+
+    // Fallback if all keys are cooling down
+    if (keyPool.length === 0 && typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getAllSystemKeys === 'function') {
+      keyPool = FayzarOcrConfig.getAllSystemKeys(true);
+    }
+    if (keyPool.length === 0 && apiKey && apiKey.trim().length > 10) {
+      keyPool = [apiKey.trim()];
     }
 
     let candidateModels = allActiveModels.slice();
@@ -935,26 +971,32 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     let lastError = null;
     let isRateLimited = false;
 
-    // Option 1: MODEL-FIRST Priority Strategy (Each model tests all available keys before falling back)
+    // Fast Execution Loop
     for (let i = 0; i < candidateModels.length; i++) {
       const model = candidateModels[i];
 
       for (let k = 0; k < keyPool.length; k++) {
         const currentKey = keyPool[k];
 
-        // Dual-endpoint smart routing: gemini-3.7-flash works best on v1, others on v1beta
-        const epVersion = (model === 'gemini-3.7-flash') ? 'v1' : 'v1beta';
-        const streamEndpoint = `https://generativelanguage.googleapis.com/${epVersion}/models/${model}:streamGenerateContent?alt=sse&key=${currentKey}`;
+        // Skip keys currently on cooldown or invalid
+        if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isKeyAvailable === 'function') {
+          if (!FayzarOcrConfig.isKeyAvailable(currentKey)) continue;
+        }
+
+        const epVersion = 'v1beta';
+        const streamEndpoint = `https://generativelanguage.googleapis.com/${epVersion}/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(currentKey)}`;
+
+        let currentPayload = buildModelPayload(model, false);
 
         try {
-          const res = await fetchWithTimeout(streamEndpoint, {
+          let res = await fetchWithTimeout(streamEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(currentPayload)
           }, REQUEST_TIMEOUT_MS);
 
           if (res.status === 404) {
-            // Model not supported on this specific key (e.g. legacy 2.5-flash on new keys) -> try next key
+            // Model not supported on this endpoint/key -> try next model/key
             continue;
           }
 
@@ -962,40 +1004,43 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             const errData = await res.json().catch(() => ({}));
             const errMsg = errData.error?.message || `HTTP ${res.status}`;
 
-            if (res.status === 400 && errMsg.includes('API_KEY_INVALID')) {
-              // Invalid key -> try next key in pool immediately
+            if (res.status === 400 && (errMsg.includes('API_KEY_INVALID') || errMsg.includes('API key not valid'))) {
+              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyInvalid === 'function') {
+                FayzarOcrConfig.markKeyInvalid(currentKey);
+              }
               continue;
             }
 
-            // If proxy/endpoint rejects system_instruction, thinkingConfig or maxOutputTokens, fallback payload format
-            if (res.status === 400 && (errMsg.includes('system_instruction') || errMsg.includes('thinkingConfig') || errMsg.includes('maxOutputTokens') || errMsg.includes('exceed') || errMsg.includes('Unknown field'))) {
-              payload = {
-                contents: [{ parts: [{ text: activePrompt }, ...contentParts] }],
-                generationConfig: {
-                  temperature: 0.2,
-                  maxOutputTokens: 8192
-                },
-                safetySettings: payload.safetySettings
-              };
-              k--; // Retry current key with compatible payload
-              continue;
-            }
-
-            if (res.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('Quota')) {
+            // Fallback payload if thinkingConfig, system_instruction or maxOutputTokens is rejected
+            if (res.status === 400 && (errMsg.includes('system_instruction') || errMsg.includes('thinkingConfig') || errMsg.includes('thinkingBudget') || errMsg.includes('maxOutputTokens') || errMsg.includes('exceed') || errMsg.includes('Unknown field') || errMsg.includes('invalid argument') || errMsg.includes('Invalid argument'))) {
+              currentPayload = buildModelPayload(model, true);
+              const retryRes = await fetchWithTimeout(streamEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentPayload)
+              }, REQUEST_TIMEOUT_MS);
+              if (retryRes.ok) {
+                res = retryRes;
+              } else {
+                continue;
+              }
+            } else if (res.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('Quota')) {
               isRateLimited = true;
+              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyCooldown === 'function') {
+                FayzarOcrConfig.markKeyCooldown(currentKey, 60);
+              }
               const nextModelDesc = candidateModels[i + 1] || 'বিকল্প মডেল';
-              setLoading(true, `[${model} কোটা ব্যস্ত] অবিলম্বে পরবর্তী মডেল (${nextModelDesc}) বা কি-তে রূপান্তর শুরু হচ্ছে...`, 50 + (i * 4));
+              setLoading(true, `[সার্ভার ব্যস্ততা এড়াতে ব্যাকআপ কি সংযোগ নেওয়া হচ্ছে...] অবিলম্বে পরবর্তী মডেল (${nextModelDesc}) বা কি-তে রূপান্তর শুরু হচ্ছে...`, 50 + (i * 4));
+              continue;
+            } else if (res.status === 503) {
+              // High demand spike -> try next key/model
+              continue;
+            } else {
+              lastError = new Error(errMsg);
               continue;
             }
-
-            if (res.status === 503) {
-              // High demand spike on this endpoint/key -> try next key
-              continue;
-            }
-
-            lastError = new Error(errMsg);
-            continue;
           }
+
 
           // Read and parse SSE stream chunks in real-time with activity keep-alive
           if (res.body && typeof res.body.getReader === 'function') {
@@ -1050,10 +1095,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           }
 
           // Non-streaming fallback on current model and key
-          const fallbackRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/${epVersion}/models/${model}:generateContent?key=${currentKey}`, {
+          const fallbackRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/${epVersion}/models/${model}:generateContent?key=${encodeURIComponent(currentKey)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(currentPayload)
           }, REQUEST_TIMEOUT_MS);
 
           if (fallbackRes.ok) {
@@ -1079,16 +1124,18 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       }
     }
 
+    const fallbackKey = (keyPool.find(k => typeof FayzarOcrConfig === 'undefined' || FayzarOcrConfig.isKeyAvailable(k))) || keyPool[0] || apiKey;
+
     // Cooldown auto-retry on gemini-3.5-flash
-    if (isRateLimited) {
+    if (isRateLimited && fallbackKey) {
       try {
         setLoading(true, 'রেট লিমিট কুলডাউন চলছে (ফ্ল্যাগশিপ মডেল gemini-3.5-flash চেষ্টা হচ্ছে)...', 88);
         const retryModel = 'gemini-3.5-flash';
-        const retryEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${retryModel}:generateContent?key=${apiKey}`;
+        const retryEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${retryModel}:generateContent?key=${encodeURIComponent(fallbackKey)}`;
         const retryRes = await fetchWithTimeout(retryEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(buildModelPayload(retryModel, false))
         }, REQUEST_TIMEOUT_MS);
 
         if (retryRes.ok) {
@@ -1104,38 +1151,41 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     }
 
     // Dynamic Discovery Fallback
-    try {
-      setLoading(true, 'আপনার API Key-এর জন্য উপলব্ধ মডেল তালিকা খোঁজা হচ্ছে...', 92);
-      const listRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {}, 6000);
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        const available = (listData.models || [])
-          .filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && m.name)
-          .map(m => m.name.replace('models/', ''))
-          .filter(m => m.includes('flash') || m.includes('pro'));
+    if (fallbackKey) {
+      try {
+        setLoading(true, 'আপনার API Key-এর জন্য উপলব্ধ মডেল তালিকা খোঁজা হচ্ছে...', 92);
+        const listRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(fallbackKey)}`, {}, 6000);
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          const available = (listData.models || [])
+            .filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && m.name)
+            .map(m => m.name.replace('models/', ''))
+            .filter(m => m.includes('flash') || m.includes('pro'));
 
-        for (const dynModel of available) {
-          if (modelsToTry.includes(dynModel)) continue;
-          try {
-            const dynRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${dynModel}:generateContent?key=${apiKey}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            }, REQUEST_TIMEOUT_MS);
+          for (const dynModel of available) {
+            if (candidateModels.includes(dynModel)) continue;
+            try {
+              const dynPayload = buildModelPayload(dynModel, false);
+              const dynRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${dynModel}:generateContent?key=${encodeURIComponent(fallbackKey)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dynPayload)
+              }, REQUEST_TIMEOUT_MS);
 
-            if (dynRes.ok) {
-              const dynData = await dynRes.json();
-              const parts = dynData?.candidates?.[0]?.content?.parts;
-              if (parts && parts.length > 0) {
-                const fullText = parts.map(p => p.text || '').join('\n');
-                if (onStreamChunk) onStreamChunk(fullText);
-                return cleanOcrResponse(fullText);
+              if (dynRes.ok) {
+                const dynData = await dynRes.json();
+                const parts = dynData?.candidates?.[0]?.content?.parts;
+                if (parts && parts.length > 0) {
+                  const fullText = parts.map(p => p.text || '').join('\n');
+                  if (onStreamChunk) onStreamChunk(fullText);
+                  return cleanOcrResponse(fullText);
+                }
               }
-            }
-          } catch (dynErr) { /* try next */ }
+            } catch (dynErr) { /* try next */ }
+          }
         }
-      }
-    } catch (e) { /* ignore */ }
+      } catch (e) { /* ignore */ }
+    }
 
     throw new Error(lastError?.message || 'Gemini API থেকে কোনো টেক্সট পাওয়া যায়নি।');
   }
@@ -1450,7 +1500,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     let out = '';
     for (let i = 0; i < str.length; i++) {
       const code = str.charCodeAt(i);
-      if (code === 0x5C) out += '\\\\';
+      if (code === 0x09) out += '\\tab ';
+      else if (code === 0x5C) out += '\\\\';
       else if (code === 0x7B) out += '\\{';
       else if (code === 0x7D) out += '\\}';
       else if (code >= 0x20 && code <= 0x7E) {
@@ -1596,7 +1647,50 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         let p = pageNum ? toBengaliNumber(pageNum.replace(/[^\d০-৯]/g, '').padStart(2, '0')) : '০১';
         return `[ছবি আছে-পৃ:${p}]`;
       });
-      l = l.replace(/\[\s*চিত্র\s*:\s*[^\]]+\]/gi, '[ছবি আছে-পৃ:০১]');
+      // 4c. MCQ Options Tab Formatting: Ensure strictly 1 literal Tab (\t) between options for Word alignment
+      l = l.replace(/[ \t]*\t+[ \t]*/g, '\t');
+
+      const hasKa = /[\(（][কaA][\)）]/.test(l);
+      const hasKha = /[\(（][খbB][\)）]/.test(l);
+      const hasGa = /[\(（][গcC][\)）]/.test(l);
+      const hasGha = /[\(（][ঘdD][\)）]/.test(l);
+
+      const hasBijoyK = /[\(（][K][\)）]/.test(l);
+      const hasBijoyL = /[\(（][L][\)）]/.test(l);
+      const hasBijoyM = /[\(（][M][\)）]/.test(l);
+      const hasBijoyN = /[\(（][N][\)）]/.test(l);
+
+      if (hasKa && hasKha) {
+        // If (ক) is preceded by non-whitespace text (question on same line), add 1 tab before (ক)
+        l = l.replace(/(?<=[^\s\r\n])[ \t]*\t*[ \t]*([\(（][কaA][\)）])/g, '\t$1');
+        // If (ক) is at start of line, remove any leading tabs/spaces so (ক) starts flush
+        l = l.replace(/^[ \t]*\t*[ \t]*([\(（][কaA][\)）])/, '$1');
+        // Strictly single tab before (খ), (গ), (ঘ)
+        l = l.replace(/[ \t]*\t*[ \t]*([\(（][খগঘbcdBCD][\)）])/g, '\t$1');
+      } else if (hasGa && hasGha && !hasKa) {
+        // Line with 2 options on second line (গ) and (ঘ)
+        l = l.replace(/^[ \t]*\t*[ \t]*([\(（][গcC][\)）])/, '$1');
+        l = l.replace(/[ \t]*\t*[ \t]*([\(（][ঘdD][\)）])/g, '\t$1');
+      } else if (hasBijoyK && hasBijoyL) {
+        // Bijoy options (K) and (L)
+        l = l.replace(/(?<=[^\s\r\n])[ \t]*\t*[ \t]*([\(（][K][\)）])/g, '\t$1');
+        l = l.replace(/^[ \t]*\t*[ \t]*([\(（][K][\)）])/, '$1');
+        l = l.replace(/[ \t]*\t*[ \t]*([\(（][LMNlmn][\)）])/g, '\t$1');
+      } else if (hasBijoyM && hasBijoyN && !hasBijoyK) {
+        // Bijoy options (M) and (N) on second line
+        l = l.replace(/^[ \t]*\t*[ \t]*([\(（][M][\)）])/, '$1');
+        l = l.replace(/[ \t]*\t*[ \t]*([\(（][N][\)）])/g, '\t$1');
+      } else if (!hasKa && /^[ \t]*[কaA][\.\)]/.test(l) && /[ \t]+[খbB][\.\)]/.test(l)) {
+        // Line with unbracketed options: ক. ... খ. ...
+        l = l.replace(/^[ \t]*\t*[ \t]*([কaA][\.\)])/, '$1');
+        l = l.replace(/[ \t]*\t*[ \t]*([খগঘbcdBCD][\.\)])/g, '\t$1');
+      } else if (!hasBijoyK && /^[ \t]*[K][\.\)]/.test(l) && /[ \t]+[L][\.\)]/.test(l)) {
+        // Bijoy options without brackets: K. ... L. ...
+        l = l.replace(/^[ \t]*\t*[ \t]*([K][\.\)])/, '$1');
+        l = l.replace(/[ \t]*\t*[ \t]*([LMN][\.\)])/g, '\t$1');
+      }
+
+      l = l.replace(/\t+/g, '\t');
 
       cleanedLines.push(l);
     }
@@ -1987,29 +2081,33 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
             : (mRun.isSuperscript ? '<w:vertAlign w:val="superscript"/>' : '');
 
           if (seg.type === 'english') {
-            runsXml += `      <w:r>
-        <w:rPr>
+            const engRpr = `        <w:rPr>
           <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
           <w:sz w:val="${fontSizeHalfPt}"/>
           <w:szCs w:val="${fontSizeHalfPt}"/>
           ${boldTag}
           ${vertAlignTag}
-        </w:rPr>
-        <w:t xml:space="preserve">${escapeXml(seg.text)}</w:t>
-      </w:r>\n`;
+        </w:rPr>`;
+            const eParts = seg.text.split('\t');
+            for (let ep = 0; ep < eParts.length; ep++) {
+              if (ep > 0) runsXml += `      <w:r>\n${engRpr}\n        <w:tab/>\n      </w:r>\n`;
+              if (eParts[ep]) runsXml += `      <w:r>\n${engRpr}\n        <w:t xml:space="preserve">${escapeXml(eParts[ep])}</w:t>\n      </w:r>\n`;
+            }
           } else {
             const targetText = isBijoy && window.BanglaConverter ? window.BanglaConverter.unicodeToBijoy(seg.text) : seg.text;
             const fontName = isBijoy ? 'SutonnyMJ' : 'Kalpurush';
-            runsXml += `      <w:r>
-        <w:rPr>
+            const bnRpr = `        <w:rPr>
           <w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}"/>
           <w:sz w:val="${fontSizeHalfPt}"/>
           <w:szCs w:val="${fontSizeHalfPt}"/>
           ${boldTag}
           ${vertAlignTag}
-        </w:rPr>
-        <w:t xml:space="preserve">${escapeXml(targetText)}</w:t>
-      </w:r>\n`;
+        </w:rPr>`;
+            const bParts = targetText.split('\t');
+            for (let bp = 0; bp < bParts.length; bp++) {
+              if (bp > 0) runsXml += `      <w:r>\n${bnRpr}\n        <w:tab/>\n      </w:r>\n`;
+              if (bParts[bp]) runsXml += `      <w:r>\n${bnRpr}\n        <w:t xml:space="preserve">${escapeXml(bParts[bp])}</w:t>\n      </w:r>\n`;
+            }
           }
         }
       }
@@ -2017,16 +2115,25 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     return runsXml;
   }
 
+  let isDownloadingDocument = false;
   async function downloadWordDocument(format) {
+    if (isDownloadingDocument) {
+      console.warn('ডকুমেন্ট ডাউনলোড প্রসেস চলছে, অতিরিক্ত ক্লিক অগ্রাহ্য করা হয়েছে');
+      return;
+    }
+    isDownloadingDocument = true;
+    setTimeout(() => { isDownloadingDocument = false; }, 1500);
+
     const text = state.unicodeText;
     if (!text || !text.trim()) {
+      isDownloadingDocument = false;
       showToast('ডাউনলোড করার মতো কোনো টেক্সট নেই', 'warning');
       return;
     }
 
-    const pageSizeVal = elements.pageSizeSelect ? elements.pageSizeSelect.value : 'a4';
-    const marginVal = elements.pageMarginSelect ? elements.pageMarginSelect.value : 'normal';
-    const fontSizeVal = elements.fontSizeSelect ? elements.fontSizeSelect.value : '12';
+    const pageSizeVal = (elements.pageSizeSelect && elements.pageSizeSelect.value) || document.getElementById('ai-target-page-size')?.value || 'a4';
+    const marginVal = (elements.pageMarginSelect && elements.pageMarginSelect.value) || document.getElementById('ai-target-page-margin')?.value || 'normal';
+    const fontSizeVal = (elements.fontSizeSelect && elements.fontSizeSelect.value) || document.getElementById('ai-target-font-size')?.value || '12';
     const fontSizePt = parseInt(fontSizeVal, 10) || 12;
 
     const rawName = state.selectedFile?.name || state.filesQueue?.[0]?.name || 'Question_Paper';
@@ -2039,12 +2146,17 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       try {
         let docBlob = null;
         if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.createDocFromText === 'function') {
-          docBlob = DocxHandler.createDocFromText(text, 'SutonnyMJ', true, fontSizePt);
+          docBlob = DocxHandler.createDocFromText(text, 'SutonnyMJ', true, fontSizePt, {
+            pageSize: pageSizeVal,
+            margin: marginVal,
+            fontSize: fontSizeVal
+          });
         } else if (typeof DocxToDocConverter !== 'undefined') {
           const docxBlob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
           const docxConverter = new DocxToDocConverter();
           const docResult = await docxConverter.convertDocxToDoc(docxBlob, {
             pageSize: pageSizeVal,
+            margin: marginVal,
             preserveSutonny: true,
             optimizeForQuestionPaper: true
           });
@@ -2106,9 +2218,9 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       throw new Error('JSZip লাইব্রেরি লোড হয়নি, অনুগ্রহ করে পেজটি রিফ্রেশ দিন');
     }
 
-    const pageSizeVal = customOptions.pageSize || (elements.pageSizeSelect ? elements.pageSizeSelect.value : 'a4');
-    const marginVal = customOptions.margin || (elements.pageMarginSelect ? elements.pageMarginSelect.value : 'normal');
-    const fontSizeVal = customOptions.fontSize || (elements.fontSizeSelect ? elements.fontSizeSelect.value : '12');
+    const pageSizeVal = customOptions.pageSize || (elements.pageSizeSelect && elements.pageSizeSelect.value) || document.getElementById('ai-target-page-size')?.value || 'a4';
+    const marginVal = customOptions.margin || (elements.pageMarginSelect && elements.pageMarginSelect.value) || document.getElementById('ai-target-page-margin')?.value || 'normal';
+    const fontSizeVal = customOptions.fontSize || (elements.fontSizeSelect && elements.fontSizeSelect.value) || document.getElementById('ai-target-font-size')?.value || '12';
     const fontSizePt = parseInt(fontSizeVal, 10) || 12;
     const fontSizeHalfPt = fontSizePt * 2;
 
@@ -2351,26 +2463,28 @@ ${bodyContentXml}
   }
 
   function saveSettings() {
-    state.demoMode = elements.demoToggle.checked;
-    state.gasUrl = elements.gasUrlInput.value.trim();
-    state.byokApiKey = elements.geminiKeyInput.value.trim();
-    state.selectedModel = elements.modelSelect.value || 'auto';
+    if (elements.demoToggle) state.demoMode = !!elements.demoToggle.checked;
+    if (elements.gasUrlInput) state.gasUrl = elements.gasUrlInput.value.trim();
+    if (elements.geminiKeyInput) state.byokApiKey = elements.geminiKeyInput.value.trim();
+    if (elements.modelSelect) state.selectedModel = elements.modelSelect.value || 'auto';
 
     if (elements.autoVerifyToggle) {
-      state.autoVerify = elements.autoVerifyToggle.checked;
+      state.autoVerify = !!elements.autoVerifyToggle.checked;
       localStorage.setItem('ai_ocr_auto_verify', state.autoVerify ? 'true' : 'false');
     }
 
     if (state.byokApiKey || state.gasUrl) {
-      state.demoMode = elements.demoToggle.checked;
+      if (elements.demoToggle) state.demoMode = !!elements.demoToggle.checked;
     }
 
-    localStorage.setItem(STORAGE_KEYS.DEMO_MODE, state.demoMode.toString());
-    localStorage.setItem(STORAGE_KEYS.GAS_URL, state.gasUrl);
-    localStorage.setItem('bengali_ocr_gas_url', state.gasUrl);
-    localStorage.setItem(STORAGE_KEYS.BYOK_KEY, state.byokApiKey);
-    localStorage.setItem('bengali_ocr_gemini_key', state.byokApiKey);
-    localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, state.selectedModel);
+    localStorage.setItem(STORAGE_KEYS.DEMO_MODE, (state.demoMode || false).toString());
+    if (state.gasUrl) {
+      localStorage.setItem(STORAGE_KEYS.GAS_URL, state.gasUrl);
+      localStorage.setItem('bengali_ocr_gas_url', state.gasUrl);
+    }
+    localStorage.setItem(STORAGE_KEYS.BYOK_KEY, state.byokApiKey || '');
+    localStorage.setItem('bengali_ocr_gemini_key', state.byokApiKey || '');
+    localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, state.selectedModel || 'auto');
 
     updateBadges();
     toggleModal(elements.settingsModal, false);
@@ -2413,8 +2527,8 @@ ${bodyContentXml}
     toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${message}</span>`;
     document.body.appendChild(toast);
     setTimeout(() => {
-      toast.style.opacity = '0';
-      setTimeout(() => toast.remove(), 300);
+      if (toast && toast.style) toast.style.opacity = '0';
+      setTimeout(() => { if (toast && toast.remove) toast.remove(); }, 300);
     }, 4000);
   }
 

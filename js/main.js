@@ -3272,6 +3272,13 @@ function initUnifiedConverterEngine() {
       targetTextArea.classList.remove('font-sutonny');
     }
 
+    // Apply universal Question Paper formatting (serials, MCQ leading tabs & dots, CQ dot subquestions, English bypassed)
+    if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.formatQuestionPaper === 'function') {
+      output = DocxHandler.formatQuestionPaper(output, isU2B);
+    } else if (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.formatQuestionPaper === 'function') {
+      output = BanglaConverter.formatQuestionPaper(output, isU2B);
+    }
+
     targetTextArea.value = output;
     updateStats();
   }

@@ -341,9 +341,27 @@
                 }
               }
 
-              newT.textContent = converted;
-              newR.appendChild(newT);
-              this._updateRunFontAndProps(newR, xmlDoc, targetFont, runIsU2B);
+              if (runIsU2B && /[-–—−‒―]/.test(converted)) {
+                const dParts = converted.split(/([-–—−‒―]+)/);
+                for (let dpi = 0; dpi < dParts.length; dpi++) {
+                  const dp = dParts[dpi];
+                  if (!dp) continue;
+                  const splitR = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:r");
+                  if (rPr) splitR.appendChild(rPr.cloneNode(true));
+                  const splitT = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:t");
+                  splitT.setAttribute("xml:space", "preserve");
+                  splitT.textContent = dp;
+                  splitR.appendChild(splitT);
+                  const isDash = /[-–—−‒―]/.test(dp);
+                  this._updateRunFontAndProps(splitR, xmlDoc, isDash ? "Times New Roman" : targetFont, !isDash);
+                  p.insertBefore(splitR, r);
+                }
+              } else {
+                newT.textContent = converted;
+                newR.appendChild(newT);
+                this._updateRunFontAndProps(newR, xmlDoc, targetFont, runIsU2B);
+                p.insertBefore(newR, r);
+              }
               stats.convertedRuns++;
 
               if (preview.originalSample.length < 8 && seg.text.trim().length > 2) {
@@ -351,8 +369,6 @@
                 preview.convertedSample.push(converted.trim());
               }
             }
-
-            p.insertBefore(newR, r);
           }
 
           p.removeChild(r);
@@ -433,6 +449,30 @@
         }
 
         if (shouldConvertText) {
+          if (runIsU2B && /[-–—−‒―]/.test(convertedText)) {
+            const dParts = convertedText.split(/([-–—−‒―]+)/);
+            for (let dpi = 0; dpi < dParts.length; dpi++) {
+              const dp = dParts[dpi];
+              if (!dp) continue;
+              const splitR = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:r");
+              if (rPr) splitR.appendChild(rPr.cloneNode(true));
+              const splitT = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:t");
+              splitT.setAttribute("xml:space", "preserve");
+              splitT.textContent = dp;
+              splitR.appendChild(splitT);
+              const isDash = /[-–—−‒―]/.test(dp);
+              this._updateRunFontAndProps(splitR, xmlDoc, isDash ? "Times New Roman" : currentTargetFont, !isDash);
+              p.insertBefore(splitR, r);
+            }
+            p.removeChild(r);
+            stats.convertedRuns++;
+
+            if (preview.originalSample.length < 8 && originalText.trim().length > 2) {
+              preview.originalSample.push(originalText.trim());
+              preview.convertedSample.push(convertedText.trim());
+            }
+            continue;
+          }
           textNodes[0].textContent = convertedText;
           textNodes[0].setAttribute("xml:space", "preserve");
           for (let k = 1; k < textNodes.length; k++) {
@@ -796,6 +836,17 @@
                   const escaped = pText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                   if (sub.type === 'english') {
                     runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
+                  } else if (isBijoy && /[-–—−‒―]/.test(pText)) {
+                    const dParts = pText.split(/([-–—−‒―]+)/);
+                    for (let dp of dParts) {
+                      if (!dp) continue;
+                      const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                      if (/[-–—−‒―]/.test(dp)) {
+                        runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+                      } else {
+                        runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+                      }
+                    }
                   } else {
                     runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" ${isBijoy ? 'w:hint="ascii"' : 'w:hint="cs"'}/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
                   }
@@ -827,6 +878,17 @@
             const escaped = pText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             if (seg.type === 'english') {
               runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
+            } else if (isBijoy && /[-–—−‒―]/.test(pText)) {
+              const dParts = pText.split(/([-–—−‒―]+)/);
+              for (let dp of dParts) {
+                if (!dp) continue;
+                const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                if (/[-–—−‒―]/.test(dp)) {
+                  runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+                } else {
+                  runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
+                }
+              }
             } else {
               runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" ${isBijoy ? 'w:hint="ascii"' : 'w:hint="cs"'}/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
             }
@@ -1121,9 +1183,23 @@
             }
           } else {
             const targetText = (isBijoy && !isInputBijoy && typeof BanglaConverter !== 'undefined') ? BanglaConverter.unicodeToBijoy(part.text) : part.text;
-            const escapedBn = (targetText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const formattedBn = escapedBn.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
-            out += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${formattedBn}</span>`;
+            if (isBijoy && /[-–—−‒―]/.test(targetText)) {
+              const dParts = targetText.split(/([-–—−‒―]+)/);
+              for (let dp of dParts) {
+                if (!dp) continue;
+                const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const fmtDp = escDp.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
+                if (/[-–—−‒―]/.test(dp)) {
+                  out += `<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${fmtDp}</span>`;
+                } else {
+                  out += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${fmtDp}</span>`;
+                }
+              }
+            } else {
+              const escapedBn = (targetText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              const formattedBn = escapedBn.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
+              out += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${formattedBn}</span>`;
+            }
           }
         }
         return out;

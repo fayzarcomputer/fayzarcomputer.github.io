@@ -189,8 +189,9 @@
      * Advance the round-robin queue, shifting the recently used key to the back
      */
     advanceRoundRobin: function () {
-      const total = VAULT.KEYS.length || 16;
-      roundRobinIndex = (roundRobinIndex + 1) % total;
+      // Use actual active key count so index never overshoots (fixes the 19-index vs 13-active-key mismatch)
+      const activeCount = this.getAllSystemKeys(false).length || VAULT.KEYS.length;
+      roundRobinIndex = (roundRobinIndex + 1) % activeCount;
       try {
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('fayzar_key_rr_index', String(roundRobinIndex));

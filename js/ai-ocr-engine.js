@@ -966,9 +966,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     // Active, verified high-speed Gemini models ordered strictly by user preference, speed & math OCR fidelity
     const allActiveModels = [
       'gemini-3.5-flash',
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
       'gemini-3.6-flash',
-      'gemini-2.5-flash',
-      'gemini-3.7-flash'
+      'gemini-3.1-flash-lite',
+      'gemini-2.5-flash'
     ];
 
     // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
@@ -978,8 +980,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         maxOutputTokens: isFallbackFormat ? 8192 : 65536
       };
 
-      // Only reasoning models (3.7, 3.8, 3.5) support thinkingConfig; 3.6 rejects it with 400 INVALID_ARGUMENT
-      if (!isFallbackFormat && (model === 'gemini-3.7-flash' || model === 'gemini-3.8-flash' || model === 'gemini-3.5-flash')) {
+      // Reasoning models (3.5, 3.7, 3.8) support thinkingBudget=0 to skip deliberation latency
+      if (!isFallbackFormat && (model === 'gemini-3.5-flash' || model === 'gemini-3.7-flash' || model === 'gemini-3.8-flash')) {
         genConfig.thinkingConfig = { thinkingBudget: 0 };
       }
 
@@ -1050,24 +1052,25 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     let lastError = null;
     let isRateLimited = false;
 
-    // Fast Execution Loop: Rotate through keys first on primary model for instant success
-    for (let k = 0; k < keyPool.length; k++) {
-      const currentKey = keyPool[k];
+    // KEY-FIRST STRATEGY: For each model, try ALL keys before moving to next model.
+    // This guarantees all 19 vault keys are rotated through before any model fallback.
+    for (let i = 0; i < candidateModels.length; i++) {
+      const model = candidateModels[i];
 
-      // Skip keys currently on cooldown or invalid
-      if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isKeyAvailable === 'function') {
-        if (!FayzarOcrConfig.isKeyAvailable(currentKey)) continue;
-      }
+      for (let k = 0; k < keyPool.length; k++) {
+        const currentKey = keyPool[k];
 
-      for (let i = 0; i < candidateModels.length; i++) {
-        const model = candidateModels[i];
+        // Skip keys currently on cooldown or invalid
+        if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isKeyAvailable === 'function') {
+          if (!FayzarOcrConfig.isKeyAvailable(currentKey)) continue;
+        }
 
         const epVersion = 'v1beta';
         const streamEndpoint = `https://generativelanguage.googleapis.com/${epVersion}/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(currentKey)}`;
 
         let currentPayload = buildModelPayload(model, false);
 
-        const CONNECT_TIMEOUT_MS = 5000; // 5.0s fast initial connect timeout to prevent stalls
+        const CONNECT_TIMEOUT_MS = 12000; // 12s per key attempt — enough for Gemini to start streaming
         try {
           if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.logAudit === 'function') {
             FayzarOcrConfig.logAudit('KEY_ATTEMPT', { keyMask: currentKey.slice(0, 8) + '...', model });
@@ -1080,7 +1083,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           }, CONNECT_TIMEOUT_MS);
 
           if (res.status === 404) {
-            // Model not supported -> try next model for this key
+            // Model not found on this key -> try next key (same model)
             continue;
           }
 
@@ -1115,23 +1118,23 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                 if (typeof FayzarOcrConfig.markKeyCooldown === 'function') FayzarOcrConfig.markKeyCooldown(currentKey, 60);
                 if (typeof FayzarOcrConfig.advanceRoundRobin === 'function') FayzarOcrConfig.advanceRoundRobin();
               }
-              setLoading(true, 'ডকুমেন্টের টেক্সট, টেবিল ও সমীকরণ নিখুঁতভাবে বিশ্লেষণ করা হচ্ছে...', 50 + Math.min(40, (k + 1) * 3));
-              break; // Key has no quota, immediately jump to next key!
+              setLoading(true, `কি ${k+1} রেট-লিমিট, পরবর্তী কি চেষ্টা হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
+              continue; // Immediately try next key!
             } else if (res.status === 503) {
               // High demand spike on this key -> immediately rotate to next key
               if (typeof FayzarOcrConfig !== 'undefined') {
                 if (typeof FayzarOcrConfig.markKeyCooldown === 'function') FayzarOcrConfig.markKeyCooldown(currentKey, 30);
                 if (typeof FayzarOcrConfig.advanceRoundRobin === 'function') FayzarOcrConfig.advanceRoundRobin();
               }
-              setLoading(true, 'ডকুমেন্টের টেক্সট, টেবিল ও সমীকরণ নিখুঁতভাবে বিশ্লেষণ করা হচ্ছে...', 50 + Math.min(40, (k + 1) * 3));
-              break; // Immediately jump to next key!
+              setLoading(true, `কি ${k+1} সার্ভার ব্যস্ত, পরবর্তী কি চেষ্টা হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
+              continue; // Immediately try next key!
             } else {
               if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.advanceRoundRobin === 'function') {
                 FayzarOcrConfig.advanceRoundRobin();
               }
               lastError = new Error(errMsg);
-              setLoading(true, 'ডকুমেন্টের টেক্সট, টেবিল ও সমীকরণ নিখুঁতভাবে বিশ্লেষণ করা হচ্ছে...', 50 + Math.min(40, (k + 1) * 3));
-              break; // Jump to next key!
+              setLoading(true, `কি ${k+1} ত্রুটি (${errMsg.slice(0,20)}), পরবর্তী কি...`, 50 + Math.min(40, (k + 1) * 2));
+              continue; // Try next key!
             }
           }
 
@@ -1219,10 +1222,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     const fallbackKey = (keyPool.find(k => typeof FayzarOcrConfig === 'undefined' || FayzarOcrConfig.isKeyAvailable(k))) || keyPool[0] || apiKey;
 
-    // Cooldown auto-retry on gemini-3.5-flash
+    // Cooldown auto-retry on gemini-2.0-flash
     if (isRateLimited && fallbackKey) {
       try {
-        setLoading(true, 'রেট লিমিট কুলডাউন চলছে (ফ্ল্যাগশিপ মডেল gemini-3.5-flash চেষ্টা হচ্ছে)...', 88);
+        setLoading(true, 'রেট লিমিট কুলডাউন চলছে (gemini-2.0-flash চেষ্টা হচ্ছে)...', 88);
         const retryModel = 'gemini-3.5-flash';
         const retryEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${retryModel}:generateContent?key=${encodeURIComponent(fallbackKey)}`;
         const retryRes = await fetchWithTimeout(retryEndpoint, {

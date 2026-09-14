@@ -175,9 +175,10 @@ SPECIFIC DEFECTS YOU MUST AUDIT AND FIX:
 
 4. ক্রমিক নম্বর ও ফরম্যাটিং নিয়ম বজায় রাখা:
    - Separate sequential numbering starting from ১ for each question category:
-     * সৃজনশীল প্রশ্ন: ১., ২., ৩., ...
-     * বহুনির্বাচনী প্রশ্ন: সতন্ত্রভাবে ১., ২., ৩., ... (সৃজনশীলের সাথে মিলিয়ে নয়)
-     * সংক্ষিপ্ত প্রশ্ন: সতন্ত্রভাবে ১., ২., ৩., ...
+     * বাংলা, গণিত ও বিজ্ঞান বিষয়ের ক্ষেত্রে প্রশ্নের ক্রমিক নম্বর এর পর অবশ্যই '।' (দাড়ি) ব্যবহার করবেন (যেমন: ১।, ২।, ৩।, ... ১০।)। (তবে ইংরেজি বিষয়ের ক্ষেত্রে স্বাভাবিক ইংরেজি ফরম্যাট '1.', '2.' অপরিবর্তিত রাখবেন)।
+     * সৃজনশীল প্রশ্ন: ১।, ২।, ৩।, ... প্রতিটি উপ-প্রশ্ন ডট ফরম্যাটে ক., খ., গ., ঘ. (বন্ধনী ছাড়া)।
+     * বহুনির্বাচনী প্রশ্ন: সতন্ত্রভাবে ১।, ২।, ৩।, ... (সৃজনশীলের সাথে মিলিয়ে নয়)। প্রতিটি অপশন লাইনে শুরুতে \t এবং মাঝে \t সহ ডট ফরম্যাট \tক. ...\tখ. ...\tগ. ...\tঘ. ...।
+     * সংক্ষিপ্ত প্রশ্ন: সতন্ত্রভাবে ১।, ২।, ৩।, ...
    - No board tags/references (e.g., omit [ঢাকা বোর্ড-২০২৩]).
    - For diagrams/images, simply write: [ছবি আছে-পৃ:০১].
    - No markdown bold asterisks (**). No asterisks on roman numerals (*i.* -> i.).
@@ -412,6 +413,12 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           elements.collapsiblePreview?.classList.remove('flex');
           if (elements.togglePreviewText) elements.togglePreviewText.textContent = 'টেক্সট প্রিভিউ দেখুন';
         }
+      });
+    }
+
+    if (elements.outputUnicodeArea) {
+      elements.outputUnicodeArea.addEventListener('input', () => {
+        state.unicodeText = elements.outputUnicodeArea.value;
       });
     }
 
@@ -1659,73 +1666,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         let p = pageNum ? toBengaliNumber(pageNum.replace(/[^\d০-৯]/g, '').padStart(2, '0')) : '০১';
         return `[ছবি আছে-পৃ:${p}]`;
       });
-      // 4c. Question Numbering: Format Bengali question numbers with Dari (।) e.g. ১।, ২।
-      // Preserves English questions as 1. What... (Normal operation for English)
-      const hasEnglishWords = /\b(what|which|where|when|who|whom|whose|why|how|read|write|fill|choose|correct|answer|following|passage|poem|story|change|transform|rewrite|complete|narrate|voice|sentence|paragraph|dialogue|table|column|true|false|match|blank|blanks|question|questions|section|marks|time)\b/i.test(l);
-      const isEnglishLine = hasEnglishWords || (/^[ \t]*[0-9]+[\.\)]\s*["'A-Za-z]/.test(l) && !/[\u0980-\u09FF]/.test(l) && !/[\u0080-\u00FF‡‰†Š&|]/.test(l));
-      if (!isEnglishLine) {
-        if (/[\u0980-\u09FF]/.test(l) && /^[ \t]*([০-৯0-9]+)[\.\)]\s*/.test(l)) {
-          l = l.replace(/^[ \t]*([০-৯0-9]+)[\.\)]\s*/, (match, p1) => {
-            const bnDigits = p1.replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
-            return `${bnDigits}। `;
-          });
-        } else if (/^[ \t]*([0-9]+)[\.\)]\s*/.test(l)) {
-          l = l.replace(/^[ \t]*([0-9]+)[\.\)]\s*/, '$1| ');
-        }
-      }
-
-      // 4d. CQ Sub-Questions: Format as ক., খ., গ., ঘ. (or K., L., M., N.)
-      // Preserves English sub-questions like (a), (b), (c)
-      const isEnglishSubQ = /^[ \t]*[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(l) && !/[\u0980-\u09FF]/.test(l);
-      if (!isEnglishSubQ) {
-        if (/^[ \t]*[\(（]?([কখগঘ])[\)）\.]\s*/.test(l) && !/[\(（]?[খগঘ][\)）\.]/.test(l.slice(5))) {
-          l = l.replace(/^[ \t]*[\(（]?([কখগঘ])[\)）\.]\s*/, '$1. ');
-        } else if (/^[ \t]*[\(（]?([KLMN])[\)）\.]\s*/.test(l) && !/[\(（]?[LMN][\)）\.]/.test(l.slice(5)) && (/[\u0080-\u00FF‡‰†Š&]/.test(l) || !hasEnglishWords)) {
-          l = l.replace(/^[ \t]*[\(（]?([KLMN])[\)）\.]\s*/, '$1. ');
-        }
-      }
-
-      // 4e. MCQ Options Tab & Dot Formatting: Ensure \tক. ...\tখ. ...
-      if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.formatMcqLineTabs === 'function') {
-        l = DocxHandler.formatMcqLineTabs(l);
-      } else {
-        l = l.replace(/[ \t]*\t+[ \t]*/g, '\t');
-        const hasBnKa = /[\(（]?[ক][\)）\.]/.test(l);
-        const hasBnKha = /[\(（]?[খ][\)）\.]/.test(l);
-        const hasBnGa = /[\(（]?[গ][\)）\.]/.test(l);
-        const hasBnGha = /[\(（]?[ঘ][\)）\.]/.test(l);
-
-        if ((hasBnKa && hasBnKha) || (hasBnGa && hasBnGha) || (hasBnKa && (hasBnGa || hasBnGha))) {
-          l = l.trim()
-            .replace(/[\(（]?\s*ক\s*[\)）\.]\s*/g, 'ক. ')
-            .replace(/[\(（]?\s*খ\s*[\)）\.]\s*/g, 'খ. ')
-            .replace(/[\(（]?\s*গ\s*[\)）\.]\s*/g, 'গ. ')
-            .replace(/[\(（]?\s*ঘ\s*[\)）\.]\s*/g, 'ঘ. ')
-            .replace(/[ \t]*\t*[ \t]*(খ\.)/g, '\t$1')
-            .replace(/[ \t]*\t*[ \t]*(গ\.)/g, '\t$1')
-            .replace(/[ \t]*\t*[ \t]*(ঘ\.)/g, '\t$1')
-            .replace(/^[ \t]*\t*[ \t]*(ক\.|গ\.)/, '\t$1');
-          if (!l.startsWith('\t')) l = '\t' + l;
-        }
-
-        const hasBijoyK = /[\(（]?[K][\)）\.]/.test(l);
-        const hasBijoyL = /[\(（]?[L][\)）\.]/.test(l);
-        const hasBijoyM = /[\(（]?[M][\)）\.]/.test(l);
-        const hasBijoyN = /[\(（]?[N][\)）\.]/.test(l);
-
-        if ((hasBijoyK && hasBijoyL) || (hasBijoyM && hasBijoyN) || (hasBijoyK && (hasBijoyM || hasBijoyN))) {
-          l = l.trim()
-            .replace(/[\(（]?\s*K\s*[\)）\.]\s*/g, 'K. ')
-            .replace(/[\(（]?\s*L\s*[\)）\.]\s*/g, 'L. ')
-            .replace(/[\(（]?\s*M\s*[\)）\.]\s*/g, 'M. ')
-            .replace(/[\(（]?\s*N\s*[\)）\.]\s*/g, 'N. ')
-            .replace(/[ \t]*\t*[ \t]*(L\.)/g, '\t$1')
-            .replace(/[ \t]*\t*[ \t]*(M\.)/g, '\t$1')
-            .replace(/[ \t]*\t*[ \t]*(N\.)/g, '\t$1')
-            .replace(/^[ \t]*\t*[ \t]*(K\.|M\.)/, '\t$1');
-          if (!l.startsWith('\t')) l = '\t' + l;
-        }
-        l = l.replace(/\t+/g, '\t');
+      // 4c. Unified Question Paper Formatting (Question serials ১।, MCQ tabs \tক. ..., CQ dot sub-questions, English preserved)
+      if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.formatQuestionPaperLine === 'function') {
+        l = DocxHandler.formatQuestionPaperLine(l, false);
+      } else if (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.formatQuestionPaper === 'function') {
+        l = BanglaConverter.formatQuestionPaper(l, false);
       }
 
       cleanedLines.push(l);
@@ -2187,7 +2132,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     isDownloadingDocument = true;
     setTimeout(() => { isDownloadingDocument = false; }, 1500);
 
-    const text = state.unicodeText;
+    const text = (elements.outputUnicodeArea && elements.outputUnicodeArea.value) || state.unicodeText;
     if (!text || !text.trim()) {
       isDownloadingDocument = false;
       showToast('ডাউনলোড করার মতো কোনো টেক্সট নেই', 'warning');

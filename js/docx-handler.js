@@ -567,51 +567,126 @@
     }
 
     /**
-     * Ensure MCQ options (ক, খ, গ, ঘ) or (K, L, M, N) or (a, b, c, d) have tabs for Word column alignment
+     * Format Bengali Question Number with Dari (।)
+     * For English questions, preserves standard English format (e.g. 1. What...)
+     */
+    static formatQuestionNumber(line) {
+      if (!line) return line;
+      // If line contains Bengali Unicode text, format as ১।, ২।, etc.
+      if (/[\u0980-\u09FF]/.test(line)) {
+        return line.replace(/^[ \t]*([০-৯0-9]+)[\.\)]\s*/, (match, p1) => {
+          const bnDigits = p1.replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+          return `${bnDigits}। `;
+        });
+      }
+
+      // Check if line is English prose / English question
+      const hasEnglishWords = /\b(what|which|where|when|who|whom|whose|why|how|read|write|fill|choose|correct|answer|following|passage|poem|story|change|transform|rewrite|complete|narrate|voice|sentence|paragraph|dialogue|table|column|true|false|match|blank|blanks|question|questions|section|marks|time)\b/i.test(line);
+      const isEnglish = hasEnglishWords || (/^[ \t]*[0-9]+[\.\)]\s*["'A-Za-z]/.test(line) && !/[\u0080-\u00FF‡‰†Š&|]/.test(line));
+      if (isEnglish) {
+        return line;
+      }
+
+      // Bijoy Question: 1. or 1) with Bijoy text -> 1|
+      if (/^[ \t]*([0-9]+)[\.\)]\s*/.test(line)) {
+        return line.replace(/^[ \t]*([0-9]+)[\.\)]\s*/, '$1| ');
+      }
+
+      return line;
+    }
+
+    /**
+     * Format Creative Question Sub-Questions (ক., খ., গ., ঘ.)
+     * For English sub-questions (e.g. (a), (b), (c)), preserves standard English format
+     */
+    static formatCqSubQuestion(line) {
+      if (!line) return line;
+      // English sub-questions: keep completely normal
+      if (/^[ \t]*[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(line) && !/[\u0980-\u09FF]/.test(line)) {
+        return line;
+      }
+      // Replace (ক), ক) with ক.
+      if (/^[ \t]*[\(（]?([কখগঘ])[\)）\.]\s*/.test(line)) {
+        return line.replace(/^[ \t]*[\(（]?([কখগঘ])[\)）\.]\s*/, '$1. ');
+      }
+      // Bijoy sub-questions (K), K) -> K. (only if followed by Bijoy text)
+      if (/^[ \t]*[\(（]?([KLMN])[\)）\.]\s*/.test(line) && (/[\u0080-\u00FF‡‰†Š&]/.test(line) || (/[a-z]/.test(line) && !/\b(the|is|are|of|in|to|and|a|an)\b/i.test(line)))) {
+        return line.replace(/^[ \t]*[\(（]?([KLMN])[\)）\.]\s*/, '$1. ');
+      }
+      return line;
+    }
+
+    /**
+     * Ensure MCQ options (ক., খ., গ., ঘ.) or (K., L., M., N.) have leading and separating tabs
+     * Normalizes (ক), ক), etc. into ক., খ., গ., ঘ. with leading \t
+     * For English questions, preserves normal English operation untouched
      */
     static formatMcqLineTabs(line) {
       if (!line) return line;
 
+      // Check if English option line (e.g. (a) Dhaka (b) Chittagong or a. Dhaka b. Chittagong)
+      const isEnglish = !/[\u0980-\u09FF]/.test(line) && /[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(line) && !/[\(（]?[KLMN][\)）\.]\s+[^\x00-\x7F]/.test(line) && !/[\(（]?[ক-ঘ]/.test(line);
+
+      if (isEnglish) {
+        // Runs normally for English questions without altering options
+        return line;
+      }
+
       // Collapse multiple tabs or mixed space-tab combinations into a single tab
       line = line.replace(/[ \t]*\t+[ \t]*/g, '\t');
 
-      // Unicode options (ক), (খ), (গ), (ঘ) or (a), (b), (c), (d)
-      const hasKa = /[\(（][কaA][\)）]/.test(line);
-      const hasKha = /[\(（][খbB][\)）]/.test(line);
-      const hasGa = /[\(（][গcC][\)）]/.test(line);
-      const hasGha = /[\(（][ঘdD][\)）]/.test(line);
+      // 1. Bengali Unicode options
+      const hasBnKa = /[\(（]?[ক][\)）\.]/.test(line);
+      const hasBnKha = /[\(（]?[খ][\)）\.]/.test(line);
+      const hasBnGa = /[\(（]?[গ][\)）\.]/.test(line);
+      const hasBnGha = /[\(（]?[ঘ][\)）\.]/.test(line);
 
-      // Bijoy options (K), (L), (M), (N)
-      const hasBijoyK = /[\(（][K][\)）]/.test(line);
-      const hasBijoyL = /[\(（][L][\)）]/.test(line);
-      const hasBijoyM = /[\(（][M][\)）]/.test(line);
-      const hasBijoyN = /[\(（][N][\)）]/.test(line);
+      if ((hasBnKa && hasBnKha) || (hasBnGa && hasBnGha) || (hasBnKa && (hasBnGa || hasBnGha))) {
+        let l = line.trim();
+        // Normalize any bracketed (ক), ক), ক. to uniform "ক. "
+        l = l.replace(/[\(（]?\s*ক\s*[\)）\.]\s*/g, 'ক. ');
+        l = l.replace(/[\(（]?\s*খ\s*[\)）\.]\s*/g, 'খ. ');
+        l = l.replace(/[\(（]?\s*গ\s*[\)）\.]\s*/g, 'গ. ');
+        l = l.replace(/[\(（]?\s*ঘ\s*[\)）\.]\s*/g, 'ঘ. ');
 
-      if (hasKa && hasKha) {
-        // If (ক) is preceded by non-whitespace text (e.g. question on same line), add 1 tab before (ক)
-        line = line.replace(/(?<=[^\s\r\n])[ \t]*\t*[ \t]*([\(（][কaA][\)）])/g, '\t$1');
-        // If (ক) is at start of line, remove any leading tabs/spaces so (ক) starts flush
-        line = line.replace(/^[ \t]*\t*[ \t]*([\(（][কaA][\)）])/, '$1');
-        // Single tab before (খ), (গ), (ঘ)
-        line = line.replace(/[ \t]*\t*[ \t]*([\(（][খগঘbcdBCD][\)）])/g, '\t$1');
-      } else if (hasGa && hasGha && !hasKa) {
-        // 2-line layout: (গ) and (ঘ) on second line
-        line = line.replace(/^[ \t]*\t*[ \t]*([\(（][গcC][\)）])/, '$1');
-        line = line.replace(/[ \t]*\t*[ \t]*([\(（][ঘdD][\)）])/g, '\t$1');
-      } else if (hasBijoyK && hasBijoyL) {
-        line = line.replace(/(?<=[^\s\r\n])[ \t]*\t*[ \t]*([\(（][K][\)）])/g, '\t$1');
-        line = line.replace(/^[ \t]*\t*[ \t]*([\(（][K][\)）])/, '$1');
-        line = line.replace(/[ \t]*\t*[ \t]*([\(（][LMNlmn][\)）])/g, '\t$1');
-      } else if (hasBijoyM && hasBijoyN && !hasBijoyK) {
-        line = line.replace(/^[ \t]*\t*[ \t]*([\(（][M][\)）])/, '$1');
-        line = line.replace(/[ \t]*\t*[ \t]*([\(（][N][\)）])/g, '\t$1');
-      } else if (!hasKa && /^[ \t]*[কaA][\.\)]/.test(line) && /[ \t]+[খbB][\.\)]/.test(line)) {
-        line = line.replace(/^[ \t]*\t*[ \t]*([কaA][\.\)])/, '$1');
-        line = line.replace(/[ \t]*\t*[ \t]*([খগঘbcdBCD][\.\)])/g, '\t$1');
-      } else if (!hasBijoyK && /^[ \t]*[K][\.\)]/.test(line) && /[ \t]+[L][\.\)]/.test(line)) {
-        line = line.replace(/^[ \t]*\t*[ \t]*([K][\.\)])/, '$1');
-        line = line.replace(/[ \t]*\t*[ \t]*([LMN][\.\)])/g, '\t$1');
+        // Insert tab before খ., গ., ঘ.
+        l = l.replace(/[ \t]*\t*[ \t]*(খ\.)/g, '\t$1');
+        l = l.replace(/[ \t]*\t*[ \t]*(গ\.)/g, '\t$1');
+        l = l.replace(/[ \t]*\t*[ \t]*(ঘ\.)/g, '\t$1');
+
+        // Ensure leading tab before first option (ক. or গ.)
+        l = l.replace(/^[ \t]*\t*[ \t]*(ক\.|গ\.)/, '\t$1');
+        if (!l.startsWith('\t')) l = '\t' + l;
+
+        return l.replace(/\t+/g, '\t');
       }
+
+      // 2. Bijoy SutonnyMJ options (K, L, M, N)
+      const hasBijoyK = /[\(（]?[K][\)）\.]/.test(line);
+      const hasBijoyL = /[\(（]?[L][\)）\.]/.test(line);
+      const hasBijoyM = /[\(（]?[M][\)）\.]/.test(line);
+      const hasBijoyN = /[\(（]?[N][\)）\.]/.test(line);
+
+      if ((hasBijoyK && hasBijoyL) || (hasBijoyM && hasBijoyN) || (hasBijoyK && (hasBijoyM || hasBijoyN))) {
+        let l = line.trim();
+        // Normalize any bracketed (K), K), K. to uniform "K. "
+        l = l.replace(/[\(（]?\s*K\s*[\)）\.]\s*/g, 'K. ');
+        l = l.replace(/[\(（]?\s*L\s*[\)）\.]\s*/g, 'L. ');
+        l = l.replace(/[\(（]?\s*M\s*[\)）\.]\s*/g, 'M. ');
+        l = l.replace(/[\(（]?\s*N\s*[\)）\.]\s*/g, 'N. ');
+
+        // Insert tab before L., M., N.
+        l = l.replace(/[ \t]*\t*[ \t]*(L\.)/g, '\t$1');
+        l = l.replace(/[ \t]*\t*[ \t]*(M\.)/g, '\t$1');
+        l = l.replace(/[ \t]*\t*[ \t]*(N\.)/g, '\t$1');
+
+        // Ensure leading tab before first option (K. or M.)
+        l = l.replace(/^[ \t]*\t*[ \t]*(K\.|M\.)/, '\t$1');
+        if (!l.startsWith('\t')) l = '\t' + l;
+
+        return l.replace(/\t+/g, '\t');
+      }
+
       return line.replace(/\t+/g, '\t');
     }
 

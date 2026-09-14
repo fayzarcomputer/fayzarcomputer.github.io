@@ -607,51 +607,78 @@
     }
 
     /**
-     * Format Bengali Question Number with Dari (।)
+     * Check if a line is part of an English question paper or English section
+     * English lines must remain 100% normal/untouched (no Dari, no pipe, no forced tabs, no forced dots)
+     */
+    static isEnglishQuestionLine(line) {
+      if (!line) return false;
+      // Bengali Unicode character presence -> Definitely not English
+      if (/[\u0980-\u09FF]/.test(line)) return false;
+      // Bijoy character presence -> Definitely not English
+      if (/[\u0080-\u00FF‡‰†Š&|]/.test(line)) return false;
+
+      const hasEnglishWords = /\b(what|which|where|when|who|whom|whose|why|how|read|write|fill|choose|correct|answer|following|passage|poem|story|change|transform|rewrite|complete|narrate|voice|sentence|sentences|paragraph|dialogue|table|column|true|false|match|blank|blanks|question|questions|section|marks|time|grammar|english|translation|clause|phrase|verb|tense|preposition|article|narration|suffix|prefix|antonym|synonym|punctuation|degree|given|below|text|comprehension|rearrange|letter|application|email|composition|essay|cv|resume|notice|report|summary|theme|identify|explain|describe|define|mention|differentiate|compare|calculate|find|prove|state|discuss|illustrate|passage)\b/i.test(line);
+      if (hasEnglishWords) return true;
+
+      // Question serial pattern e.g. 1. "Honesty is...", 1. Karim went..., Question 1. ...
+      if (/^[ \t]*(?:question|q)?\s*[0-9]+[\.\):]\s*["'A-Za-z]/i.test(line)) return true;
+
+      // Sub-question pattern e.g. (a) What is..., a. Dhaka
+      if (/^[ \t]*[\(（]?[a-zA-Z][\)）\.]\s+[A-Za-z]/.test(line)) return true;
+
+      // English options on line e.g. (a) Dhaka (b) Chittagong or a. Dhaka b. Chittagong
+      if (/[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(line)) return true;
+
+      return false;
+    }
+
+    /**
+     * Format Bengali Question Number with Dari (।) e.g. ১।, ২। or Bijoy 1|, 2|
      * For English questions, preserves standard English format (e.g. 1. What...)
      */
-    static formatQuestionNumber(line) {
+    static formatQuestionNumber(line, isBijoy = false) {
       if (!line) return line;
-      // If line contains Bengali Unicode text, format as ১।, ২।, etc.
+      if (DocxHandler.isEnglishQuestionLine(line)) return line;
+
+      // Unicode Bengali Question: e.g. ১. or ১) or ১: or 1. (with Bengali text)
       if (/[\u0980-\u09FF]/.test(line)) {
-        return line.replace(/^[ \t]*([০-৯0-9]+)[\.\)]\s*/, (match, p1) => {
+        return line.replace(/^[ \t]*(?:প্রশ্ন|প্রশ্ন নং|প্রশ্ননং|Question)?\s*([০-৯0-9]+)[\.\)\:\-]\s*/i, (match, p1) => {
           const bnDigits = p1.replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
           return `${bnDigits}। `;
         });
       }
 
-      // Check if line is English prose / English question
-      const hasEnglishWords = /\b(what|which|where|when|who|whom|whose|why|how|read|write|fill|choose|correct|answer|following|passage|poem|story|change|transform|rewrite|complete|narrate|voice|sentence|paragraph|dialogue|table|column|true|false|match|blank|blanks|question|questions|section|marks|time)\b/i.test(line);
-      const isEnglish = hasEnglishWords || (/^[ \t]*[0-9]+[\.\)]\s*["'A-Za-z]/.test(line) && !/[\u0080-\u00FF‡‰†Š&|]/.test(line));
-      if (isEnglish) {
-        return line;
-      }
-
-      // Bijoy Question: 1. or 1) with Bijoy text -> 1|
-      if (/^[ \t]*([0-9]+)[\.\)]\s*/.test(line)) {
-        return line.replace(/^[ \t]*([0-9]+)[\.\)]\s*/, '$1| ');
+      // Bijoy Question: 1. or 1) or 1:
+      if (isBijoy || /[\u0080-\u00FF‡‰†Š&|]/.test(line)) {
+        if (/^[ \t]*(?:cÖkœ|cÖkœ bs)?\s*([0-9]+)[\.\)\:\-]\s*/i.test(line)) {
+          return line.replace(/^[ \t]*(?:cÖkœ|cÖkœ bs)?\s*([0-9]+)[\.\)\:\-]\s*/i, '$1| ');
+        }
+        if (/^[ \t]*([0-9]+)[\.\)\:\-]\s*/.test(line)) {
+          return line.replace(/^[ \t]*([0-9]+)[\.\)\:\-]\s*/, '$1| ');
+        }
       }
 
       return line;
     }
 
     /**
-     * Format Creative Question Sub-Questions (ক., খ., গ., ঘ.)
+     * Format Creative Question Sub-Questions (ক., খ., গ., ঘ. or K., L., M., N.)
+     * Removes brackets: (ক), ক) -> ক.
      * For English sub-questions (e.g. (a), (b), (c)), preserves standard English format
      */
-    static formatCqSubQuestion(line) {
+    static formatCqSubQuestion(line, isBijoy = false) {
       if (!line) return line;
-      // English sub-questions: keep completely normal
-      if (/^[ \t]*[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(line) && !/[\u0980-\u09FF]/.test(line)) {
-        return line;
+      if (DocxHandler.isEnglishQuestionLine(line)) return line;
+
+      // Replace (ক), ক), [ক] with ক.
+      if (/^[ \t]*[\(（\[]?\s*([কখগঘ])\s*[\)）\]\.]\s*/.test(line)) {
+        return line.replace(/^[ \t]*[\(（\[]?\s*([কখগঘ])\s*[\)）\]\.]\s*/, '$1. ');
       }
-      // Replace (ক), ক) with ক.
-      if (/^[ \t]*[\(（]?([কখগঘ])[\)）\.]\s*/.test(line)) {
-        return line.replace(/^[ \t]*[\(（]?([কখগঘ])[\)）\.]\s*/, '$1. ');
-      }
-      // Bijoy sub-questions (K), K) -> K. (only if followed by Bijoy text)
-      if (/^[ \t]*[\(（]?([KLMN])[\)）\.]\s*/.test(line) && (/[\u0080-\u00FF‡‰†Š&]/.test(line) || (/[a-z]/.test(line) && !/\b(the|is|are|of|in|to|and|a|an)\b/i.test(line)))) {
-        return line.replace(/^[ \t]*[\(（]?([KLMN])[\)）\.]\s*/, '$1. ');
+      // Bijoy sub-questions (K), K) -> K.
+      if (isBijoy || /[\u0080-\u00FF‡‰†Š&]/.test(line)) {
+        if (/^[ \t]*[\(（\[]?\s*([KLMN])\s*[\)）\]\.]\s*/.test(line)) {
+          return line.replace(/^[ \t]*[\(（\[]?\s*([KLMN])\s*[\)）\]\.]\s*/, '$1. ');
+        }
       }
       return line;
     }
@@ -661,33 +688,26 @@
      * Normalizes (ক), ক), etc. into ক., খ., গ., ঘ. with leading \t
      * For English questions, preserves normal English operation untouched
      */
-    static formatMcqLineTabs(line) {
+    static formatMcqLineTabs(line, isBijoy = false) {
       if (!line) return line;
-
-      // Check if English option line (e.g. (a) Dhaka (b) Chittagong or a. Dhaka b. Chittagong)
-      const isEnglish = !/[\u0980-\u09FF]/.test(line) && /[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(line) && !/[\(（]?[KLMN][\)）\.]\s+[^\x00-\x7F]/.test(line) && !/[\(（]?[ক-ঘ]/.test(line);
-
-      if (isEnglish) {
-        // Runs normally for English questions without altering options
-        return line;
-      }
+      if (DocxHandler.isEnglishQuestionLine(line)) return line;
 
       // Collapse multiple tabs or mixed space-tab combinations into a single tab
       line = line.replace(/[ \t]*\t+[ \t]*/g, '\t');
 
       // 1. Bengali Unicode options
-      const hasBnKa = /[\(（]?[ক][\)）\.]/.test(line);
-      const hasBnKha = /[\(（]?[খ][\)）\.]/.test(line);
-      const hasBnGa = /[\(（]?[গ][\)）\.]/.test(line);
-      const hasBnGha = /[\(（]?[ঘ][\)）\.]/.test(line);
+      const hasBnKa = /[\(（\[]?\s*[ক]\s*[\)）\]\.]/.test(line);
+      const hasBnKha = /[\(（\[]?\s*[খ]\s*[\)）\]\.]/.test(line);
+      const hasBnGa = /[\(（\[]?\s*[গ]\s*[\)）\]\.]/.test(line);
+      const hasBnGha = /[\(（\[]?\s*[ঘ]\s*[\)）\]\.]/.test(line);
 
       if ((hasBnKa && hasBnKha) || (hasBnGa && hasBnGha) || (hasBnKa && (hasBnGa || hasBnGha))) {
         let l = line.trim();
-        // Normalize any bracketed (ক), ক), ক. to uniform "ক. "
-        l = l.replace(/[\(（]?\s*ক\s*[\)）\.]\s*/g, 'ক. ');
-        l = l.replace(/[\(（]?\s*খ\s*[\)）\.]\s*/g, 'খ. ');
-        l = l.replace(/[\(（]?\s*গ\s*[\)）\.]\s*/g, 'গ. ');
-        l = l.replace(/[\(（]?\s*ঘ\s*[\)）\.]\s*/g, 'ঘ. ');
+        // Normalize any bracketed (ক), ক), [ক], ক. to uniform "ক. "
+        l = l.replace(/[\(（\[]?\s*ক\s*[\)）\]\.]\s*/g, 'ক. ');
+        l = l.replace(/[\(（\[]?\s*খ\s*[\)）\]\.]\s*/g, 'খ. ');
+        l = l.replace(/[\(（\[]?\s*গ\s*[\)）\]\.]\s*/g, 'গ. ');
+        l = l.replace(/[\(（\[]?\s*ঘ\s*[\)）\]\.]\s*/g, 'ঘ. ');
 
         // Insert tab before খ., গ., ঘ.
         l = l.replace(/[ \t]*\t*[ \t]*(খ\.)/g, '\t$1');
@@ -702,18 +722,18 @@
       }
 
       // 2. Bijoy SutonnyMJ options (K, L, M, N)
-      const hasBijoyK = /[\(（]?[K][\)）\.]/.test(line);
-      const hasBijoyL = /[\(（]?[L][\)）\.]/.test(line);
-      const hasBijoyM = /[\(（]?[M][\)）\.]/.test(line);
-      const hasBijoyN = /[\(（]?[N][\)）\.]/.test(line);
+      const hasBijoyK = /[\(（\[]?\s*[K]\s*[\)）\]\.]/.test(line);
+      const hasBijoyL = /[\(（\[]?\s*[L]\s*[\)）\]\.]/.test(line);
+      const hasBijoyM = /[\(（\[]?\s*[M]\s*[\)）\]\.]/.test(line);
+      const hasBijoyN = /[\(（\[]?\s*[N]\s*[\)）\]\.]/.test(line);
 
       if ((hasBijoyK && hasBijoyL) || (hasBijoyM && hasBijoyN) || (hasBijoyK && (hasBijoyM || hasBijoyN))) {
         let l = line.trim();
-        // Normalize any bracketed (K), K), K. to uniform "K. "
-        l = l.replace(/[\(（]?\s*K\s*[\)）\.]\s*/g, 'K. ');
-        l = l.replace(/[\(（]?\s*L\s*[\)）\.]\s*/g, 'L. ');
-        l = l.replace(/[\(（]?\s*M\s*[\)）\.]\s*/g, 'M. ');
-        l = l.replace(/[\(（]?\s*N\s*[\)）\.]\s*/g, 'N. ');
+        // Normalize any bracketed (K), K), [K], K. to uniform "K. "
+        l = l.replace(/[\(（\[]?\s*K\s*[\)）\]\.]\s*/g, 'K. ');
+        l = l.replace(/[\(（\[]?\s*L\s*[\)）\]\.]\s*/g, 'L. ');
+        l = l.replace(/[\(（\[]?\s*M\s*[\)）\]\.]\s*/g, 'M. ');
+        l = l.replace(/[\(（\[]?\s*N\s*[\)）\]\.]\s*/g, 'N. ');
 
         // Insert tab before L., M., N.
         l = l.replace(/[ \t]*\t*[ \t]*(L\.)/g, '\t$1');
@@ -728,6 +748,72 @@
       }
 
       return line.replace(/\t+/g, '\t');
+    }
+
+    /**
+     * Unified single-line formatter for Question Papers
+     * Handles:
+     * - English lines: 100% untouched
+     * - Question serials: ১। (Unicode) or 1| (Bijoy)
+     * - Multi-option MCQ lines: leading \t and dots \tক. ...\tখ. ...
+     * - Vertical single-option MCQ lines: leading \t and dot \tক. [option]
+     * - CQ sub-questions: dot without brackets ক. [question text]
+     */
+    static formatQuestionPaperLine(line, isBijoy = false) {
+      if (!line) return line;
+      if (DocxHandler.isEnglishQuestionLine(line)) return line;
+
+      // 1. Multi-option MCQ line check (e.g. \tক. ...\tখ. ...)
+      const mcqFormatted = DocxHandler.formatMcqLineTabs(line, isBijoy);
+      if (mcqFormatted !== line) {
+        return mcqFormatted;
+      }
+
+      // 2. Question number check (e.g. ১. ... -> ১। ...)
+      const qNumFormatted = DocxHandler.formatQuestionNumber(line, isBijoy);
+      if (qNumFormatted !== line) {
+        return qNumFormatted;
+      }
+
+      // 3. Single option or CQ sub-question check
+      // Unicode: (ক) or ক) or [ক]
+      const bnMatch = line.match(/^[ \t]*[\(（\[]?\s*([কখগঘ])\s*[\)）\]\.]\s*(.*)$/);
+      if (bnMatch) {
+        const letter = bnMatch[1];
+        const rest = bnMatch[2] || '';
+        const isCq = /\?/.test(rest) || /(?:উদ্দীপক|কাকে বলে|কী\?|কীভাবে|কেন\?|ব্যাখ্যা|বর্ণনা|নির্ণয়|পার্থক্য|চিহ্নিত|বিশ্লেষণ|আলোচনা|মূলভাব)/.test(rest);
+        if (isCq) {
+          return `${letter}. ${rest}`;
+        } else {
+          return `\t${letter}. ${rest}`;
+        }
+      }
+
+      // Bijoy: (K) or K) or [K]
+      if (isBijoy || /[\u0080-\u00FF‡‰†Š&]/.test(line)) {
+        const bjMatch = line.match(/^[ \t]*[\(（\[]?\s*([KLMN])\s*[\)）\]\.]\s*(.*)$/);
+        if (bjMatch) {
+          const letter = bjMatch[1];
+          const rest = bjMatch[2] || '';
+          const isCq = /\?/.test(rest) || /(?:DÏxcK|Kv‡K e‡j|e¨vL¨v|eY©bv|wbY©q|cv_©K¨|we‡kølY)/.test(rest);
+          if (isCq) {
+            return `${letter}. ${rest}`;
+          } else {
+            return `\t${letter}. ${rest}`;
+          }
+        }
+      }
+
+      return line;
+    }
+
+    /**
+     * Unified full-document question paper formatter
+     */
+    static formatQuestionPaper(text, isBijoy = false) {
+      if (!text) return text;
+      const lines = text.split(/\r?\n/);
+      return lines.map(line => DocxHandler.formatQuestionPaperLine(line, isBijoy)).join('\n');
     }
 
     /**
@@ -773,7 +859,7 @@
       const pageMar = MARGINS_TWIPS[marginVal] || MARGINS_TWIPS['normal'];
 
       const zip = new JSZip();
-      const lines = (text || '').replace(/\*\*/g, '').replace(/\r/g, '').split('\n').filter(l => l.trim().length > 0).map(l => DocxHandler.formatMcqLineTabs(l));
+      const lines = (text || '').replace(/\*\*/g, '').replace(/\r/g, '').split('\n').filter(l => l.trim().length > 0).map(l => DocxHandler.formatQuestionPaperLine(l, isBijoy));
       
       const paragraphsXml = lines.map(line => {
         if (!line) return '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:t></w:t></w:r></w:p>';
@@ -857,13 +943,18 @@
           return `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>${runsXml}</w:p>`;
         }
 
+        let processedLine = line;
+        if (isBijoy && typeof BanglaConverter !== 'undefined' && BanglaConverter.hasBengaliText(processedLine)) {
+          processedLine = BanglaConverter.unicodeToBijoy(processedLine);
+        }
+
         const segments = isBijoy
           ? (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.splitBijoyAndEnglish === 'function'
-              ? BanglaConverter.splitBijoyAndEnglish(line)
-              : [{ type: 'bengali', text: line }])
+              ? BanglaConverter.splitBijoyAndEnglish(processedLine)
+              : [{ type: 'bengali', text: processedLine }])
           : (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.splitMixedBengaliAndEnglish === 'function'
-              ? BanglaConverter.splitMixedBengaliAndEnglish(line)
-              : [{ type: 'bengali', text: line }]);
+              ? BanglaConverter.splitMixedBengaliAndEnglish(processedLine)
+              : [{ type: 'bengali', text: processedLine }]);
 
         let runsXml = "";
         for (let seg of segments) {
@@ -1205,7 +1296,7 @@
         return out;
       }
 
-      const lines = sanitizedText.split(/\r?\n/).map(l => DocxHandler.formatMcqLineTabs(l));
+      const lines = sanitizedText.split(/\r?\n/).map(l => DocxHandler.formatQuestionPaperLine(l, isBijoy));
       let i = 0;
       const htmlBlocks = [];
 
@@ -1324,6 +1415,10 @@ ${paragraphsHtml}
   DocxHandler.prototype.createDocxFromText = DocxHandler.createDocxFromText;
   DocxHandler.prototype.createDocFromText = DocxHandler.createDocFromText;
   DocxHandler.prototype.formatMcqLineTabs = DocxHandler.formatMcqLineTabs;
+  DocxHandler.prototype.formatQuestionNumber = DocxHandler.formatQuestionNumber;
+  DocxHandler.prototype.formatCqSubQuestion = DocxHandler.formatCqSubQuestion;
+  DocxHandler.prototype.formatQuestionPaperLine = DocxHandler.formatQuestionPaperLine;
+  DocxHandler.prototype.formatQuestionPaper = DocxHandler.formatQuestionPaper;
   DocxHandler.prototype.renderWordWhitespace = DocxHandler.renderWordWhitespace;
 
   if (typeof window !== 'undefined') {

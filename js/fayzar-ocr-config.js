@@ -113,7 +113,7 @@
     /**
      * Mark a key as temporarily on cooldown (e.g. 429 quota exhaustion)
      */
-    markKeyCooldown: function (key, seconds = 60) {
+    markKeyCooldown: function (key, seconds = 15) {
       if (!key) return;
       const cleanKey = key.trim();
       keyStatusMap.set(cleanKey, {
@@ -122,6 +122,18 @@
       });
       _syncCooldownsToStorage();
       this.logAudit('KEY_COOLDOWN', { keyMask: cleanKey.slice(0, 8) + '...', cooldownSec: seconds });
+    },
+
+    /**
+     * Clear all cooldowns so fresh conversion is never locked out
+     */
+    clearCooldowns: function () {
+      keyStatusMap.clear();
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.removeItem('fayzar_key_cooldowns');
+        }
+      } catch (e) {}
     },
 
     /**
@@ -214,13 +226,18 @@
     },
 
     /**
-     * Resolve the most appropriate active API key taking user custom keys into account
+     * Resolve the current active API key without premature index advancement
      */
     getActiveApiKey: function (userCustomKey = '') {
       if (userCustomKey && this.isValidApiKey(userCustomKey)) {
         return userCustomKey.trim();
       }
-      return this.getNextRoundRobinKey();
+      let keys = this.getAllSystemKeys(false);
+      if (keys.length === 0) {
+        keys = this.getAllSystemKeys(true);
+      }
+      if (keys.length === 0) return '';
+      return keys[roundRobinIndex % keys.length];
     },
 
     /**

@@ -2815,6 +2815,10 @@ function initUnifiedConverterEngine() {
   executeAiConversionBtn?.addEventListener('click', async () => {
     if (!currentScanResult || !currentScanResult.isAiOcr) return;
 
+    if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.clearCooldowns === 'function') {
+      FayzarOcrConfig.clearCooldowns();
+    }
+
     step2Box?.classList.add('hidden');
     step3Box?.classList.remove('hidden');
     wizardProgressCard?.classList.remove('hidden');

@@ -224,12 +224,18 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   // Default to Live mode (false) when API key is available
   const isDemo = (rawDemoSetting === 'true');
 
+  let savedModelSetting = localStorage.getItem(STORAGE_KEYS.SELECTED_MODEL) || 'auto';
+  if (savedModelSetting === 'gemini-3.8-flash') {
+    savedModelSetting = 'auto';
+    localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, 'auto');
+  }
+
   const state = {
     freeUsesCount: parseInt(localStorage.getItem(STORAGE_KEYS.FREE_COUNT) || '0', 10),
     byokApiKey: savedKey,
     gasUrl: savedGas,
     demoMode: isDemo,
-    selectedModel: localStorage.getItem(STORAGE_KEYS.SELECTED_MODEL) || 'auto',
+    selectedModel: savedModelSetting,
     autoVerify: localStorage.getItem('ai_ocr_auto_verify') === 'true',
 
     filesQueue: [],
@@ -337,6 +343,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       gasUrlInput: document.getElementById('ai-ocr-gas-url-input'),
       resetCreditsBtn: document.getElementById('ai-ocr-reset-credits-btn'),
       autoVerifyToggle: document.getElementById('ai-ocr-settings-autoverify'),
+      downloadAuditBtn: document.getElementById('ai-ocr-download-audit-btn'),
 
       // Re-verification & Audit elements
       verifyBtn: document.getElementById('wizardVerifyBtn'),
@@ -471,6 +478,27 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (elements.resetCreditsBtn) elements.resetCreditsBtn.addEventListener('click', resetCredits);
     if (elements.cancelByokBtn) elements.cancelByokBtn.addEventListener('click', () => toggleModal(elements.byokModal, false));
     if (elements.saveByokBtn) elements.saveByokBtn.addEventListener('click', saveByokKey);
+    if (elements.downloadAuditBtn) {
+      elements.downloadAuditBtn.addEventListener('click', () => {
+        const logs = (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getAuditLogs === 'function')
+          ? FayzarOcrConfig.getAuditLogs()
+          : [];
+        if (!logs || logs.length === 0) {
+          showToast('এখনও কোনো অডিট লগ রেকর্ড হয়নি। কনভার্ট সম্পন্ন হলে লগ পাওয়া যাবে।', 'info');
+          return;
+        }
+        const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fayzar_ocr_audit_log_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('অডিট লগ ফাইল সফলভাবে ডাউনলোড হয়েছে!', 'success');
+      });
+    }
   }
 
   // Extract all pages from a PDF as crisp images
@@ -740,13 +768,19 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
   async function startOcrConversion() {
     if (state.isProcessing) return;
+    if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.clearCooldowns === 'function') {
+      FayzarOcrConfig.clearCooldowns();
+    }
     if (!state.imageBase64 && state.filesQueue.length === 0) {
       showToast('অনুগ্রহ করে প্রথমে ফাইল আপলোড করুন', 'warning');
       return;
     }
 
+    const isValidKeyCheck = (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isValidApiKey === 'function')
+      ? FayzarOcrConfig.isValidApiKey
+      : (k => typeof k === 'string' && (k.trim().startsWith('AIzaSy') || k.trim().startsWith('AQ.')) && k.trim().length >= 35);
     const userCustomKey = localStorage.getItem('fayzar_ai_ocr_custom_byok');
-    const activeKey = (userCustomKey && userCustomKey.trim().length > 10)
+    const activeKey = (userCustomKey && isValidKeyCheck(userCustomKey))
       ? userCustomKey.trim()
       : (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getActiveApiKey === 'function' ? FayzarOcrConfig.getActiveApiKey() : (state.byokApiKey || ''));
 
@@ -779,6 +813,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       };
     }
     state.isProcessing = true;
+
+    try {
+      if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.clearCooldowns === 'function') {
+        FayzarOcrConfig.clearCooldowns();
+      }
     if (!state.imageBase64 && state.filesQueue.length === 0) {
       throw new Error('অনুগ্রহ করে প্রথমে ছবি বা PDF ফাইল নির্বাচন করুন');
     }
@@ -804,8 +843,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (onProgress) onProgress(total > 1 ? `সবগুলো (${toBengaliNumber(total)}টি) পেজ একসাথে AI-তে পাঠানো হচ্ছে...` : 'Gemini AI দিয়ে রূপান্তর হচ্ছে...', 45);
 
     // Always resolve the freshest rotated active key from the 19-key pool for every request
+    const isValidKeyCheck = (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isValidApiKey === 'function')
+      ? FayzarOcrConfig.isValidApiKey
+      : (k => typeof k === 'string' && (k.trim().startsWith('AIzaSy') || k.trim().startsWith('AQ.')) && k.trim().length >= 35);
     const userCustomKey = localStorage.getItem('fayzar_ai_ocr_custom_byok');
-    const apiKey = (userCustomKey && userCustomKey.trim().length > 10)
+    const apiKey = (userCustomKey && isValidKeyCheck(userCustomKey))
       ? userCustomKey.trim()
       : (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getActiveApiKey === 'function' ? FayzarOcrConfig.getActiveApiKey() : (state.byokApiKey || ''));
 
@@ -863,14 +905,15 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     if (onProgress) onProgress('রূপান্তর সফলভাবে সম্পন্ন হয়েছে!', 100);
 
-    state.isProcessing = false;
-
     return {
       unicodeText: state.unicodeText,
       bijoyText: state.bijoyText,
       totalFiles: total
     };
+  } finally {
+    state.isProcessing = false;
   }
+}
 
   async function ensureBase64(item) {
     if (item.base64) return item.base64;
@@ -1044,9 +1087,14 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       keyPool.push(apiKey.trim());
     }
 
-    let candidateModels = allActiveModels.slice();
-    if (state.selectedModel && state.selectedModel !== 'auto') {
-      candidateModels = [state.selectedModel, ...candidateModels.filter(m => m !== state.selectedModel)];
+    // Filter out models known to have severe 503 capacity outages on Google's free tier
+    const reliableModels = allActiveModels.filter(m => m !== 'gemini-3.8-flash');
+
+    let candidateModels;
+    if (state.selectedModel && state.selectedModel !== 'auto' && state.selectedModel !== 'gemini-3.8-flash') {
+      candidateModels = [state.selectedModel, ...reliableModels.filter(m => m !== state.selectedModel)];
+    } else {
+      candidateModels = ['gemini-3.5-flash', 'gemini-2.5-flash', ...reliableModels.filter(m => m !== 'gemini-3.5-flash' && m !== 'gemini-2.5-flash')];
     }
 
     let lastError = null;
@@ -1060,9 +1108,13 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       for (let k = 0; k < keyPool.length; k++) {
         const currentKey = keyPool[k];
 
-        // Skip keys currently on cooldown or invalid
+        // Skip keys currently on cooldown or invalid (unless all keys are cooling down, in which case we still try them)
         if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isKeyAvailable === 'function') {
-          if (!FayzarOcrConfig.isKeyAvailable(currentKey)) continue;
+          const isAvail = FayzarOcrConfig.isKeyAvailable(currentKey);
+          if (!isAvail) {
+            const hasHealthy = keyPool.some(k => FayzarOcrConfig.isKeyAvailable(k));
+            if (hasHealthy) continue;
+          }
         }
 
         const epVersion = 'v1beta';
@@ -1070,7 +1122,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
         let currentPayload = buildModelPayload(model, false);
 
-        const CONNECT_TIMEOUT_MS = 12000; // 12s per key attempt — enough for Gemini to start streaming
+        // 25s realistic connect timeout: gives full time for multi-MB image upload without premature abort
+        const CONNECT_TIMEOUT_MS = 25000;
         try {
           if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.logAudit === 'function') {
             FayzarOcrConfig.logAudit('KEY_ATTEMPT', { keyMask: currentKey.slice(0, 8) + '...', model });
@@ -1083,7 +1136,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           }, CONNECT_TIMEOUT_MS);
 
           if (res.status === 404) {
-            // Model not found on this key -> try next key (same model)
+            // Model not found on this key -> immediately try next key (same model)
             continue;
           }
 
@@ -1092,10 +1145,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             const errMsg = errData.error?.message || `HTTP ${res.status}`;
 
             if (res.status === 400 && (errMsg.includes('API_KEY_INVALID') || errMsg.includes('API key not valid'))) {
-              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyInvalid === 'function') {
-                FayzarOcrConfig.markKeyInvalid(currentKey);
+              if (typeof FayzarOcrConfig !== 'undefined') {
+                if (typeof FayzarOcrConfig.markKeyInvalid === 'function') FayzarOcrConfig.markKeyInvalid(currentKey);
+                if (typeof FayzarOcrConfig.advanceRoundRobin === 'function') FayzarOcrConfig.advanceRoundRobin();
               }
-              setLoading(true, 'ডকুমেন্টের টেক্সট, টেবিল ও সমীকরণ নিখুঁতভাবে বিশ্লেষণ করা হচ্ছে...', 50 + Math.min(40, (k + 1) * 3));
+              setLoading(true, `⚡ কি #${k+1} নিষ্ক্রিয়, ০ সেকেন্ডে পরবর্তী কি দিয়ে চেষ্টা চলছে...`, 50 + Math.min(40, (k + 1) * 2));
               continue;
             }
 
@@ -1115,26 +1169,26 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             } else if (res.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('Quota')) {
               isRateLimited = true;
               if (typeof FayzarOcrConfig !== 'undefined') {
-                if (typeof FayzarOcrConfig.markKeyCooldown === 'function') FayzarOcrConfig.markKeyCooldown(currentKey, 60);
+                if (typeof FayzarOcrConfig.markKeyCooldown === 'function') FayzarOcrConfig.markKeyCooldown(currentKey, 15);
                 if (typeof FayzarOcrConfig.advanceRoundRobin === 'function') FayzarOcrConfig.advanceRoundRobin();
               }
-              setLoading(true, `কি ${k+1} রেট-লিমিট, পরবর্তী কি চেষ্টা হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
-              continue; // Immediately try next key!
-            } else if (res.status === 503) {
-              // High demand spike on this key -> immediately rotate to next key
-              if (typeof FayzarOcrConfig !== 'undefined') {
-                if (typeof FayzarOcrConfig.markKeyCooldown === 'function') FayzarOcrConfig.markKeyCooldown(currentKey, 30);
-                if (typeof FayzarOcrConfig.advanceRoundRobin === 'function') FayzarOcrConfig.advanceRoundRobin();
+              // ZERO DELAY FAILOVER: Instant shift to next key with 0ms pause
+              setLoading(true, `⚡ কি #${k+1} কোটা শেষ, ০ সেকেন্ডে পরবর্তী কি চেষ্টা হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
+              continue;
+            } else if (res.status === 503 || errMsg.includes('No capacity') || errMsg.includes('high demand') || errMsg.includes('UNAVAILABLE')) {
+              // Server capacity exhausted on this model -> immediately break key loop and switch model (0ms delay)
+              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.logAudit === 'function') {
+                FayzarOcrConfig.logAudit('MODEL_503_FAILOVER', { failedModel: model, error: errMsg });
               }
-              setLoading(true, `কি ${k+1} সার্ভার ব্যস্ত, পরবর্তী কি চেষ্টা হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
-              continue; // Immediately try next key!
+              setLoading(true, `⚡ ${model} মডেল সার্ভার ওভারলোড, ০ সেকেন্ডে স্থিতিশীল Gemini 3.5/2.5 মডেলে অটো-সুইচ হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
+              break; // Instantly move to next candidate model!
             } else {
               if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.advanceRoundRobin === 'function') {
                 FayzarOcrConfig.advanceRoundRobin();
               }
               lastError = new Error(errMsg);
-              setLoading(true, `কি ${k+1} ত্রুটি (${errMsg.slice(0,20)}), পরবর্তী কি...`, 50 + Math.min(40, (k + 1) * 2));
-              continue; // Try next key!
+              setLoading(true, `⚡ কি #${k+1} ত্রুটি (${errMsg.slice(0,20)}), ০ সেকেন্ডে পরবর্তী কি...`, 50 + Math.min(40, (k + 1) * 2));
+              continue;
             }
           }
 
@@ -1146,7 +1200,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             let buffer = '';
             let fullStreamedText = '';
             let lastChunkTime = 0;
-            const STREAM_IDLE_TIMEOUT_MS = 8000; // 8.0s fast stream idle timeout to prevent mid-stream freezing
+            const STREAM_IDLE_TIMEOUT_MS = 35000; // 35s realistic stream idle timeout for complex OCR & math generation
 
             while (true) {
               let chunkTimeoutId;
@@ -1214,76 +1268,17 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             throw err;
           }
           lastError = err;
-          setLoading(true, 'পরবর্তী অ্যাক্টিভ কি দিয়ে প্রস্তুত করা হচ্ছে...', 50 + Math.min(40, (k + 1) * 3));
+          if (err.message && (err.message.includes('503') || err.message.includes('No capacity') || err.message.includes('UNAVAILABLE') || err.message.includes('high demand'))) {
+            setLoading(true, `⚡ ${model} মডেল ওভারলোড, ০ সেকেন্ডে পরবর্তী স্থিতিশীল মডেলে অটো-সুইচ হচ্ছে...`, 50 + Math.min(40, (k + 1) * 3));
+            break;
+          }
+          setLoading(true, '⚡ পরবর্তী অ্যাক্টিভ কি দিয়ে প্রস্তুত করা হচ্ছে...', 50 + Math.min(40, (k + 1) * 3));
           continue;
         }
       }
     }
 
-    const fallbackKey = (keyPool.find(k => typeof FayzarOcrConfig === 'undefined' || FayzarOcrConfig.isKeyAvailable(k))) || keyPool[0] || apiKey;
-
-    // Cooldown auto-retry on gemini-2.0-flash
-    if (isRateLimited && fallbackKey) {
-      try {
-        setLoading(true, 'রেট লিমিট কুলডাউন চলছে (gemini-2.0-flash চেষ্টা হচ্ছে)...', 88);
-        const retryModel = 'gemini-3.5-flash';
-        const retryEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${retryModel}:generateContent?key=${encodeURIComponent(fallbackKey)}`;
-        const retryRes = await fetchWithTimeout(retryEndpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(buildModelPayload(retryModel, false))
-        }, REQUEST_TIMEOUT_MS);
-
-        if (retryRes.ok) {
-          const retryData = await retryRes.json().catch(() => ({}));
-          const parts = retryData.candidates?.[0]?.content?.parts;
-          if (parts && parts.length > 0) {
-            const fullText = parts.map(p => p.text || '').join('\n');
-            if (onStreamChunk) onStreamChunk(fullText);
-            return cleanOcrResponse(fullText);
-          }
-        }
-      } catch (retryErr) { /* ignore */ }
-    }
-
-    // Dynamic Discovery Fallback
-    if (fallbackKey) {
-      try {
-        setLoading(true, 'আপনার API Key-এর জন্য উপলব্ধ মডেল তালিকা খোঁজা হচ্ছে...', 92);
-        const listRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(fallbackKey)}`, {}, 6000);
-        if (listRes.ok) {
-          const listData = await listRes.json();
-          const available = (listData.models || [])
-            .filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && m.name)
-            .map(m => m.name.replace('models/', ''))
-            .filter(m => m.includes('flash') || m.includes('pro'));
-
-          for (const dynModel of available) {
-            if (candidateModels.includes(dynModel)) continue;
-            try {
-              const dynPayload = buildModelPayload(dynModel, false);
-              const dynRes = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${dynModel}:generateContent?key=${encodeURIComponent(fallbackKey)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dynPayload)
-              }, REQUEST_TIMEOUT_MS);
-
-              if (dynRes.ok) {
-                const dynData = await dynRes.json();
-                const parts = dynData?.candidates?.[0]?.content?.parts;
-                if (parts && parts.length > 0) {
-                  const fullText = parts.map(p => p.text || '').join('\n');
-                  if (onStreamChunk) onStreamChunk(fullText);
-                  return cleanOcrResponse(fullText);
-                }
-              }
-            } catch (dynErr) { /* try next */ }
-          }
-        }
-      } catch (e) { /* ignore */ }
-    }
-
-    throw new Error(lastError?.message || 'Gemini API থেকে কোনো টেক্সট পাওয়া যায়নি।');
+    throw new Error(lastError?.message || 'Gemini API-র সকল কি ব্যস্ত বা কোটা পূর্ণ। অনুগ্রহ করে কয়েক মুহূর্ত পর পুনরায় চেষ্টা করুন।');
   }
 
   async function runGasProxyOcr() {

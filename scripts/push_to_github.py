@@ -151,6 +151,21 @@ def main():
         })
         print(f"    [{idx}/{len(to_upload)}] Uploaded {rel_path} -> blob {created_sha[:7]}")
 
+    # Handle files deleted locally (e.g. removing studio engines from web repo)
+    deleted_files = [p for p in remote_files if not os.path.exists(os.path.join(BASE_DIR, p.replace('/', os.sep))) and not any(p.startswith(ex + '/') for ex in EXCLUDE_DIRS) and p not in EXCLUDE_FILES]
+    for p in deleted_files:
+        new_tree_entries.append({
+            "path": p,
+            "mode": "100644",
+            "type": "blob",
+            "sha": None
+        })
+        print(f"    [DELETE] Removing {p} from remote repository")
+
+    if not to_upload and not deleted_files:
+        print("\n[SUCCESS] Everything is already 100% up-to-date on GitHub!")
+        return
+
     # 6. Create new Git Tree
     print("\n[*] Creating new Git Tree on GitHub...")
     tree_payload = {
@@ -162,7 +177,7 @@ def main():
     print(f"    New Tree SHA: {new_tree_sha}")
 
     # 7. Create Git Commit
-    commit_msg = "fix(ocr): optimize Gemini key rotation, auto-failover on 503, realistic timeouts & instant retry"
+    commit_msg = "revert: remove studio engines and restore clean web converter with key optimization"
     commit_payload = {
         "message": commit_msg,
         "tree": new_tree_sha,

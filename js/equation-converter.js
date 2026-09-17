@@ -48,12 +48,20 @@
 
       // 1. Process \text{...} / \mathrm{...} / \textbf{...} blocks:
       s = s.replace(/\\(?:text|mathrm|textmd|textbf|textit|mbox)\{([^{}]+)\}/g, function(match, inner) {
-        let trimmed = inner.trim();
+        let trimmed = inner.trim().replace(/^["']|["']$/g, '');
+        // Standard scientific, physics & math units: do NOT quote them!
+        if (/^(?:cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|kHz|MHz|GHz|N|Pa|kPa|J|kJ|cal|kcal|eV|MeV|mol|K|rad|deg|cd|lm|lx|dB)$/i.test(trimmed)) {
+          return ' ' + trimmed + ' ';
+        }
         let converted = trimmed;
         if (isU2B && typeof BanglaConverter !== 'undefined' && BanglaConverter.hasBengaliText(trimmed)) {
           converted = BanglaConverter.unicodeToBijoy(trimmed, { convertNumbers: false });
+          return ' ' + converted + ' ';
         }
-        return ' "' + converted + '" ';
+        if (/[\u0980-\u09FF]/.test(converted)) {
+          return ' ' + converted + ' ';
+        }
+        return ' ' + converted + ' ';
       });
 
       // 2. Convert LaTeX macros (fractions, roots, superscripts, subscripts, brackets)
@@ -61,6 +69,13 @@
 
       // 3. Convert math symbols, trig functions and greek letters
       s = this._convertSymbols(s);
+
+      // 3.5 Sanitize any unhandled LaTeX backslash commands so Word EQ field code never fails with Error!
+      // Allowed switches in Word EQ fields: \F, \R, \S, \B, \A, \I, \O, \X, \L, \N, \D, \up, \do, \bc, \ba, \fo, \li, \to
+      s = s.replace(/\\(?!(?:[FRSBAIOXLD]|up\d*|do\d*|bc|ba|fo|li|to)\b)([a-zA-Z]+)/g, '$1');
+
+      // Strip any stray quotation marks around standard units
+      s = s.replace(/["']\s*(cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|kHz|N|Pa|J)\s*["']/gi, '$1');
 
       // 4. Clean up spaces
       s = s.replace(/\s+/g, ' ').trim();
@@ -293,8 +308,20 @@
         [/\\forall\b/g, '\u2200'],
         [/\\exists\b/g, '\u2203'],
         [/\\cdot\b/g, '\u00B7'],
-        [/\\cdots\b/g, '\u00B7\u00B7\u00B7'],
+        [/\\cdots\b/g, '...'],
         [/\\ldots\b/g, '...'],
+        [/\\dots\b|\\dotsb\b|\\dotsc\b|\\dotsm\b|\\dotso\b/g, '...'],
+
+        // Calculus & Summations
+        [/\\sum\b/g, '\u2211'],
+        [/\\prod\b/g, '\u220F'],
+        [/\\int\b/g, '\u222B'],
+        [/\\iint\b/g, '\u222C'],
+        [/\\iiint\b/g, '\u222D'],
+        [/\\oint\b/g, '\u222E'],
+        [/\\partial\b/g, '\u2202'],
+        [/\\nabla\b/g, '\u2207'],
+        [/\\operatornamewithlimits\{([^{}]+)\}|\\operatorname\{([^{}]+)\}/g, '$1'],
 
         // Greek Letters (Lowercase)
         [/\\alpha\b/g, '\u03B1'],
@@ -417,7 +444,7 @@
           tokens.push({ text: text, italic: true, isScript: scriptDepth > 0 });
         } else if (match[8]) {
           // Greek & Math Symbols: θ, α, β, ⇒, ≤, ≥, ° ...
-          tokens.push({ text: text, italic: false, isScript: scriptDepth > 0 });
+          tokens.push({ text: text, italic: false, isScript: scriptDepth > 0, isSymbol: true });
         } else {
           // Operators, spaces, punctuation
           tokens.push({ text: text, italic: false, isScript: scriptDepth > 0 });
@@ -430,14 +457,178 @@
         if (merged.length > 0 && 
             merged[merged.length - 1].italic === t.italic && 
             merged[merged.length - 1].isScript === t.isScript &&
+            merged[merged.length - 1].isSymbol === t.isSymbol &&
             !merged[merged.length - 1].isQuotedText &&
-            !t.isQuotedText) {
+            !t.isQuotedText &&
+            !t.text.startsWith('\\') &&
+            !merged[merged.length - 1].text.startsWith('\\')) {
           merged[merged.length - 1].text += t.text;
         } else {
-          merged.push({ text: t.text, italic: t.italic, isScript: t.isScript, isQuotedText: !!t.isQuotedText });
+          merged.push({ text: t.text, italic: t.italic, isScript: t.isScript, isSymbol: !!t.isSymbol, isQuotedText: !!t.isQuotedText });
         }
       }
       return merged;
+    }
+
+    /**
+     * Formats an EQ field code into Word 2003 HTML runs with proper variable italics,
+     * upright numbers/operators, reduced 8.0pt font size for scripts, and Symbol font mapping,
+     * while preserving all Word EQ switch commands (\F, \R, \S, \B, etc.).
+     */
+    static formatEqCodeToWordHtml(cleanEqCode, baseFontSizePt = 12, isBijoy = true) {
+      if (!cleanEqCode) return "";
+      const bengaliFont = isBijoy ? 'SutonnyMJ' : 'Kalpurush';
+      const scriptSizePt = '8.0'; // Standard small 8pt for superscripts/subscripts in Word 2003
+
+      let eqStr = cleanEqCode.trim();
+      if (eqStr.startsWith('EQ ')) eqStr = eqStr.slice(3).trim();
+
+      const tokens = this.tokenizeEqCode(eqStr);
+
+      let html = "";
+      for (const t of tokens) {
+        if (!t || !t.text) continue;
+        const textTrim = t.text.trim();
+        if (textTrim === 'EQ') continue;
+
+        const textEsc = t.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // Check if quoted Bengali text or units inside equation (e.g. "Ges", "অথবা", "cm")
+        if (t.isQuotedText) {
+          const stripped = textEsc.replace(/^["'“]|["'”]$/g, '');
+          html += `<span style="font-family:'${bengaliFont}',Arial,sans-serif;font-style:normal;">${stripped}</span>`;
+          continue;
+        }
+
+        // Preserve Word EQ macro switches and parentheses as plain instruction text
+        if (/^\\(?:F|R|S|B|A|I|D|X|up\d*|do\d*)\b/i.test(textTrim) || /^\\(?:S\\)?(?:up|do)\d*\(/i.test(textTrim) || t.text === '(' || t.text === ')') {
+          html += textEsc;
+          continue;
+        }
+
+        // Variable letters (e.g. x, y, z, a, b, c, d, p, N, n)
+        if (t.italic) {
+          if (t.isScript) {
+            html += `<i><span style="font-size:${scriptSizePt}pt;">${textEsc}</span></i>`;
+          } else {
+            html += `<i>${textEsc}</i>`;
+          }
+          continue;
+        }
+
+        // Superscript or subscript contents (numbers, operators inside \S\up / \S\do)
+        if (t.isScript) {
+          if (textTrim) {
+            html += `<span style="font-size:${scriptSizePt}pt;font-style:normal;">${textEsc}</span>`;
+          } else {
+            html += textEsc;
+          }
+          continue;
+        }
+
+        // Greek and Math symbols (∈, ≤, ≥, θ, α, β)
+        if (t.isSymbol) {
+          html += `<span style="font-family:'Symbol','Times New Roman',serif;font-style:normal;">${textEsc}</span>`;
+          continue;
+        }
+
+        // Standard functions (sin, cos, tan, log, ln, lim) or plain numbers/operators
+        if (t.isFunction || /^(?:sin|cos|tan|cot|sec|csc|ln|log|lim|det|min|max|exp|deg)$/i.test(textTrim)) {
+          html += `<span style="font-style:normal;">${textEsc}</span>`;
+          continue;
+        }
+
+        html += textEsc;
+      }
+      return html;
+    }
+
+    /**
+     * Converts a LaTeX equation to human-readable HTML for Word's MsoFieldResult display cache.
+     */
+    static latexToReadableHtml(latex, isBijoy = true, bengaliFontName = 'SutonnyMJ', baseFontSizePt = 12) {
+      if (!latex) return "";
+      let s = latex.trim();
+      if (s.startsWith('$$') && s.endsWith('$$')) s = s.slice(2, -2).trim();
+      else if (s.startsWith('$') && s.endsWith('$')) s = s.slice(1, -1).trim();
+      else if (s.startsWith('\\[') && s.endsWith('\\]')) s = s.slice(2, -2).trim();
+      else if (s.startsWith('\\(') && s.endsWith('\\)')) s = s.slice(2, -2).trim();
+
+      const scriptSizePt = Math.round(baseFontSizePt * 0.7 * 10) / 10;
+
+      // Handle \frac{num}{den}
+      s = s.replace(/\\(?:d|t)?frac\{([^}]+)\}\{([^}]+)\}/g, (m, num, den) => {
+        const rNum = this.latexToReadableHtml(num, isBijoy, bengaliFontName, baseFontSizePt);
+        const rDen = this.latexToReadableHtml(den, isBijoy, bengaliFontName, baseFontSizePt);
+        return `<table align="center" style="display:inline-table;vertical-align:middle;text-align:center;border-collapse:collapse;margin:0 1pt;">` +
+               `<tr><td style="border-bottom:1.0pt solid windowtext;padding:0 2pt;line-height:1.0;text-align:center;">${rNum}</td></tr>` +
+               `<tr><td style="padding:0 2pt;line-height:1.0;text-align:center;">${rDen}</td></tr></table>`;
+      });
+
+      // Handle \sqrt{arg} or \sqrt[n]{arg}
+      s = s.replace(/\\sqrt(?:\[([^\]]+)\])?\{([^}]+)\}/g, (m, root, arg) => {
+        const rArg = this.latexToReadableHtml(arg, isBijoy, bengaliFontName, baseFontSizePt);
+        if (root) {
+          return `<sup style="font-size:${scriptSizePt}pt;vertical-align:super;">${root}</sup>√(${rArg})`;
+        }
+        return `√(${rArg})`;
+      });
+
+      // Handle superscripts ^{...} or ^\w
+      s = s.replace(/\^\{([^}]+)\}|\^([a-zA-Z0-9\u09E6-\u09EF+\-]+)/g, (m, g1, g2) => {
+        const val = g1 || g2;
+        const rVal = this.latexToReadableHtml(val, isBijoy, bengaliFontName, scriptSizePt);
+        return `<sup style="font-size:${scriptSizePt}pt;vertical-align:super;mso-text-raise:3.0pt;">${rVal}</sup>`;
+      });
+
+      // Handle subscripts _{...} or _\w
+      s = s.replace(/_\{([^}]+)\}|_([a-zA-Z0-9\u09E6-\u09EF+\-]+)/g, (m, g1, g2) => {
+        const val = g1 || g2;
+        const rVal = this.latexToReadableHtml(val, isBijoy, bengaliFontName, scriptSizePt);
+        return `<sub style="font-size:${scriptSizePt}pt;vertical-align:sub;mso-text-raise:-2.0pt;">${rVal}</sub>`;
+      });
+
+      // Common symbols
+      s = s.replace(/\\times/g, '×')
+           .replace(/\\div/g, '÷')
+           .replace(/\\pm/g, '±')
+           .replace(/\\leq|\\le/g, '≤')
+           .replace(/\\geq|\\ge/g, '≥')
+           .replace(/\\neq/g, '≠')
+           .replace(/\\approx/g, '≈')
+           .replace(/\\theta/g, 'θ')
+           .replace(/\\alpha/g, 'α')
+           .replace(/\\beta/g, 'β')
+           .replace(/\\pi/g, 'π')
+           .replace(/\\circ|\\degree/g, '°')
+           .replace(/\\dots|\\cdots|\\ldots/g, '...')
+           .replace(/\\text\{([^}]+)\}/g, '$1')
+           .replace(/\\quad|\\qquad|~/g, ' ');
+
+      // Wrap English letters in italic Times New Roman, numbers/symbols upright
+      const tokenRegex = /([a-zA-Z]+)|(\d+(?:\.\d+)?)|([\u0980-\u09FF]+)|(<\/?table[^>]*>|<\/?tr[^>]*>|<\/?td[^>]*>|<\/?sup[^>]*>|<\/?sub[^>]*>)|([^\s\w<>]+)|\s+/g;
+      let out = "";
+      let m;
+      while ((m = tokenRegex.exec(s)) !== null) {
+        if (m[4]) {
+          out += m[4];
+        } else if (m[1]) {
+          if (/^[a-zA-Z]$/.test(m[1])) {
+            out += `<i style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${m[1]}</i>`;
+          } else {
+            out += `<span lang="EN-US" style="font-family:'Times New Roman',serif;">${m[1]}</span>`;
+          }
+        } else if (m[2]) {
+          out += `<span lang="EN-US" style="font-family:'Times New Roman',serif;">${m[2]}</span>`;
+        } else if (m[3]) {
+          const targetBn = isBijoy && typeof BanglaConverter !== 'undefined' ? BanglaConverter.unicodeToBijoy(m[3]) : m[3];
+          out += `<span style="font-family:'${bengaliFontName}',Arial,sans-serif;">${targetBn}</span>`;
+        } else {
+          const esc = (m[0] || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          out += esc;
+        }
+      }
+      return out;
     }
 
     /**
@@ -610,10 +801,45 @@
         }
 
         const mathContent = match[1] || match[2] || match[3] || match[4] || "";
-        segments.push({
-          type: 'math',
-          value: mathContent
-        });
+
+        // If math block contains any Bengali letters, extract Bengali words as 'text' and pure math as 'math'
+        if (/[\u0980-\u09FF]/.test(mathContent)) {
+          // 1. Unpack any \text{...} containing Bengali
+          let cleanM = mathContent.replace(/\\(?:text|mathrm|textmd|textbf|textit|mbox)\{\s*([^{}]*?[\u0980-\u09FF][^{}]*?)\s*\}/g, ' $1 ');
+          // 2. Strip quotes around Bengali words
+          cleanM = cleanM.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
+          // 3. Split by Bengali word blocks
+          const parts = cleanM.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
+          for (const p of parts) {
+            if (!p) continue;
+            if (/[\u0980-\u09FF]/.test(p)) {
+              segments.push({
+                type: 'text',
+                value: ' ' + p.trim() + ' '
+              });
+            } else {
+              const trimmedP = p.trim();
+              if (trimmedP) {
+                if (/^[.,;:]+$/.test(trimmedP)) {
+                  segments.push({
+                    type: 'text',
+                    value: trimmedP + ' '
+                  });
+                } else {
+                  segments.push({
+                    type: 'math',
+                    value: trimmedP
+                  });
+                }
+              }
+            }
+          }
+        } else {
+          segments.push({
+            type: 'math',
+            value: mathContent
+          });
+        }
 
         lastIndex = regex.lastIndex;
       }
@@ -641,8 +867,16 @@
       else if (s.startsWith('\\[') && s.endsWith('\\]')) s = s.slice(2, -2).trim();
       else if (s.startsWith('\\(') && s.endsWith('\\)')) s = s.slice(2, -2).trim();
 
+      // Pure numbers, comma-separated number lists (e.g. "75, 65, 80..."), or numbers with decimal/hyphen
+      if (/^[\d\s,.\u09E6-\u09EF\-]+$/.test(s)) return false;
+      // Plain numbers with units or words e.g. "8 m", "20 cm", "50 জন", "7 সে.মি."
+      if (/^[\d\s,.\u09E6-\u09EF]+[a-zA-Z\u0980-\u09FF\s.]+$/.test(s)) return false;
+      // Simple measurement units e.g. "cm", "m", "kg"
+      if (/^(?:cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)$/i.test(s)) return false;
+
       // Complex mathematical structures requiring Word EQ switch commands:
-      return /[_^]|\\frac|\\dfrac|\\tfrac|\\sqrt|\\int|\\sum|\\prod|\\lim|\\matrix|\\binom|\\overline|\\underline|\\vec|\\dot|\\ddot|\\partial/.test(s);
+      return /\\frac|\\dfrac|\\tfrac|\\sqrt|\\int|\\sum|\\prod|\\lim|\\matrix|\\binom|\\overline|\\underline|\\vec|\\dot|\\ddot|\\partial/.test(s) ||
+             (/[_^]/.test(s) && !/^(?:cm|mm|m|km)\s*[\^][23]$/i.test(s));
     }
 
     /**
@@ -1045,83 +1279,6 @@
       }
 
       return '<m:oMath>' + parseChunk(s) + '</m:oMath>';
-    }
-
-    /**
-     * Converts a LaTeX math string into clean, zero-error HTML markup for Word .doc
-     * Automatically renders vertically stacked fractions, roots, super/subscripts, symbols and trig.
-     */
-    static latexToHtmlMath(latex, isBijoy = false) {
-      if (!latex) return '';
-      let s = latex.trim();
-      s = s.replace(/^\$\$+|\$\$+$/g, '').replace(/^\\\[|\\\]$/g, '').replace(/^\\\(|\\\)$/g, '').replace(/^\$+|\$+$/g, '').trim();
-
-      // Convert fractions recursively
-      for (let depth = 0; depth < 5; depth++) {
-        s = s.replace(/\\(?:frac|dfrac|tfrac)\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, (m, num, den) => {
-          const numHtml = EquationConverter.latexToHtmlMath(num, isBijoy);
-          const denHtml = EquationConverter.latexToHtmlMath(den, isBijoy);
-          return `<span style="display:inline-block;vertical-align:middle;text-align:center;line-height:1.0;margin:0 2px;"><span style="display:block;border-bottom:1pt solid #000;padding:0 2px;font-size:85%;font-family:'Times New Roman',serif;">${numHtml}</span><span style="display:block;padding:0 2px;font-size:85%;font-family:'Times New Roman',serif;">${denHtml}</span></span>`;
-        });
-      }
-
-      // Roots \sqrt[deg]{val} or \sqrt{val}
-      s = s.replace(/\\sqrt\s*\[([^\]]+)\]\s*\{([^{}]*)\}/g, (m, deg, val) => {
-        const valHtml = EquationConverter.latexToHtmlMath(val, isBijoy);
-        return `<sup>${deg}</sup>&radic;(${valHtml})`;
-      });
-      s = s.replace(/\\sqrt\s*\{([^{}]*)\}/g, (m, val) => {
-        const valHtml = EquationConverter.latexToHtmlMath(val, isBijoy);
-        return `&radic;(${valHtml})`;
-      });
-
-      // Powers / Superscripts & Subscripts
-      s = s.replace(/\^\{([^{}]*)\}/g, '<sup>$1</sup>');
-      s = s.replace(/\^([a-zA-Z0-9+\-°]+)/g, '<sup>$1</sup>');
-      s = s.replace(/_\{([^{}]*)\}/g, '<sub>$1</sub>');
-      s = s.replace(/_([a-zA-Z0-9]+)/g, '<sub>$1</sub>');
-
-      // Convert Greek and mathematical symbols
-      s = EquationConverter._convertSymbols(s);
-
-      // Functions & cleanups
-      s = s.replace(/\\(sin|cos|tan|cot|sec|csc|log|ln|lim|det|min|max|deg)\b/g, '$1 ');
-      s = s.replace(/\\text\{([^}]+)\}/g, function(match, inner) {
-        let trimmed = inner.trim();
-        if (isBijoy && typeof BanglaConverter !== 'undefined' && BanglaConverter.hasBengaliText(trimmed)) {
-          return BanglaConverter.unicodeToBijoy(trimmed, { convertNumbers: false });
-        }
-        return trimmed;
-      });
-      s = s.replace(/\\mathrm\{([^}]+)\}/g, '$1');
-      s = s.replace(/\\([+=-])/g, '$1');
-      s = s.replace(/\\/g, '');
-
-      return s;
-    }
-
-    /**
-     * Automatically wraps unbracketed raw LaTeX expressions into $...$ blocks
-     */
-    static autoWrapLatex(text) {
-      if (!text || typeof text !== 'string') return text || '';
-      
-      const segments = this.splitTextAndMath(text);
-      let result = '';
-
-      for (const seg of segments) {
-        if (seg.type === 'math') {
-          result += `$${seg.value}$`;
-        } else {
-          let s = seg.value;
-          // Wrap raw \frac, \sqrt, \sin, \cos, \tan, etc.
-          s = s.replace(/((?:-|\+)?\\(?:frac|dfrac|tfrac)\s*\{[^{}]*\}\s*\{[^{}]*(?:\{[^{}]*\})*\}(?:\s*,\s*(?:-|\+)?\\(?:frac|dfrac|tfrac)\s*\{[^{}]*\}\s*\{[^{}]*(?:\{[^{}]*\})*\})*)/g, '$$$1$$');
-          s = s.replace(/((?:-|\+)?\\sqrt\s*(?:\[[^\]]*\])?\s*\{[^{}]*\})/g, '$$$1$$');
-          result += s;
-        }
-      }
-
-      return result;
     }
   }
 

@@ -206,16 +206,9 @@
         }
       }
 
-      // Remove old runs in p, keeping pPr intact and strictly preserving runs with drawings/images
+      // Remove old runs in p, keeping pPr intact
       const oldRuns = Array.from(p.getElementsByTagName("w:r"));
       for (let r of oldRuns) {
-        if (r.getElementsByTagName("w:drawing").length > 0 ||
-            r.getElementsByTagName("w:pict").length > 0 ||
-            r.getElementsByTagName("w:object").length > 0 ||
-            r.getElementsByTagName("a:blip").length > 0 ||
-            r.getElementsByTagName("v:imagedata").length > 0) {
-          continue; // PRESERVE DRAWING / IMAGE RUN!
-        }
         p.removeChild(r);
       }
 
@@ -226,7 +219,7 @@
     }
 
     /**
-     * ধাপ ২: টেক্সট কনভার্ট (মিক্সড ফাইল হ্যান্ডলিং ও ইংরেজি ফন্ট অক্ষত রাখার লজিকসহ)
+     * ধাপ ২: টেক্সট কনভার্ট (মিক্সড ফাইল হ্যান্ডলিং ও ইংরেজি ফন্ট অ��্ষত রাখার লজিকসহ)
      */
     /**
      * ধাপ ২: টেক্সট কনভার্ট (মিক্সড রান স্প্লিটিং ও ইংরেজি ফন্ট শতভাগ অক্ষত রাখার লজিকসহ)
@@ -341,27 +334,9 @@
                 }
               }
 
-              if (runIsU2B && /[-–—−‒―]/.test(converted)) {
-                const dParts = converted.split(/([-–—−‒―]+)/);
-                for (let dpi = 0; dpi < dParts.length; dpi++) {
-                  const dp = dParts[dpi];
-                  if (!dp) continue;
-                  const splitR = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:r");
-                  if (rPr) splitR.appendChild(rPr.cloneNode(true));
-                  const splitT = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:t");
-                  splitT.setAttribute("xml:space", "preserve");
-                  splitT.textContent = dp;
-                  splitR.appendChild(splitT);
-                  const isDash = /[-–—−‒―]/.test(dp);
-                  this._updateRunFontAndProps(splitR, xmlDoc, isDash ? "Times New Roman" : targetFont, !isDash);
-                  p.insertBefore(splitR, r);
-                }
-              } else {
-                newT.textContent = converted;
-                newR.appendChild(newT);
-                this._updateRunFontAndProps(newR, xmlDoc, targetFont, runIsU2B);
-                p.insertBefore(newR, r);
-              }
+              newT.textContent = converted;
+              newR.appendChild(newT);
+              this._updateRunFontAndProps(newR, xmlDoc, targetFont, runIsU2B);
               stats.convertedRuns++;
 
               if (preview.originalSample.length < 8 && seg.text.trim().length > 2) {
@@ -369,6 +344,8 @@
                 preview.convertedSample.push(converted.trim());
               }
             }
+
+            p.insertBefore(newR, r);
           }
 
           p.removeChild(r);
@@ -449,30 +426,6 @@
         }
 
         if (shouldConvertText) {
-          if (runIsU2B && /[-–—−‒―]/.test(convertedText)) {
-            const dParts = convertedText.split(/([-–—−‒―]+)/);
-            for (let dpi = 0; dpi < dParts.length; dpi++) {
-              const dp = dParts[dpi];
-              if (!dp) continue;
-              const splitR = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:r");
-              if (rPr) splitR.appendChild(rPr.cloneNode(true));
-              const splitT = xmlDoc.createElementNS("http://schemas.openxmlformats.org/wordprocessingml/2006/main", "w:t");
-              splitT.setAttribute("xml:space", "preserve");
-              splitT.textContent = dp;
-              splitR.appendChild(splitT);
-              const isDash = /[-–—−‒―]/.test(dp);
-              this._updateRunFontAndProps(splitR, xmlDoc, isDash ? "Times New Roman" : currentTargetFont, !isDash);
-              p.insertBefore(splitR, r);
-            }
-            p.removeChild(r);
-            stats.convertedRuns++;
-
-            if (preview.originalSample.length < 8 && originalText.trim().length > 2) {
-              preview.originalSample.push(originalText.trim());
-              preview.convertedSample.push(convertedText.trim());
-            }
-            continue;
-          }
           textNodes[0].textContent = convertedText;
           textNodes[0].setAttribute("xml:space", "preserve");
           for (let k = 1; k < textNodes.length; k++) {
@@ -504,14 +457,6 @@
 
         if (!currentRun || !nextRun || !currentRun.parentNode || !nextRun.parentNode) continue;
         if (currentRun.nextSibling !== nextRun) continue;
-
-        // Never merge runs containing drawings or images
-        if (currentRun.getElementsByTagName("w:drawing").length > 0 ||
-            currentRun.getElementsByTagName("w:pict").length > 0 ||
-            nextRun.getElementsByTagName("w:drawing").length > 0 ||
-            nextRun.getElementsByTagName("w:pict").length > 0) {
-          continue;
-        }
 
         const currentPr = currentRun.getElementsByTagName("w:rPr")[0];
         const nextPr = nextRun.getElementsByTagName("w:rPr")[0];
@@ -605,297 +550,6 @@
         opts.onProgress(percent, message);
       }
     }
-
-    /**
-     * Check if a line is part of an English question paper or English section
-     * English lines must remain 100% normal/untouched (no Dari, no pipe, no forced tabs, no forced dots)
-     */
-    static isEnglishQuestionLine(line) {
-      if (!line) return false;
-      // Bengali Unicode character presence -> Definitely not English
-      if (/[\u0980-\u09FF]/.test(line)) return false;
-      // Bijoy character presence -> Definitely not English
-      if (/[\u0080-\u00FF‡‰†Š&|]/.test(line)) return false;
-
-      const hasEnglishWords = /\b(what|which|where|when|who|whom|whose|why|how|read|write|fill|choose|correct|answer|following|passage|poem|story|change|transform|rewrite|complete|narrate|voice|sentence|sentences|paragraph|dialogue|table|column|true|false|match|blank|blanks|question|questions|section|marks|time|grammar|english|translation|clause|phrase|verb|tense|preposition|article|narration|suffix|prefix|antonym|synonym|punctuation|degree|given|below|text|comprehension|rearrange|letter|application|email|composition|essay|cv|resume|notice|report|summary|theme|identify|explain|describe|define|mention|differentiate|compare|calculate|find|prove|state|discuss|illustrate|passage)\b/i.test(line);
-      if (hasEnglishWords) return true;
-
-      // Question serial pattern e.g. 1. "Honesty is...", 1. Karim went..., Question 1. ...
-      if (/^[ \t]*(?:question|q)?\s*[0-9]+[\.\):]\s*["'A-Za-z]/i.test(line)) return true;
-
-      // Sub-question pattern e.g. (a) What is..., a. Dhaka (excluding roman numerals i, ii, iii, iv, v...)
-      const isRomanNum = /^[ \t]*[\(（\[]?\s*(?:i{1,3}|iv|v|vi{0,3}|ix|x)\s*[\)）\]\.]/i.test(line);
-      if (!isRomanNum && /^[ \t]*[\(（]?[a-zA-Z][\)）\.]\s+[A-Za-z]/.test(line)) return true;
-
-      // English options on line e.g. (a) Dhaka (b) Chittagong or a. Dhaka b. Chittagong
-      if (/[\(（]?[a-dA-D][\)）\.]\s+[A-Za-z]/.test(line)) return true;
-
-      return false;
-    }
-
-    /**
-     * Format Bengali Question Number with Dari (।) e.g. ১।, ২। or Bijoy 1|, 2|
-     * For English questions, preserves standard English format (e.g. 1. What...)
-     */
-    static formatQuestionNumber(line, isBijoy = false) {
-      if (!line) return line;
-      if (DocxHandler.isEnglishQuestionLine(line)) return line;
-
-      // Unicode Bengali Question: e.g. ১. or ১) or ১: or 1. (with Bengali text)
-      if (/[\u0980-\u09FF]/.test(line)) {
-        return line.replace(/^[ \t]*(?:প্রশ্ন|প্রশ্ন নং|প্রশ্ননং|Question)?\s*([০-৯0-9]+)[\.\)\:\-]\s*/i, (match, p1) => {
-          const bnDigits = p1.replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
-          return `${bnDigits}। `;
-        });
-      }
-
-      // Bijoy Question: 1. or 1) or 1:
-      if (isBijoy || /[\u0080-\u00FF‡‰†Š&|]/.test(line)) {
-        if (/^[ \t]*(?:cÖkœ|cÖkœ bs)?\s*([0-9]+)[\.\)\:\-]\s*/i.test(line)) {
-          return line.replace(/^[ \t]*(?:cÖkœ|cÖkœ bs)?\s*([0-9]+)[\.\)\:\-]\s*/i, '$1| ');
-        }
-        if (/^[ \t]*([0-9]+)[\.\)\:\-]\s*/.test(line)) {
-          return line.replace(/^[ \t]*([0-9]+)[\.\)\:\-]\s*/, '$1| ');
-        }
-      }
-
-      return line;
-    }
-
-    /**
-     * Format Creative Question Sub-Questions (ক., খ., গ., ঘ. or K., L., M., N.)
-     * Removes brackets: (ক), ক) -> ক.
-     * For English sub-questions (e.g. (a), (b), (c)), preserves standard English format
-     */
-    static formatCqSubQuestion(line, isBijoy = false) {
-      if (!line) return line;
-      if (DocxHandler.isEnglishQuestionLine(line)) return line;
-
-      // Replace (ক), ক), [ক] with ক.
-      if (/^[ \t]*[\(（\[]?\s*([কখগঘ])\s*[\)）\]\.]\s*/.test(line)) {
-        return line.replace(/^[ \t]*[\(（\[]?\s*([কখগঘ])\s*[\)）\]\.]\s*/, '$1. ');
-      }
-      // Bijoy sub-questions (K), K) -> K.
-      if (isBijoy || /[\u0080-\u00FF‡‰†Š&]/.test(line)) {
-        if (/^[ \t]*[\(（\[]?\s*([KLMN])\s*[\)）\]\.]\s*/.test(line)) {
-          return line.replace(/^[ \t]*[\(（\[]?\s*([KLMN])\s*[\)）\]\.]\s*/, '$1. ');
-        }
-      }
-      return line;
-    }
-
-    /**
-     * Ensure MCQ options (ক., খ., গ., ঘ.) or (K., L., M., N.) have leading and separating tabs
-     * Normalizes (ক), ক), etc. into ক., খ., গ., ঘ. with leading \t
-     * For English questions, preserves normal English operation untouched
-     */
-    static formatMcqLineTabs(line, isBijoy = false) {
-      if (!line) return line;
-      if (DocxHandler.isEnglishQuestionLine(line)) return line;
-
-      // Collapse multiple tabs or mixed space-tab combinations into a single tab
-      line = line.replace(/[ \t]*\t+[ \t]*/g, '\t');
-
-      // 1. Bengali Unicode options
-      const hasBnKa = /[\(（\[]?\s*[ক]\s*[\)）\]\.]/.test(line);
-      const hasBnKha = /[\(（\[]?\s*[খ]\s*[\)）\]\.]/.test(line);
-      const hasBnGa = /[\(（\[]?\s*[গ]\s*[\)）\]\.]/.test(line);
-      const hasBnGha = /[\(（\[]?\s*[ঘ]\s*[\)）\]\.]/.test(line);
-
-      if ((hasBnKa && hasBnKha) || (hasBnGa && hasBnGha) || (hasBnKa && (hasBnGa || hasBnGha))) {
-        let l = line.trim();
-        // Normalize any bracketed (ক), ক), [ক], ক. to uniform "ক. "
-        l = l.replace(/[\(（\[]?\s*ক\s*[\)）\]\.]\s*/g, 'ক. ');
-        l = l.replace(/[\(（\[]?\s*খ\s*[\)）\]\.]\s*/g, 'খ. ');
-        l = l.replace(/[\(（\[]?\s*গ\s*[\)）\]\.]\s*/g, 'গ. ');
-        l = l.replace(/[\(（\[]?\s*ঘ\s*[\)）\]\.]\s*/g, 'ঘ. ');
-
-        // Insert tab before খ., গ., ঘ. even if concatenated or separated by space
-        l = l.replace(/(?:\s+|\t+)?(খ\.)/g, '\t$1');
-        l = l.replace(/(?:\s+|\t+)?(গ\.)/g, '\t$1');
-        l = l.replace(/(?:\s+|\t+)?(ঘ\.)/g, '\t$1');
-
-        // Ensure leading tab before first option (ক. or গ.)
-        l = l.replace(/^[ \t]*(ক\.|গ\.)/, '\t$1');
-        if (!l.startsWith('\t')) l = '\t' + l;
-
-        return l.replace(/\t+/g, '\t');
-      }
-
-      // 2. Bijoy SutonnyMJ options (K, L, M, N)
-      const hasBijoyK = /[\(（\[]?\s*[K]\s*[\)）\]\.]/.test(line);
-      const hasBijoyL = /[\(（\[]?\s*[L]\s*[\)）\]\.]/.test(line);
-      const hasBijoyM = /[\(（\[]?\s*[M]\s*[\)）\]\.]/.test(line);
-      const hasBijoyN = /[\(（\[]?\s*[N]\s*[\)）\]\.]/.test(line);
-
-      if ((hasBijoyK && hasBijoyL) || (hasBijoyM && hasBijoyN) || (hasBijoyK && (hasBijoyM || hasBijoyN))) {
-        let l = line.trim();
-        // Normalize any bracketed (K), K), [K], K. to uniform "K. "
-        l = l.replace(/[\(（\[]?\s*K\s*[\)）\]\.]\s*/g, 'K. ');
-        l = l.replace(/[\(（\[]?\s*L\s*[\)）\]\.]\s*/g, 'L. ');
-        l = l.replace(/[\(（\[]?\s*M\s*[\)）\]\.]\s*/g, 'M. ');
-        l = l.replace(/[\(（\[]?\s*N\s*[\)）\]\.]\s*/g, 'N. ');
-
-        // Insert tab before L., M., N.
-        l = l.replace(/[ \t]*\t*[ \t]*(L\.)/g, '\t$1');
-        l = l.replace(/[ \t]*\t*[ \t]*(M\.)/g, '\t$1');
-        l = l.replace(/[ \t]*\t*[ \t]*(N\.)/g, '\t$1');
-
-        // Ensure leading tab before first option (K. or M.)
-        l = l.replace(/^[ \t]*\t*[ \t]*(K\.|M\.)/, '\t$1');
-        if (!l.startsWith('\t')) l = '\t' + l;
-
-        return l.replace(/\t+/g, '\t');
-      }
-
-      return line.replace(/\t+/g, '\t');
-    }
-
-    /**
-     * Unified single-line formatter for Question Papers
-     * Handles:
-     * - English lines: 100% untouched
-     * - Question serials: ১। (Unicode) or 1| (Bijoy)
-     * - Multi-option MCQ lines: leading \t and dots \tক. ...\tখ. ...
-     * - Vertical single-option MCQ lines: leading \t and dot \tক. [option]
-     * - CQ sub-questions: dot without brackets ক. [question text]
-     */
-    static formatQuestionPaperLine(line, isBijoy = false) {
-      if (!line) return line;
-      if (DocxHandler.isEnglishQuestionLine(line)) return line;
-
-      // 1. Multi-option MCQ line check (e.g. \tক. ...\tখ. ...)
-      const hasBnKa = /[\(（\[]?\s*[ক]\s*[\)）\]\.]/.test(line);
-      const hasBnKha = /[\(（\[]?\s*[খ]\s*[\)）\]\.]/.test(line);
-      const hasBnGa = /[\(（\[]?\s*[গ]\s*[\)）\]\.]/.test(line);
-      const hasBnGha = /[\(（\[]?\s*[ঘ]\s*[\)）\]\.]/.test(line);
-      const isMultiBn = (hasBnKa && hasBnKha) || (hasBnGa && hasBnGha) || (hasBnKa && (hasBnGa || hasBnGha));
-
-      const hasBijoyK = /[\(（\[]?\s*[K]\s*[\)）\]\.]/.test(line);
-      const hasBijoyL = /[\(（\[]?\s*[L]\s*[\)）\]\.]/.test(line);
-      const hasBijoyM = /[\(（\[]?\s*[M]\s*[\)）\]\.]/.test(line);
-      const hasBijoyN = /[\(（\[]?\s*[N]\s*[\)）\]\.]/.test(line);
-      const isMultiBijoy = (hasBijoyK && hasBijoyL) || (hasBijoyM && hasBijoyN) || (hasBijoyK && (hasBijoyM || hasBijoyN));
-
-      if (isMultiBn || isMultiBijoy) {
-        return DocxHandler.formatMcqLineTabs(line, isBijoy);
-      }
-
-      // 2. Question number check (e.g. ১. ... -> ১। ...)
-      const qNumFormatted = DocxHandler.formatQuestionNumber(line, isBijoy);
-      if (qNumFormatted !== line) {
-        return qNumFormatted;
-      }
-
-      // 2.5 Roman numeral statements under MCQ stem (e.g. i. সোডিয়াম, ii. ক্যালসিয়াম, iii. ক্লোরিন)
-      const romanMatch = line.match(/^[ \t]*[\(（\[]?\s*(i{1,3}|iv|v|vi{0,3}|ix|x)\s*[\)）\]\.]\s*(.*)$/i);
-      if (romanMatch) {
-        return `\t${romanMatch[1].toLowerCase()}. ${romanMatch[2]}`;
-      }
-
-      // 3. Single option or CQ sub-question check
-      // Unicode: ক., খ., গ., ঘ.
-      const bnMatch = line.match(/^([ \t]*)[\(（\[]?\s*([কখগঘ])\s*[\)）\]\.]\s*(.*)$/);
-      if (bnMatch) {
-        const leadingWs = bnMatch[1];
-        const letter = bnMatch[2];
-        const rest = bnMatch[3] || '';
-        
-        // If line already had a leading tab, keep it (MCQ vertical option)
-        if (leadingWs.includes('\t')) {
-          return `\t${letter}. ${rest}`;
-        }
-
-        // Check if this looks like a CQ sub-question (typically contains question keywords or ends with ?)
-        const isCq = /[\?？]|কাকে বলে|কী|কি|কেন|ব্যাখ্যা|বর্ণনা|লিখ|লেখ|চিহ্নিত|নির্ণয়|নির্ণয়|প্রমাণ|মূল্যায়ন|মূল্যায়ন|বিশ্লেষণ|উৎস|উদ্দীপক/i.test(rest);
-        if (isCq) {
-          // CQ sub-questions must NOT have a leading tab (handled manually by user)
-          return `${letter}. ${rest}`;
-        }
-
-        // Vertical MCQ option without initial tab gets a leading tab
-        return `\t${letter}. ${rest}`;
-      }
-
-      // Bijoy: K., L., M., N.
-      if (isBijoy || /[\u0080-\u00FF‡‰†Š&]/.test(line)) {
-        const bjMatch = line.match(/^([ \t]*)[\(（\[]?\s*([KLMN])\s*[\)）\]\.]\s*(.*)$/);
-        if (bjMatch) {
-          const leadingWs = bjMatch[1];
-          const letter = bjMatch[2];
-          const rest = bjMatch[3] || '';
-          if (leadingWs.includes('\t')) {
-            return `\t${letter}. ${rest}`;
-          }
-          const isCq = /\?|Kv‡K e‡j|Kx|wK|‡Kb|e¨vL¨v|eY©bv|wjL|‡jL|wPý|wbY©q|cÖgvY|we‡kølY|DÏxcK/i.test(rest);
-          if (isCq) {
-            return `${letter}. ${rest}`;
-          }
-          return `\t${letter}. ${rest}`;
-        }
-      }
-
-      return line;
-    }
-
-    /**
-     * Converts LaTeX chemical / reaction arrows into standard Word-compatible symbols
-     */
-    static formatReactionArrows(text) {
-      if (!text) return text;
-      // Clean any existing disjointed dash arrows: ──[ label ]──> -> → (label)
-      text = text.replace(/──\[\s*([^\]]+)\s*\]──>/g, ' → ($1) ');
-      text = text.replace(/──>/g, ' → ');
-
-      // 1. \xrightarrow[sub]{sup} or xrightarrow[sub]{sup}
-      text = text.replace(/\\?xrightarrow\s*\[([^\]]*)\]\s*\{([^}]*)\}/gi, (m, sub, sup) => {
-        const s1 = (sup || '').trim();
-        const s2 = (sub || '').trim();
-        const label = s1 && s2 ? `${s1} / ${s2}` : (s1 || s2);
-        return label ? ` → (${label}) ` : ' → ';
-      });
-
-      // 2. \xrightarrow{sup} or xrightarrow{sup}
-      text = text.replace(/\\?xrightarrow\s*\{([^}]*)\}/gi, (m, sup) => {
-        const s = (sup || '').trim();
-        return s ? ` → (${s}) ` : ' → ';
-      });
-
-      // 3. \rightarrow, \longrightarrow, \to
-      text = text.replace(/\\(?:rightarrow|longrightarrow|to)\b/g, ' → ');
-
-      // 4. \leftarrow, \longleftarrow
-      text = text.replace(/\\(?:leftarrow|longleftarrow)\b/g, ' ← ');
-
-      // 5. \rightleftharpoons, \longleftrightarrow, \leftrightarrow
-      text = text.replace(/\\(?:rightleftharpoons|longleftrightarrow|leftrightarrow)\b/g, ' ⇄ ');
-
-      return text;
-    }
-
-    /**
-     * Unified full-document question paper formatter
-     */
-    static formatQuestionPaper(text, isBijoy = false) {
-      if (!text) return text;
-      const arrowNormalized = DocxHandler.formatReactionArrows(text);
-      const lines = arrowNormalized.split(/\r?\n/);
-      return lines.map(line => DocxHandler.formatQuestionPaperLine(line, isBijoy)).join('\n');
-    }
-
-    /**
-     * Render whitespace into MS Word compatible HTML tokens preserving mso-tab-count and spaces
-     */
-    static renderWordWhitespace(ws) {
-      if (!ws) return "";
-      let res = "";
-      for (let ch of ws) {
-        if (ch === '\t') res += "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>";
-        else res += "<span style='mso-spacerun:yes'>&nbsp;</span>";
-      }
-      return res;
-    }
-
     /**
      * Generate a complete standalone .docx Blob from raw text
      */
@@ -904,32 +558,15 @@
         throw new Error("JSZip is not loaded.");
       }
 
-      const opts = typeof options === 'string' ? { fontName: options } : (options || {});
+      const opts = typeof options === 'string' ? { fontName: options } : options;
       const isBijoy = opts.direction === 'all_bijoy' || opts.direction === 'u2b' || opts.isBijoy;
       const fontName = isBijoy ? 'SutonnyMJ' : (opts.targetFont || opts.fontName || 'Kalpurush');
 
-      const pageSizeVal = opts.pageSize || (typeof document !== 'undefined' && (document.getElementById('ai-target-page-size')?.value || document.getElementById('ai-ocr-page-size')?.value)) || 'a4';
-      const marginVal = opts.margin || opts.pageMargin || (typeof document !== 'undefined' && (document.getElementById('ai-target-page-margin')?.value || document.getElementById('ai-ocr-page-margin')?.value)) || 'normal';
-
-      const PAGE_SIZES_TWIPS = {
-        'a4': { w: 11906, h: 16838 },
-        'legal': { w: 12240, h: 20160 },
-        'letter': { w: 12240, h: 15840 }
-      };
-      const MARGINS_TWIPS = {
-        'normal': { top: 1440, right: 1440, bottom: 1440, left: 1440 },
-        'narrow': { top: 720, right: 720, bottom: 720, left: 720 },
-        'moderate': { top: 1080, right: 1080, bottom: 1080, left: 1080 },
-        'wide': { top: 1800, right: 1800, bottom: 1800, left: 1800 }
-      };
-      const pageDim = PAGE_SIZES_TWIPS[pageSizeVal] || PAGE_SIZES_TWIPS['a4'];
-      const pageMar = MARGINS_TWIPS[marginVal] || MARGINS_TWIPS['normal'];
-
       const zip = new JSZip();
-      const lines = (text || '').replace(/\*\*/g, '').replace(/\r/g, '').split('\n').filter(l => l.trim().length > 0).map(l => DocxHandler.formatQuestionPaperLine(l, isBijoy));
+      const lines = (text || '').split(/\r?\n/);
       
       const paragraphsXml = lines.map(line => {
-        if (!line) return '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:t></w:t></w:r></w:p>';
+        if (!line) return '<w:p><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr><w:r><w:t></w:t></w:r></w:p>';
 
         const hasMath = typeof EquationConverter !== 'undefined' && 
                         (/\$\$[\s\S]*?\$\$|\$[^\$]+?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)/.test(line));
@@ -978,81 +615,36 @@
                 : [{ type: 'bengali', text: seg.value }];
               
               for (let sub of subSegments) {
-                const textVal = sub.text || '';
-                const parts = textVal.split('\t');
-                for (let pIdx = 0; pIdx < parts.length; pIdx++) {
-                  if (pIdx > 0) {
-                    runsXml += `<w:r><w:tab/></w:r>`;
-                  }
-                  const pText = parts[pIdx];
-                  if (!pText) continue;
-                  const escaped = pText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                  if (sub.type === 'english') {
-                    runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
-                  } else if (isBijoy && /[-–—−‒―]/.test(pText)) {
-                    const dParts = pText.split(/([-–—−‒―]+)/);
-                    for (let dp of dParts) {
-                      if (!dp) continue;
-                      const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                      if (/[-–—−‒―]/.test(dp)) {
-                        runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
-                      } else {
-                        runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
-                      }
-                    }
-                  } else {
-                    runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" ${isBijoy ? 'w:hint="ascii"' : 'w:hint="cs"'}/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
-                  }
+                const escaped = (sub.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                if (sub.type === 'english') {
+                  runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
+                } else {
+                  runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" ${isBijoy ? 'w:hint="ascii"' : 'w:hint="cs"'}/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
                 }
               }
             }
           }
-          return `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>${runsXml}</w:p>`;
+          return `<w:p><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr>${runsXml}</w:p>`;
         }
 
-        const isInputBijoy = Boolean(options.inputIsBijoy || options.isInputBijoy);
-        const segments = (typeof BanglaConverter !== 'undefined')
-          ? (isInputBijoy && typeof BanglaConverter.splitBijoyAndEnglish === 'function'
+        const segments = isBijoy
+          ? (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.splitBijoyAndEnglish === 'function'
               ? BanglaConverter.splitBijoyAndEnglish(line)
-              : BanglaConverter.splitMixedBengaliAndEnglish(line))
-          : [{ type: 'bengali', text: line }];
+              : [{ type: 'bengali', text: line }])
+          : (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.splitMixedBengaliAndEnglish === 'function'
+              ? BanglaConverter.splitMixedBengaliAndEnglish(line)
+              : [{ type: 'bengali', text: line }]);
 
         let runsXml = "";
         for (let seg of segments) {
-          const textVal = seg.text || '';
-          const parts = textVal.split('\t');
-          for (let pIdx = 0; pIdx < parts.length; pIdx++) {
-            if (pIdx > 0) {
-              runsXml += `<w:r><w:tab/></w:r>`;
-            }
-            const pText = parts[pIdx];
-            if (!pText) continue;
-            const escaped = pText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            if (seg.type === 'english') {
-              runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
-            } else if (isBijoy) {
-              const targetText = (typeof BanglaConverter !== 'undefined' && !isInputBijoy) ? BanglaConverter.unicodeToBijoy(pText) : pText;
-              if (/[-–—−‒―]/.test(targetText)) {
-                const dParts = targetText.split(/([-–—−‒―]+)/);
-                for (let dp of dParts) {
-                  if (!dp) continue;
-                  const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                  if (/[-–—−‒―]/.test(dp)) {
-                    runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
-                  } else {
-                    runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escDp}</w:t></w:r>`;
-                  }
-                }
-              } else {
-                const escTarget = targetText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="ascii"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escTarget}</w:t></w:r>`;
-              }
-            } else {
-              runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" w:hint="cs"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
-            }
+          const escaped = (seg.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          if (seg.type === 'english') {
+            runsXml += `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
+          } else {
+            runsXml += `<w:r><w:rPr><w:rFonts w:ascii="${fontName}" w:hAnsi="${fontName}" w:cs="${fontName}" ${isBijoy ? 'w:hint="ascii"' : 'w:hint="cs"'}/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r>`;
           }
         }
-        return `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>${runsXml}</w:p>`;
+        return `<w:p><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr>${runsXml}</w:p>`;
       }).join('\n');
 
       const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1078,8 +670,8 @@
   <w:body>
     ${paragraphsXml}
     <w:sectPr>
-      <w:pgSz w:w="${pageDim.w}" w:h="${pageDim.h}"/>
-      <w:pgMar w:top="${pageMar.top}" w:right="${pageMar.right}" w:bottom="${pageMar.bottom}" w:left="${pageMar.left}" w:header="720" w:footer="720" w:gutter="0"/>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>
     </w:sectPr>
   </w:body>
 </w:document>`;
@@ -1111,367 +703,85 @@
     /**
      * Generate an Office 2003 .doc Blob from raw text with 100% font & math preservation
      */
-    static createDocFromText(text, fontName = 'SutonnyMJ', isBijoy = true, baseFontSizePt = 12, options = {}) {
-      let opts = {};
-      if (typeof baseFontSizePt === 'object' && baseFontSizePt !== null) {
-        opts = baseFontSizePt;
-        baseFontSizePt = parseInt(opts.fontSize || opts.fontSizePt || opts.baseFontSizePt, 10) || 12;
-      } else if (typeof options === 'object' && options !== null) {
-        opts = options;
-      }
+    static createDocFromText(text, fontName = 'SutonnyMJ', isBijoy = true) {
+      const lines = (text || '').split(/\r?\n/);
+      const paragraphsHtml = lines.map(line => {
+        if (!line || !line.trim()) return `<p class="MsoNormal" style="margin: 0 0 6pt 0; font-size: 14pt;">&nbsp;</p>`;
 
-      const pageSizeVal = opts.pageSize || (typeof document !== 'undefined' && (document.getElementById('ai-target-page-size')?.value || document.getElementById('ai-ocr-page-size')?.value)) || 'a4';
-      const marginVal = opts.margin || opts.pageMargin || (typeof document !== 'undefined' && (document.getElementById('ai-target-page-margin')?.value || document.getElementById('ai-ocr-page-margin')?.value)) || 'normal';
-
-      const PAGE_SIZES_PT = {
-        'a4': { w: 595.35, h: 841.95 },
-        'legal': { w: 612.0, h: 1008.0 },
-        'letter': { w: 612.0, h: 792.0 }
-      };
-      const MARGINS_PT = {
-        'normal': { top: 72.0, right: 72.0, bottom: 72.0, left: 72.0 },
-        'narrow': { top: 36.0, right: 36.0, bottom: 36.0, left: 36.0 },
-        'moderate': { top: 54.0, right: 54.0, bottom: 54.0, left: 54.0 },
-        'wide': { top: 90.0, right: 90.0, bottom: 90.0, left: 90.0 }
-      };
-
-      const pageDim = PAGE_SIZES_PT[pageSizeVal] || PAGE_SIZES_PT['a4'];
-      const pageMar = MARGINS_PT[marginVal] || MARGINS_PT['normal'];
-
-      let sanitizedText = (text || '').replace(/\*\*/g, '').replace(/\r/g, '');
-
-      // 0. Extract ALL Bengali text out of math mode so words like 'এবং', 'অথবা' are NEVER inside equations
-      sanitizedText = sanitizedText.replace(/\\(?:text|mathrm|textmd|textbf|textit|mbox)\{\s*([^{}]*?[\u0980-\u09FF][^{}]*?)\s*\}/g, ' $1 ');
-      sanitizedText = sanitizedText.replace(/["“'’](\s*[\u0980-\u09FF\s]+\s*)["”'’]/g, ' $1 ');
-      sanitizedText = sanitizedText.replace(/(\}\s*)([A-Za-z]\s*=)/g, (match, g1, g2) => `${g1.trim()}, ${g2}`);
-      sanitizedText = sanitizedText.replace(/\$\$([\s\S]*?)\$\$|\$([^\$]+?)\$|\\\[([\s\S]*?\\\])|\\\(([\s\S]*?)\\\)/g, (match, d1, s1, b1, p1) => {
-        const isDouble = Boolean(d1 || b1);
-        const inner = (d1 || s1 || b1 || p1 || '').trim();
-        if (!/[\u0980-\u09FF]/.test(inner)) return match;
-        const parts = inner.split(/([\u0980-\u09FF]+(?:\s+[\u0980-\u09FF]+)*)/);
-        let out = [];
-        for (let p of parts) {
-          p = (p || '').trim();
-          if (!p) continue;
-          if (/[\u0980-\u09FF]/.test(p)) {
-            out.push(p);
-          } else {
-            if (/^[.,;:]+$/.test(p)) {
-              out.push(p);
-            } else {
-              out.push(isDouble ? `$$${p}$$` : `$${p}$`);
-            }
-          }
-        }
-        return out.join(' ');
-      });
-      sanitizedText = sanitizedText.replace(/\$\$\s*\$\$/g, '').replace(/\$\s*\$/g, '');
-      sanitizedText = sanitizedText.replace(/,\s*,/g, ',');
-
-      // 1. Strip stray quotes around scientific & standard units and convert cubic/square units to superscripts
-      sanitizedText = sanitizedText.replace(/(?<=\d|\))\s*["']\s*(cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)\s*["']\s*(\^?\d+)?/gi, function(match, unit, exp) {
-        let cleanExp = exp ? exp.replace('^', '') : '';
-        return cleanExp ? ` ${unit}<sup>${cleanExp}</sup>` : ` ${unit}`;
-      });
-      sanitizedText = sanitizedText.replace(/["']\s*(cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)\s*["']/gi, '$1');
-      // Convert e.g. "cm 3", "cm 2", "cm^3", "m 3", "m^3" to superscripts
-      sanitizedText = sanitizedText.replace(/\b(cm|mm|m|km)\s*(\^?([23]))\b/gi, '$1<sup>$3</sup>');
-
-      // 1b. Auto-format common chemical formulas (e.g. KNO3, KNO2, H2O, HO2, 2H2O, H2O2, CO2, O2, SO4, CaCO3) to have proper HTML subscripts
-      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
-      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?[A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
-      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?[A-Z][a-z]?[A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
-      sanitizedText = sanitizedText.replace(/\b([0-9]*[A-Z][a-z]?)([0-9]+)([A-Z][a-z]?)([0-9]+)?\b/g, (m, g1, g2, g3, g4) => {
-        return `${g1}<sub>${g2}</sub>${g3}${g4 ? `<sub>${g4}</sub>` : ''}`;
-      });
-
-      // 2. UNWRAP comma-separated lists of numbers (e.g. 75, 65, 80... in Q11)
-      // These must NEVER be treated as EQ fields, which cause Word's "!Syntax Error" / "Error!"
-      sanitizedText = sanitizedText.replace(/\$\s*([০-৯0-9\s,.\-]+(?:\s*,\s*[০-৯0-9\s,.\-]+)+)\s*\$/g, '$1');
-
-      // 3. UNWRAP plain isolated numbers in $...$ (e.g. $50$, $65$, $62.5$, $30$, $7$)
-      sanitizedText = sanitizedText.replace(/\$\s*([০-৯0-9]+(?:\.[০-৯0-9]+)?)\s*\$/g, '$1');
-
-      // 4. UNWRAP plain measurements in $...$ (e.g. $8 m$, $6 m$, $20 cm$)
-      sanitizedText = sanitizedText.replace(/\$\s*([০-৯0-9]+(?:\.[০-৯0-9]+)?\s*(?:m|cm|mm|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J))\s*\$/gi, '$1');
-
-      // 5. UNWRAP Bengali abbreviations in $...$ (e.g. $7 সে.মি.$, $7 সে. মি.$)
-      sanitizedText = sanitizedText.replace(/\$\s*([০-৯0-9]+(?:\.[০-৯0-9]+)?\s*[\u0980-\u09FF\s.]+)\s*\$/g, '$1');
-
-      // 6. ONLY auto-wrap isolated math variables and expressions before Bengali postpositions (strictly [a-zA-Z], NEVER \d*[a-zA-Z])
-      sanitizedText = sanitizedText.replace(/(?<!\$)\b([a-zA-Z]\([a-zA-Z0-9,\s]+\))(?!\$)(?=\s+(?:এর|হলে|নির্ণয়|মান|কে|তালিকা|প্রকাশ)(?:[\s।\?,\.]|$))/g, '$$$1$$');
-      sanitizedText = sanitizedText.replace(/(?<!\$)\b([a-zA-Z])(?!\$)(?=\s+(?:এর|হলে|কে|তে|মান|নির্ণয়|সমান|মানটি|থেকে|পর্যন্ত|সংখ্যক|তম|পদ)(?:[\s।\?,\.]|$))/g, '$$$1$$');
-      sanitizedText = sanitizedText.replace(/(?<!\$)\b([A-Z])(?!\$)(?=\s+(?:অন্বয়|সেট|তালিকা|ফাংশন|সম্পর্ক|কে|নির্ণয়))/g, '$$$1$$');
-      sanitizedText = sanitizedText.replace(/(?<!\$)\b([a-zA-Z]\s*[-+]\s*[a-zA-Z]\s*=\s*-?\d+(?:\s*\\?\}|\s*\})?)(?!\$)/g, '$$$1$$');
-
-      function renderFormattedRun(str) {
-        if (!str || !str.trim()) return "";
         const hasMath = typeof EquationConverter !== 'undefined' && 
-                        (/\$\$[\s\S]*?\$\$|\$[^\$]+?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)/.test(str));
+                        (/\$\$[\s\S]*?\$\$|\$[^\$]+?\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)/.test(line));
 
         if (hasMath) {
-          const segments = EquationConverter.splitTextAndMath(str);
+          const segments = EquationConverter.splitTextAndMath(line);
           let innerHtml = "";
           for (let seg of segments) {
             if (seg.type === 'math') {
-              const rawMath = seg.value;
-              const cleanContent = rawMath.replace(/^\$\$|\$\$$|^\$|\$$|^\\\[|\\\]$|^\\\(|\\\)$/g, '').trim();
-
-              // If comma-separated numbers or pure numbers, render as plain text (NEVER EQ field!)
-              if (/^[\d\s,.\u09E6-\u09EF\-]+$/.test(cleanContent) || /^[\d\s,.\u09E6-\u09EF]+[a-zA-Z\u0980-\u09FF\s.]+$/.test(cleanContent)) {
-                innerHtml += renderMixedWithHtmlTags(cleanContent);
-                continue;
-              }
-
-              // If segment contains any Bengali characters, NEVER send to Word EQ field!
-              if (/[\u0980-\u09FF]/.test(cleanContent)) {
-                if (/\^|\_/.test(cleanContent)) {
-                  innerHtml += renderSuperscriptsAndSubscripts(cleanContent, isBijoy, fontName, baseFontSizePt);
-                } else {
-                  innerHtml += renderMixedWithHtmlTags(cleanContent);
-                }
-                continue;
-              }
-
-              // Check if it genuinely needs a Word EQ field
-              const needsEq = typeof EquationConverter !== 'undefined' && typeof EquationConverter.needsEqField === 'function'
-                ? EquationConverter.needsEqField(rawMath)
-                : false;
-
-              if (!needsEq) {
-                if (/\^|\_/.test(cleanContent)) {
-                  innerHtml += renderSuperscriptsAndSubscripts(cleanContent, isBijoy, fontName, baseFontSizePt);
-                } else {
-                  const sanitized = typeof EquationConverter !== 'undefined' && typeof EquationConverter.sanitizeSimpleMath === 'function'
-                    ? EquationConverter.sanitizeSimpleMath(rawMath, isBijoy)
-                    : cleanContent;
-                  innerHtml += renderMixedWithHtmlTags(sanitized);
-                }
-                continue;
-              }
-
-              // Complex equation: generate compliant Word 2003 Field
-              const eqCode = EquationConverter.latexToEqField(rawMath, isBijoy);
-              const cleanEq = (eqCode || '').trim();
-              const cleanEqCode = cleanEq.startsWith('EQ ') ? cleanEq.slice(3).trim() : cleanEq;
-
-              const formattedEq = (typeof EquationConverter !== 'undefined' && typeof EquationConverter.formatEqCodeToWordHtml === 'function')
-                ? EquationConverter.formatEqCodeToWordHtml(cleanEqCode, baseFontSizePt, isBijoy)
-                : cleanEqCode.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-              // Standard Word 2003 field markup with math variable italics and small 8pt scripts:
-              innerHtml += `<!--[if supportFields]><span class="MsoFieldCode" style="font-family:'Times New Roman',serif;"><span style='mso-element:field-begin'></span><span style='mso-spacerun:yes'>&nbsp;</span>EQ ${formattedEq} <span style='mso-element:field-end'></span></span><![endif]-->`;
+              const mathHtml = (typeof EquationConverter !== 'undefined' && typeof EquationConverter.latexToHtmlMath === 'function')
+                ? EquationConverter.latexToHtmlMath(seg.value, isBijoy)
+                : (typeof EquationConverter !== 'undefined' ? EquationConverter.sanitizeSimpleMath(seg.value, isBijoy) : seg.value);
+              innerHtml += `<span lang="EN-US" style="font-family:'Times New Roman',Arial,serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${mathHtml}</span>`;
             } else if (seg.value) {
-              innerHtml += renderMixedWithHtmlTags(seg.value);
-            }
-          }
-          return innerHtml;
-        }
-
-        return renderMixedWithHtmlTags(str);
-      }
-
-      function renderSuperscriptsAndSubscripts(str, isBijoy, fontName, baseFontSizePt) {
-        let s = str;
-        const scriptSize = '8.0'; // crisp small font size for superscripts & subscripts
-
-        s = s.replace(/\^\{([^}]+)\}|\^\(([^)]+)\)|\^([a-zA-Z0-9\u09E6-\u09EF+\-]+)/g, (m, g1, g2, g3) => {
-          const val = g1 || g2 || g3;
-          const rendered = renderPlainMixedText(val);
-          return `<sup style="font-size:${scriptSize}pt;vertical-align:super;mso-text-raise:3.0pt;">${rendered}</sup>`;
-        });
-
-        s = s.replace(/_\{([^}]+)\}|_\(([^)]+)\)|_([a-zA-Z0-9\u09E6-\u09EF+\-]+)/g, (m, g1, g2, g3) => {
-          const val = g1 || g2 || g3;
-          const rendered = renderPlainMixedText(val);
-          return `<sub style="font-size:${scriptSize}pt;vertical-align:sub;mso-text-raise:-2.0pt;">${rendered}</sub>`;
-        });
-
-        return renderMixedWithHtmlTags(s);
-      }
-
-      function renderMixedWithHtmlTags(str) {
-        if (!str) return "";
-        if (!/<\/?(sup|sub|i|b|span|table|tr|td)[^>]*>/i.test(str)) {
-          return renderPlainMixedText(str);
-        }
-        const tagRegex = /(<\/?(?:sup|sub|i|b|span|table|tr|td)[^>]*>)/gi;
-        const parts = str.split(tagRegex);
-        let result = "";
-        for (const p of parts) {
-          if (tagRegex.test(p)) {
-            result += p;
-          } else if (p) {
-            result += renderPlainMixedText(p);
-          }
-        }
-        return result;
-      }
-
-      function renderPlainMixedText(str) {
-        if (!str) return "";
-        if (/^\s+$/.test(str)) {
-          return DocxHandler.renderWordWhitespace(str);
-        }
-        const isInputBijoy = Boolean(opts.inputIsBijoy || opts.isInputBijoy);
-        const mixedParts = (typeof BanglaConverter !== 'undefined')
-          ? (isInputBijoy && typeof BanglaConverter.splitBijoyAndEnglish === 'function'
-              ? BanglaConverter.splitBijoyAndEnglish(str)
-              : BanglaConverter.splitMixedBengaliAndEnglish(str))
-          : [{ type: 'bengali', text: str }];
-        
-        let out = "";
-        for (const part of mixedParts) {
-          const escaped = (part.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          if (part.type === 'english') {
-            const trimmedEn = part.text.trim();
-            const leadSpMatch = part.text.match(/^\s+/);
-            const trailSpMatch = part.text.match(/\s+$/);
-            const leadSp = leadSpMatch ? DocxHandler.renderWordWhitespace(leadSpMatch[0]) : "";
-            const trailSp = trailSpMatch ? DocxHandler.renderWordWhitespace(trailSpMatch[0]) : "";
-            const formattedEn = escaped.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
-            // Single math variable letter (e.g. x, y, n, a, b, N) -> render in italic!
-            if (/^[a-hj-zA-HJ-Z]$/.test(trimmedEn)) {
-              out += `${leadSp}<i style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${escaped.trim()}</i>${trailSp}`;
-            } else if (/^\d+[a-zA-Z]$/.test(trimmedEn)) { // e.g. 3n
-              const numPart = trimmedEn.slice(0, -1);
-              const varPart = trimmedEn.slice(-1);
-              out += `${leadSp}<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${numPart}<i>${varPart}</i></span>${trailSp}`;
-            } else if (/^[a-zA-Z]\([a-zA-Z0-9,\s]+\)$/.test(trimmedEn)) { // e.g. P(A), f(x)
-              const formattedFn = formattedEn.trim().replace(/([a-zA-Z])/g, '<i>$1</i>');
-              out += `${leadSp}<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${formattedFn}</span>${trailSp}`;
-            } else if (/[=+\-*/<>]/.test(trimmedEn)) {
-              // Mathematical expression containing variable letters and operators e.g. y - x = -1}
-              const formattedExpr = formattedEn.trim().replace(/\b([a-zA-Z])\b/g, '<i>$1</i>');
-              out += `${leadSp}<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${formattedExpr}</span>${trailSp}`;
-            } else {
-              out += `<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${formattedEn}</span>`;
-            }
-          } else {
-            const targetText = (isBijoy && !isInputBijoy && typeof BanglaConverter !== 'undefined') ? BanglaConverter.unicodeToBijoy(part.text) : part.text;
-            if (isBijoy && /[-–—−‒―]/.test(targetText)) {
-              const dParts = targetText.split(/([-–—−‒―]+)/);
-              for (let dp of dParts) {
-                if (!dp) continue;
-                const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                const fmtDp = escDp.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
-                if (/[-–—−‒―]/.test(dp)) {
-                  out += `<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${fmtDp}</span>`;
+              const mixedParts = (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.splitMixedBengaliAndEnglish === 'function')
+                ? BanglaConverter.splitMixedBengaliAndEnglish(seg.value)
+                : [{ type: 'bengali', text: seg.value }];
+              
+              for (const part of mixedParts) {
+                const escaped = (part.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                if (part.type === 'english') {
+                  innerHtml += `<span lang="EN-US" style="font-family:'Times New Roman',Arial,serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${escaped}</span>`;
                 } else {
-                  out += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${fmtDp}</span>`;
+                  const targetText = isBijoy && typeof BanglaConverter !== 'undefined' ? BanglaConverter.unicodeToBijoy(part.text) : part.text;
+                  const escapedBn = (targetText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                  innerHtml += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${escapedBn}</span>`;
                 }
               }
-            } else {
-              const escapedBn = (targetText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-              const formattedBn = escapedBn.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
-              out += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${formattedBn}</span>`;
             }
           }
-        }
-        return out;
-      }
-
-      const lines = sanitizedText.split(/\r?\n/).map(l => DocxHandler.formatQuestionPaperLine(l, isBijoy));
-      let i = 0;
-      const htmlBlocks = [];
-
-      let isInsideNote = false;
-
-      while (i < lines.length) {
-        const line = lines[i];
-        const trimmed = line.trim();
-
-        // Check if line is a markdown table row
-        if (trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.includes('|')) {
-          const tableLines = [];
-          while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
-            tableLines.push(lines[i].trim());
-            i++;
-          }
-
-          const parsedRows = [];
-          for (const tLine of tableLines) {
-            if (/^\|[\s\-:]+(\|[\s\-:]+)+\|$/.test(tLine)) continue; // skip markdown divider |:---|:---|
-            const cells = tLine.split('|').slice(1, -1).map(c => c.trim());
-            if (cells.length > 0) parsedRows.push(cells);
-          }
-
-          if (parsedRows.length > 0) {
-            let tableHtml = `<table class="MsoTableGrid" border="1" cellspacing="0" cellpadding="0" align="center" style="border-collapse:collapse; border:none; mso-border-alt:solid windowtext .5pt; mso-yfti-tbllook:1184; mso-padding-alt:2.0pt 5.4pt 2.0pt 5.4pt; margin:4pt auto; width:auto;">\n`;
-            for (let rIdx = 0; rIdx < parsedRows.length; rIdx++) {
-              const row = parsedRows[rIdx];
-              tableHtml += `  <tr class="MsoTableRow" style="mso-yfti-irow:${rIdx};">\n`;
-              for (let cIdx = 0; cIdx < row.length; cIdx++) {
-                const cellVal = row[cIdx];
-                const renderedCell = renderFormattedRun(cellVal);
-                tableHtml += `    <td class="MsoTableCell" style="border:solid windowtext 1.0pt; mso-border-alt:solid windowtext .5pt; padding:2.0pt 5.4pt 2.0pt 5.4pt; text-align:center; vertical-align:middle;">\n`;
-                tableHtml += `      <p class="MsoNormal" align="center" style="margin:0cm;margin-bottom:.0001pt;text-align:center;line-height:normal;mso-line-height-rule:auto;font-size:${baseFontSizePt}pt;">${renderedCell || '&nbsp;'}</p>\n`;
-                tableHtml += `    </td>\n`;
-              }
-              tableHtml += `  </tr>\n`;
-            }
-            tableHtml += `</table>`;
-            htmlBlocks.push(tableHtml);
-            continue;
-          }
+          return `<p class="MsoNormal" style="margin: 0 0 6pt 0; font-size: 14pt; line-height: 1.4;">${innerHtml || '&nbsp;'}</p>`;
         }
 
-        // Regular paragraph line (skip empty lines / extra enters)
-        if (!trimmed) {
-          i++;
-          continue;
-        } else {
-          const contentHtml = renderFormattedRun(line);
-          const isNoteHeader = /^\s*\[\s*নোট/i.test(trimmed);
-          if (isNoteHeader) isInsideNote = true;
-          const isNoteLine = isNoteHeader || isInsideNote;
-          const noteStyle = isNoteLine ? (isNoteHeader ? 'color:#334155;font-weight:bold;padding-top:6pt;' : 'color:#334155;padding-left:10pt;') : '';
-          if (trimmed.endsWith(']')) isInsideNote = false;
-          htmlBlocks.push(`<p class="MsoNormal" style="margin:0cm;margin-bottom:.0001pt;line-height:normal;mso-line-height-rule:auto;font-size:${baseFontSizePt}pt;${noteStyle}">${contentHtml || '&nbsp;'}</p>`);
+        // Plain line without LaTeX delimiters: check mixed Bengali & English/Math
+        const mixedParts = (typeof BanglaConverter !== 'undefined' && typeof BanglaConverter.splitMixedBengaliAndEnglish === 'function')
+          ? BanglaConverter.splitMixedBengaliAndEnglish(line)
+          : [{ type: 'bengali', text: line }];
+
+        let lineHtml = "";
+        for (const part of mixedParts) {
+          if (part.type === 'english') {
+            const escapedEn = (part.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            lineHtml += `<span lang="EN-US" style="font-family:'Times New Roman',Arial,serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${escapedEn}</span>`;
+          } else {
+            const targetText = isBijoy && typeof BanglaConverter !== 'undefined' ? BanglaConverter.unicodeToBijoy(part.text) : part.text;
+            const escapedBn = (targetText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            lineHtml += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${escapedBn}</span>`;
+          }
         }
-        i++;
-      }
-      const paragraphsHtml = htmlBlocks.join('\n');
+        return `<p class="MsoNormal" style="margin: 0 0 6pt 0; font-size: 14pt; line-height: 1.4;">${lineHtml || '&nbsp;'}</p>`;
+      }).join('\n');
 
       const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <style>
-@page Section1 { size: ${pageDim.w}pt ${pageDim.h}pt; margin: ${pageMar.top}pt ${pageMar.right}pt ${pageMar.bottom}pt ${pageMar.left}pt; mso-header-margin: 36pt; mso-footer-margin: 36pt; mso-paper-source: 0; }
+@page Section1 { size: 595.35pt 841.95pt; margin: 72pt 72pt 72pt 72pt; mso-header-margin: 36pt; mso-footer-margin: 36pt; }
 div.Section1 { page: Section1; }
 p.MsoNormal, li.MsoNormal, div.MsoNormal {
-  margin: 0cm;
-  margin-bottom: .0001pt;
-  mso-pagination: widow-orphan;
-  font-size: ${baseFontSizePt}pt;
-  line-height: normal;
-  mso-line-height-rule: auto;
+  margin: 0 0 6pt 0;
+  font-size: 14pt;
   font-family: "${fontName}", Arial, sans-serif;
   mso-ascii-font-family: "Times New Roman";
   mso-hansi-font-family: "Times New Roman";
   mso-fareast-font-family: "Times New Roman";
   mso-bidi-font-family: "${fontName}";
 }
-table.MsoTableGrid {
-  border-collapse: collapse;
-  mso-table-layout-alt: auto;
-  border: none;
-  mso-border-alt: solid windowtext .5pt;
-  margin: 4pt auto;
-}
-td.MsoTableCell {
-  border: solid windowtext 1.0pt;
-  mso-border-alt: solid windowtext .5pt;
-  padding: 2.0pt 5.4pt;
-}
 body {
   font-family: "${fontName}", Arial, sans-serif;
   mso-ascii-font-family: "Times New Roman";
   mso-hansi-font-family: "Times New Roman";
   mso-bidi-font-family: "${fontName}";
-  font-size: ${baseFontSizePt}pt;
+  font-size: 14pt;
 }
-p { margin: 0cm; margin-bottom: .0001pt; line-height: normal; mso-line-height-rule: auto; }
+p { margin: 0 0 6pt 0; }
 </style>
 </head>
 <body>
@@ -1489,12 +799,6 @@ ${paragraphsHtml}
   DocxHandler.convertDocx = (fileOrBuf, opts) => docxHandlerInstance.convertDocx(fileOrBuf, opts);
   DocxHandler.prototype.createDocxFromText = DocxHandler.createDocxFromText;
   DocxHandler.prototype.createDocFromText = DocxHandler.createDocFromText;
-  DocxHandler.prototype.formatMcqLineTabs = DocxHandler.formatMcqLineTabs;
-  DocxHandler.prototype.formatQuestionNumber = DocxHandler.formatQuestionNumber;
-  DocxHandler.prototype.formatCqSubQuestion = DocxHandler.formatCqSubQuestion;
-  DocxHandler.prototype.formatQuestionPaperLine = DocxHandler.formatQuestionPaperLine;
-  DocxHandler.prototype.formatQuestionPaper = DocxHandler.formatQuestionPaper;
-  DocxHandler.prototype.renderWordWhitespace = DocxHandler.renderWordWhitespace;
 
   if (typeof window !== 'undefined') {
     window.DocxHandler = DocxHandler;

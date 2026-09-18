@@ -1007,11 +1007,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     const activePrompt = customPrompt || GEMINI_PROMPT;
 
     const allActiveModels = [
-      'gemini-3.5-flash',
-      'gemini-3.8-flash',
-      'gemini-3.7-flash',
+      'gemini-2.5-flash',
       'gemini-3.6-flash',
-      'gemini-2.5-flash'
+      'gemini-3.5-flash'
     ];
 
     // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
@@ -1021,8 +1019,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         maxOutputTokens: isFallbackFormat ? 8192 : 65536
       };
 
-      // Reasoning models (3.5, 3.7, 3.8) support thinkingBudget=0 to skip deliberation latency
-      if (!isFallbackFormat && (model === 'gemini-3.5-flash' || model === 'gemini-3.7-flash' || model === 'gemini-3.8-flash')) {
+      // Reasoning models support thinkingBudget=0 to skip deliberation latency
+      if (!isFallbackFormat && model === 'gemini-2.5-flash') {
         genConfig.thinkingConfig = { thinkingBudget: 0 };
       }
 
@@ -1089,8 +1087,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.selectedModel && state.selectedModel !== 'auto') {
       candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
     } else {
-      // Quality 1st Priority: Gemini 3.5 Flash flagship (maximum Bengali OCR & Math fidelity, 19/19 keys active)
-      candidateModels = ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-2.5-flash'];
+      // Benchmark-proven priority: gemini-2.5-flash (#1: 100% quality, 3s) > 3.6-flash (#2: 5s) > 3.5-flash (#3: 11s)
+      candidateModels = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-3.5-flash'];
     }
 
     // ⚡ PARALLEL PRE-FLIGHT KEY RACE (Instant Active & Quota Discovery)

@@ -1007,9 +1007,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     const activePrompt = customPrompt || GEMINI_PROMPT;
 
     const allActiveModels = [
-      'gemini-2.5-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash'
+      'gemini-3.6-flash',   // Live test: 10/19 keys OK (most reliable)
+      'gemini-2.5-flash',   // Live test: 4/19 keys OK (best quality)
+      'gemini-3.5-flash'    // Fallback only (currently overloaded)
     ];
 
     // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
@@ -1019,7 +1019,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         maxOutputTokens: isFallbackFormat ? 8192 : 65536
       };
 
-      // Reasoning models support thinkingBudget=0 to skip deliberation latency
+      // Only 2.5-flash confirmed to support thinkingBudget; 3.6-flash uses standard config
       if (!isFallbackFormat && model === 'gemini-2.5-flash') {
         genConfig.thinkingConfig = { thinkingBudget: 0 };
       }
@@ -1087,8 +1087,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.selectedModel && state.selectedModel !== 'auto') {
       candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
     } else {
-      // Benchmark-proven priority: gemini-2.5-flash (#1: 100% quality, 3s) > 3.6-flash (#2: 5s) > 3.5-flash (#3: 11s)
-      candidateModels = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-3.5-flash'];
+      // Live benchmark (2026-09-18): 3.6-flash=10/19 keys, 2.5-flash=4/19 keys, rest=0/19
+      candidateModels = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash'];
     }
 
     // ⚡ PARALLEL PRE-FLIGHT KEY RACE (Instant Active & Quota Discovery)

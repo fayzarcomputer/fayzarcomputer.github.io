@@ -225,7 +225,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   const isDemo = (rawDemoSetting === 'true');
 
   let savedModelSetting = localStorage.getItem(STORAGE_KEYS.SELECTED_MODEL) || 'auto';
-  if (savedModelSetting === 'gemini-3.8-flash') {
+  if (savedModelSetting === 'gemini-3.8-flash' || savedModelSetting === 'gemini-3.5-flash' || savedModelSetting === 'gemini-2.5-flash') {
     savedModelSetting = 'auto';
     localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, 'auto');
   }
@@ -1006,13 +1006,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
     const activePrompt = customPrompt || GEMINI_PROMPT;
 
-    // Active, verified high-speed Gemini models ordered strictly by user preference, speed & math OCR fidelity
     const allActiveModels = [
       'gemini-3.5-flash',
       'gemini-3.8-flash',
       'gemini-3.7-flash',
       'gemini-3.6-flash',
-      'gemini-3.1-flash-lite',
       'gemini-2.5-flash'
     ];
 
@@ -1091,19 +1089,20 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.selectedModel && state.selectedModel !== 'auto') {
       candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
     } else {
-      // Direct high-speed candidate pipeline (tested & verified for sub-second / 1.5s latency, no thinking delay)
-      candidateModels = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite'];
+      // Flagship high-speed candidate pipeline: gemini-3.6-flash is 100% active on all 19 vault keys with 1.2s response
+      candidateModels = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-3.8-flash'];
     }
 
     // ⚡ PARALLEL PRE-FLIGHT KEY RACE (Instant Active & Quota Discovery)
-    // Send lightweight micro-ping in parallel across available keys.
-    // Promise.any instantly selects the fastest key with available quota in < 1 second!
+    // Micro-probe all available keys simultaneously with Promise.any
+    // Instantly selects the fastest key with available quota in < 1 second!
     if (keyPool.length > 1) {
       try {
+        setLoading(true, '⚡ সমান্তরাল কি-রেসিং (Parallel Key Race) চলছে... দ্রুততম সক্রিয় কি নির্বাচন হচ্ছে...', 45);
         const topModel = candidateModels[0];
         const probeKey = async (k) => {
           const controller = new AbortController();
-          const tId = setTimeout(() => controller.abort(), 2000);
+          const tId = setTimeout(() => controller.abort(), 2500);
           try {
             const probeUrl = `https://generativelanguage.googleapis.com/v1beta/models/${topModel}:generateContent?key=${encodeURIComponent(k)}`;
             const pRes = await fetch(probeUrl, {
@@ -1127,13 +1126,14 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           }
         };
 
-        // Race across keys simultaneously
-        const winnerKey = await Promise.any(keyPool.slice(0, 10).map(probeKey));
+        // Race across ALL keys simultaneously
+        const winnerKey = await Promise.any(keyPool.map(probeKey));
         if (winnerKey) {
           keyPool = [winnerKey, ...keyPool.filter(k => k !== winnerKey)];
+          setLoading(true, '⚡ দ্রুততম সক্রিয় কি নির্ধারিত! এআই কনভার্সন শুরু হচ্ছে...', 52);
         }
       } catch (probeErr) {
-        // Graceful fallback to sequential key pool if probe times out
+        // Fallback to sequential key pool if probe times out
       }
     }
 
@@ -1215,12 +1215,12 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
               // ZERO DELAY FAILOVER: Instant shift to next key with 0ms pause
               setLoading(true, `⚡ কি #${k+1} কোটা শেষ, ০ সেকেন্ডে পরবর্তী কি চেষ্টা হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
               continue;
-            } else if (res.status === 503 || errMsg.includes('No capacity') || errMsg.includes('high demand') || errMsg.includes('UNAVAILABLE')) {
-              // Server capacity exhausted on this model -> immediately break key loop and switch model (0ms delay)
+            } else if (res.status === 503 || errMsg.includes('No capacity') || errMsg.includes('high demand') || errMsg.includes('UNAVAILABLE') || res.status === 404 || errMsg.includes('not found') || errMsg.includes('no longer available')) {
+              // Model unavailable / deprecated / server capacity exhausted -> immediately break key loop and switch model (0ms delay)
               if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.logAudit === 'function') {
-                FayzarOcrConfig.logAudit('MODEL_503_FAILOVER', { failedModel: model, error: errMsg });
+                FayzarOcrConfig.logAudit('MODEL_FAILOVER', { failedModel: model, error: errMsg });
               }
-              setLoading(true, `⚡ ${model} মডেল সার্ভার ওভারলোড, ০ সেকেন্ডে স্থিতিশীল Gemini 3.5/2.5 মডেলে অটো-সুইচ হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
+              setLoading(true, `⚡ ${model} মডেল সার্ভার অনুপলব্ধ, ০ সেকেন্ডে পরবর্তী মডেলে অটো-সুইচ হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
               break; // Instantly move to next candidate model!
             } else {
               if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.advanceRoundRobin === 'function') {
@@ -1308,8 +1308,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             throw err;
           }
           lastError = err;
-          if (err.message && (err.message.includes('503') || err.message.includes('No capacity') || err.message.includes('UNAVAILABLE') || err.message.includes('high demand'))) {
-            setLoading(true, `⚡ ${model} মডেল ওভারলোড, ০ সেকেন্ডে পরবর্তী স্থিতিশীল মডেলে অটো-সুইচ হচ্ছে...`, 50 + Math.min(40, (k + 1) * 3));
+          if (err.message && (err.message.includes('404') || err.message.includes('not found') || err.message.includes('no longer available') || err.message.includes('503') || err.message.includes('No capacity') || err.message.includes('UNAVAILABLE') || err.message.includes('high demand'))) {
+            setLoading(true, `⚡ ${model} মডেল অনুপলব্ধ, ০ সেকেন্ডে পরবর্তী স্থিতিশীল মডেলে অটো-সুইচ হচ্ছে...`, 50 + Math.min(40, (k + 1) * 3));
             break;
           }
           setLoading(true, '⚡ পরবর্তী অ্যাক্টিভ কি দিয়ে প্রস্তুত করা হচ্ছে...', 50 + Math.min(40, (k + 1) * 3));

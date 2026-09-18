@@ -1110,10 +1110,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: '1' }] }],
-                generationConfig: { 
-                  maxOutputTokens: 1,
-                  thinkingConfig: { thinkingBudget: 0 }
-                }
+                generationConfig: { maxOutputTokens: 1 }
               }),
               signal: controller.signal
             });
@@ -1265,6 +1262,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                   try {
                     const chunkObj = JSON.parse(dataJson);
                     const candidate = chunkObj.candidates?.[0];
+                    // Detect safety block or empty model output
+                    const finishReason = candidate?.finishReason;
+                    if (finishReason === 'SAFETY') {
+                      throw new Error('Safety Filter: কন্টেন্ট Gemini-র নিরাপত্তা ফিল্টারে আটকে গেছে।');
+                    }
                     const chunkPart = candidate?.content?.parts?.[0]?.text || '';
                     if (chunkPart) {
                       fullStreamedText += chunkPart;
@@ -1277,7 +1279,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                         if (onStreamChunk) onStreamChunk(fullStreamedText);
                       }
                     }
-                  } catch (pe) { /* partial chunk */ }
+                  } catch (pe) {
+                    if (pe.message && pe.message.includes('Safety Filter')) throw pe;
+                    /* partial chunk, ignore parse error */
+                  }
                 }
               }
             }
@@ -1291,6 +1296,45 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
               }
               if (onStreamChunk) onStreamChunk(fullStreamedText);
               return cleanOcrResponse(fullStreamedText);
+            }
+            // Empty stream: model returned no text - try fallback format
+            currentPayload = buildModelPayload(model, true);
+            const emptyRetryRes = await fetchWithTimeout(streamEndpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(currentPayload)
+            }, CONNECT_TIMEOUT_MS);
+            if (emptyRetryRes.ok) {
+              res = emptyRetryRes;
+              // Re-read the fallback response
+              if (res.body && typeof res.body.getReader === 'function') {
+                const fbReader = res.body.getReader();
+                const fbDecoder = new TextDecoder('utf-8');
+                let fbBuffer = '';
+                let fbText = '';
+                while (true) {
+                  const { done: fbDone, value: fbVal } = await fbReader.read();
+                  if (fbDone) break;
+                  fbBuffer += fbDecoder.decode(fbVal, { stream: true });
+                  const fbLines = fbBuffer.split('\n');
+                  fbBuffer = fbLines.pop() || '';
+                  for (const fbLine of fbLines) {
+                    const fbTrimmed = fbLine.trim();
+                    if (fbTrimmed.startsWith('data:')) {
+                      const fbJson = fbTrimmed.slice(5).trim();
+                      if (!fbJson || fbJson === '[DONE]') continue;
+                      try {
+                        const fbChunk = JSON.parse(fbJson);
+                        fbText += fbChunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                      } catch (_) { /* ignore */ }
+                    }
+                  }
+                }
+                if (fbText.trim()) {
+                  if (onStreamChunk) onStreamChunk(fbText);
+                  return cleanOcrResponse(fbText);
+                }
+              }
             }
           }
 

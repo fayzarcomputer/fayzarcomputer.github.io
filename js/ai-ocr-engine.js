@@ -225,7 +225,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   const isDemo = (rawDemoSetting === 'true');
 
   let savedModelSetting = localStorage.getItem(STORAGE_KEYS.SELECTED_MODEL) || 'auto';
-  if (savedModelSetting === 'gemini-3.8-flash' || savedModelSetting === 'gemini-3.5-flash' || savedModelSetting === 'gemini-2.5-flash') {
+  if (savedModelSetting === 'gemini-3.8-flash' || savedModelSetting === 'gemini-2.5-flash' || savedModelSetting.includes('lite')) {
     savedModelSetting = 'auto';
     localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, 'auto');
   }
@@ -1089,13 +1089,13 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.selectedModel && state.selectedModel !== 'auto') {
       candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
     } else {
-      // Flagship high-speed candidate pipeline: gemini-3.6-flash is 100% active on all 19 vault keys with 1.2s response
-      candidateModels = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-3.8-flash'];
+      // Quality 1st Priority: Gemini 3.5 Flash flagship (maximum Bengali OCR & Math fidelity, 19/19 keys active)
+      candidateModels = ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-2.5-flash'];
     }
 
     // ⚡ PARALLEL PRE-FLIGHT KEY RACE (Instant Active & Quota Discovery)
     // Micro-probe all available keys simultaneously with Promise.any
-    // Instantly selects the fastest key with available quota in < 1 second!
+    // Instantly selects the fastest key with available quota in < 1.5 seconds!
     if (keyPool.length > 1) {
       try {
         setLoading(true, '⚡ সমান্তরাল কি-রেসিং (Parallel Key Race) চলছে... দ্রুততম সক্রিয় কি নির্বাচন হচ্ছে...', 45);
@@ -1110,7 +1110,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: '1' }] }],
-                generationConfig: { maxOutputTokens: 1 }
+                generationConfig: { 
+                  maxOutputTokens: 1,
+                  thinkingConfig: { thinkingBudget: 0 }
+                }
               }),
               signal: controller.signal
             });

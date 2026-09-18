@@ -26,8 +26,8 @@
 
   const MAX_FREE_USES = 5;
   const REQUEST_TIMEOUT_MS = 180000; // 180s (3 minutes) timeout for complete multi-page extraction
-  const MAX_IMAGE_DIMENSION = 1400; // 1400px provides ultra-crisp 150-200 DPI OCR while keeping payload under 150KB/page
-  const JPEG_COMPRESSION_QUALITY = 0.82; // Optimal compression: 90% lighter payload with 100% stroke & math fidelity
+  const MAX_IMAGE_DIMENSION = 2048; // 2048px = ultra-crisp 200-250 DPI — essential for dense Bengali yuktakhor & small printed text
+  const JPEG_COMPRESSION_QUALITY = 0.92; // High-fidelity compression: preserves fine strokes, Bengali ligatures & math symbols perfectly
   const modelCooldowns = new Map(); // Tracks models with 429 quota exhaustion (model -> expireTimestamp)
 
   const GEMINI_PROMPT = `You are an elite Bengali Professional Document Composer, Question Paper Typist, and LaTeX-to-Word formatting specialist.
@@ -522,8 +522,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         const page = await pdf.getPage(pageNum);
         const unscaled = page.getViewport({ scale: 1.0 });
 
-        // Optimal scale bounded by MAX_IMAGE_DIMENSION (1400px)
-        let scale = 1.6;
+        // Optimal scale bounded by MAX_IMAGE_DIMENSION (2048px)
+        let scale = 2.0;
         if (unscaled.width * scale > MAX_IMAGE_DIMENSION || unscaled.height * scale > MAX_IMAGE_DIMENSION) {
           scale = Math.min(MAX_IMAGE_DIMENSION / unscaled.width, MAX_IMAGE_DIMENSION / unscaled.height);
         }

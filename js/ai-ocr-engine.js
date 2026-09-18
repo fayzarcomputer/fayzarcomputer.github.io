@@ -1007,9 +1007,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     const activePrompt = customPrompt || GEMINI_PROMPT;
 
     const allActiveModels = [
-      'gemini-3.6-flash',   // Live test: 10/19 keys OK (most reliable)
-      'gemini-2.5-flash',   // Live test: 4/19 keys OK (best quality)
-      'gemini-3.5-flash'    // Fallback only (currently overloaded)
+      'gemini-3.6-flash',         // #1: 100% OCR quality, 3.8s, 4/5 keys
+      'gemini-3-flash-preview',   // #2: 100% OCR quality, 9.8s, 5/5 keys
+      'gemini-2.5-flash',         // #3: 100% OCR quality, best reasoning, 2/5 keys
+      'gemini-3.5-flash',         // #4: Standard flash, 3/5 keys
+      'gemini-3.5-flash-lite'     // #5: Fastest (1.4s) but lite - fallback only
     ];
 
     // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
@@ -1087,8 +1089,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.selectedModel && state.selectedModel !== 'auto') {
       candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
     } else {
-      // Live benchmark (2026-09-18): 3.6-flash=10/19 keys, 2.5-flash=4/19 keys, rest=0/19
-      candidateModels = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash'];
+      // Live benchmark: 3.6-flash=best reliability, 3-flash-preview=5/5 keys, lite=fastest but reduced capability
+      candidateModels = ['gemini-3.6-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
     }
 
     // ⚡ PARALLEL PRE-FLIGHT KEY RACE (Instant Active & Quota Discovery)

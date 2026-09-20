@@ -24,6 +24,24 @@
     SELECTED_MODEL: 'fayzar_ai_ocr_selected_model'
   };
 
+  // ---------------------------------------------------------
+  // HYBRID PRO-BRIDGE: NATIVE REST API (ZERO SDK DEPENDENCY)
+  // ---------------------------------------------------------
+  const FIREBASE_BRIDGE_URL = "https://fayzar-ocr-bridge-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+  async function checkDesktopBridgeOnline() {
+    try {
+      const res = await fetch(`${FIREBASE_BRIDGE_URL}/status/desktop.json?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
+      const val = await res.json();
+      return val === 'online';
+    } catch (e) {
+      return false;
+    }
+  }
+  // ---------------------------------------------------------
+
   const MAX_FREE_USES = 5;
   const REQUEST_TIMEOUT_MS = 180000; // 180s (3 minutes) timeout for complete multi-page extraction
   const MAX_IMAGE_DIMENSION = 2048; // 2048px = ultra-crisp 200-250 DPI — essential for dense Bengali yuktakhor & small printed text
@@ -784,6 +802,17 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       ? userCustomKey.trim()
       : (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getActiveApiKey === 'function' ? FayzarOcrConfig.getActiveApiKey() : (state.byokApiKey || ''));
 
+    // ---------------------------------------------------------
+    // HYBRID PRO-BRIDGE: PRE-FLIGHT CHECK
+    // ---------------------------------------------------------
+    const isDesktopOnline = await checkDesktopBridgeOnline();
+    if (isDesktopOnline) {
+      showToast('⚡ Pro Desktop Bridge অনলাইনে সংযুক্ত! রিকোয়েস্ট পাঠানো হচ্ছে...', 'info');
+      await startUnifiedOcr('doc');
+      return;
+    }
+    // ---------------------------------------------------------
+
     if (activeKey && activeKey.length > 0) {
       await runDirectGeminiOcr(activeKey);
       return;
@@ -852,7 +881,64 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       : (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getActiveApiKey === 'function' ? FayzarOcrConfig.getActiveApiKey() : (state.byokApiKey || ''));
 
     let rawText = '';
-    if (state.demoMode || !apiKey) {
+
+    // ---------------------------------------------------------
+    // HYBRID PRO-BRIDGE: PRE-FLIGHT CHECK & DIRECT REST EXECUTION
+    // ---------------------------------------------------------
+    const isDesktopOnline = await checkDesktopBridgeOnline();
+
+    if (isDesktopOnline) {
+      if (onProgress) onProgress('⚡ Pro Desktop Bridge সংযুক্ত! রিকোয়েস্ট পাঠানো হচ্ছে...', 40);
+      
+      const combinedBase64 = mediaItems.map(m => m.data.includes('base64,') ? m.data.split('base64,')[1] : m.data).join('|||');
+      const jobId = 'job_' + Date.now();
+
+      await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'pending',
+          imageBase64: combinedBase64,
+          prompt: GEMINI_PROMPT,
+          timestamp: Date.now()
+        })
+      });
+
+      if (onProgress) onProgress('⚡ Pro Desktop Bridge আপনার জেমিনি সেশনে কাজ করছে। অপেক্ষা করুন...', 65);
+
+      const timeoutMs = REQUEST_TIMEOUT_MS;
+      const start = Date.now();
+      let bridgeSuccess = false;
+
+      while (Date.now() - start < timeoutMs) {
+        await sleep(1500);
+        try {
+          const resp = await fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json?t=${Date.now()}`, {
+            cache: 'no-store'
+          });
+          const val = await resp.json();
+          if (val) {
+            fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+            if (val.status === 'success') {
+              rawText = val.text;
+              bridgeSuccess = true;
+              break;
+            } else {
+              throw new Error(val.error || 'Desktop Bridge error');
+            }
+          }
+        } catch (pollErr) {
+          if (pollErr.message && !pollErr.message.includes('fetch')) throw pollErr;
+        }
+      }
+
+      if (!bridgeSuccess) {
+        fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+        throw new Error("Pro Desktop Bridge থেকে রেসপন্স পেতে নির্ধারিত সময় অতিক্রান্ত হয়েছে");
+      }
+
+      if (onStream) onStream(rawText);
+    } else if (state.demoMode || !apiKey) {
       if (state.demoMode) {
         if (onProgress) onProgress('অফলাইন ডেমো সিমুলেশন চলছে...', 60);
         await sleep(700);
@@ -927,6 +1013,84 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+  }
+
+  // ---------------------------------------------------------
+  // HYBRID PRO-BRIDGE: SEND TO FIREBASE
+  // ---------------------------------------------------------
+  async function runFirebaseBridgeOcr() {
+    if (!ocrDatabase) return;
+    const queue = state.filesQueue.length > 0
+      ? state.filesQueue
+      : [{ file: state.selectedFile, mimeType: state.imageMimeType, base64: state.imageBase64, name: 'ফাইল' }];
+    const total = queue.length;
+
+    setLoading(true, `Pro Desktop Bridge-এ পাঠানো হচ্ছে (${toBengaliNumber(total)}টি পেজ)...`, 30);
+
+    try {
+      const mediaItems = await Promise.all(queue.map(async (item) => {
+        const b64 = await ensureBase64(item);
+        return { data: b64, mimeType: item.mimeType, name: item.name };
+      }));
+      state.lastMediaItems = mediaItems;
+
+      // Extract raw base64 without prefix
+      const combinedBase64 = mediaItems.map(m => m.data.includes('base64,') ? m.data.split('base64,')[1] : m.data).join('|||');
+
+      const jobId = 'job_' + Date.now();
+      const requestRef = ocrDatabase.ref('requests/' + jobId);
+      const responseRef = ocrDatabase.ref('responses/' + jobId);
+
+      await requestRef.set({
+        status: 'pending',
+        imageBase64: combinedBase64,
+        prompt: GEMINI_PROMPT,
+        timestamp: Date.now()
+      });
+
+      setLoading(true, 'Pro Desktop আপনার ব্রাউজারে কাজটি করছে। অপেক্ষা করুন...', 50);
+
+      // Listen for response
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          responseRef.off();
+          requestRef.remove();
+          reject(new Error("Timeout waiting for Desktop Bridge"));
+        }, REQUEST_TIMEOUT_MS);
+
+        responseRef.on('value', (snapshot) => {
+          const val = snapshot.val();
+          if (val) {
+            clearTimeout(timeout);
+            responseRef.off();
+            responseRef.remove(); // Cleanup
+            
+            if (val.status === 'success') {
+              setLoading(false);
+              
+              // Track Usage Stats for pro-bridge
+              try {
+                const stats = JSON.parse(localStorage.getItem('fayzar_usage_stats')) || { models: {}, keys: {} };
+                stats.models['pro-bridge'] = (stats.models['pro-bridge'] || 0) + 1;
+                localStorage.setItem('fayzar_usage_stats', JSON.stringify(stats));
+              } catch (e) { /* ignore */ }
+              
+              handleExtractionSuccess(val.text, false);
+              showToast('Pro Desktop Bridge দিয়ে সফলভাবে রূপান্তর সম্পন্ন হয়েছে!', 'success');
+              resolve(val.text);
+            } else {
+              setLoading(false);
+              showToast(`Desktop Bridge ত্রুটি: ${val.error}`, 'error');
+              reject(new Error(val.error));
+            }
+          }
+        });
+      });
+
+    } catch (err) {
+      setLoading(false);
+      showToast(`ব্রিজ ত্রুটি: ${err.message}`, 'error');
+    }
   }
 
   // UNIFIED MULTI-IMAGE / MULTI-PAGE GEMINI OCR (ALL PAGES IN 1 SINGLE API REQUEST)
@@ -1057,16 +1221,21 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       ? FayzarOcrConfig.isValidApiKey
       : (k => typeof k === 'string' && (k.trim().startsWith('AIzaSy') || k.trim().startsWith('AQ.')) && k.trim().length >= 35);
 
-    // 1. Primary: Rotated system keys from vault (guarantees a fresh new key on every run)
-    if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getRotatedSystemKeys === 'function') {
-      const rotatedKeys = FayzarOcrConfig.getRotatedSystemKeys(false);
-      for (const sk of rotatedKeys) {
-        if (!keyPool.includes(sk)) keyPool.push(sk);
-      }
-    } else if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getAllSystemKeys === 'function') {
-      const systemKeys = FayzarOcrConfig.getAllSystemKeys(false);
-      for (const sk of systemKeys) {
-        if (!keyPool.includes(sk)) keyPool.push(sk);
+    if (typeof window !== 'undefined' && window.forceKeyIndex !== undefined && window.forceKeyIndex !== null && typeof FayzarOcrConfig !== 'undefined' && FayzarOcrConfig.keys) {
+      const forcedKey = FayzarOcrConfig.keys[window.forceKeyIndex];
+      if (forcedKey) keyPool.push(forcedKey);
+    } else {
+      // 1. Primary: Rotated system keys from vault (guarantees a fresh new key on every run)
+      if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getRotatedSystemKeys === 'function') {
+        const rotatedKeys = FayzarOcrConfig.getRotatedSystemKeys(false);
+        for (const sk of rotatedKeys) {
+          if (!keyPool.includes(sk)) keyPool.push(sk);
+        }
+      } else if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getAllSystemKeys === 'function') {
+        const systemKeys = FayzarOcrConfig.getAllSystemKeys(false);
+        for (const sk of systemKeys) {
+          if (!keyPool.includes(sk)) keyPool.push(sk);
+        }
       }
     }
 
@@ -1335,6 +1504,17 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                 if (typeof FayzarOcrConfig.logAudit === 'function') {
                   FayzarOcrConfig.logAudit('OCR_SUCCESS', { keyMask: currentKey.slice(0, 8) + '...', model, length: fullStreamedText.length });
                 }
+                
+                // Track Usage Stats
+                try {
+                  const stats = JSON.parse(localStorage.getItem('fayzar_usage_stats')) || { models: {}, keys: {} };
+                  stats.models[model] = (stats.models[model] || 0) + 1;
+                  const keyIdx = FayzarOcrConfig.keys ? FayzarOcrConfig.keys.indexOf(currentKey) : -1;
+                  if (keyIdx !== -1) {
+                    stats.keys[keyIdx] = (stats.keys[keyIdx] || 0) + 1;
+                  }
+                  localStorage.setItem('fayzar_usage_stats', JSON.stringify(stats));
+                } catch (e) { /* ignore */ }
               }
               if (onStreamChunk) onStreamChunk(fullStreamedText);
               return cleanOcrResponse(fullStreamedText);

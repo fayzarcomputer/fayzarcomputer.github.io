@@ -1,0 +1,15 @@
+Line 3:
+  S: <a href="index.html" class="py-0.5 flex items-center gap-2 sm:gap-3 group shrink-0">
+  I: <a href="#home" class="py-0.5 flex items-center gap-2 sm:gap-3 group shrink-0">
+Line 42:
+  S: <a href="index.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_home">হোম</a>
+  I: <a href="#home" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_home">হোম</a>
+Line 43:
+  S: <!-- 2. সার্ভিস (Active State on services.html) -->
+  I: <!-- 2. সার্ভিস (Direct link) -->
+Line 44:
+  S: <a href="services.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md text-[#075e24] bg-emerald-50 dark:bg-slate-800 dark:text-emerald-400 transition font-extrabold shadow-2xs" data-i18n="nav_services_short">সার্ভিস</a>
+  I: <a href="services.html" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_services_short">সার্ভিস</a>
+Line 57:
+  S: <a href="index.html#contact" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_contact_short">কন্টাক্ট</a>
+  I: <a href="#contact" class="py-0.5 px-1.5 sm:px-2 lg:px-2.5 rounded-md hover:text-[#075e24] hover:bg-emerald-50/60 dark:hover:bg-slate-800 transition font-bold" data-i18n="nav_contact_short">কন্টাক্ট</a>

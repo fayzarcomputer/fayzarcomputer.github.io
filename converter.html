@@ -1449,6 +1449,7 @@
         <div>
           <label for="ai-ocr-settings-model-select" class="block font-bold text-slate-700 dark:text-slate-300 mb-1">AI মডেল (ওসিআর প্রায়োরিটি):</label>
           <select id="ai-ocr-settings-model-select" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-[#1a263d] text-slate-800 dark:text-slate-100 text-xs font-bold outline-none focus:border-indigo-500">
+            <option value="pro-bridge">Pro Desktop Bridge (ফ্রি আনলিমিটেড + গুগল অ্যাকাউন্ট কানেক্ট)</option>
             <option value="auto" selected>⚡ অটো স্মার্ট প্রি-টেস্ট (সকল কি টেস্ট করে সক্রিয় কি ও মডেল নির্বাচন)</option>
             <option value="gemini-3-flash-preview">Gemini 3 Flash Preview (১ নম্বর দ্রুততম — ১৯টি কি-তে ১০০% সক্রিয়, ১.১ সেকেন্ড)</option>
             <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview (২ নম্বর প্রো কোয়ালিটি — জটিল গণিত ও নথিপত্রে সেরা)</option>
@@ -1587,10 +1588,123 @@
         </div>
         <div class="flex items-center gap-4">
           <a href="admin.html" class="hover:text-slate-400 transition flex items-center gap-1"><i class="fas fa-lock text-[10px]"></i> এডমিন প্যানেল</a>
-        </div>
       </div>
     </div>
   </footer>
+
+  <!-- ========================================================================= -->
+  <!-- Usage & Quota Modal -->
+  <!-- ========================================================================= -->
+  <div id="quotaModal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-white dark:bg-[#111827] rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-700 transform scale-95 transition-transform duration-300">
+      
+      <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h3 class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-emerald-500"></i> Usage & Quota Stats
+        </h3>
+        <button onclick="closeQuotaModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+        
+        <!-- API Models Overview -->
+        <div>
+          <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Model Usage</h4>
+          <div class="grid grid-cols-2 gap-3" id="modelUsageStats">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- API Keys Overview -->
+        <div>
+          <h4 class="text-sm font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Vault Keys Usage</h4>
+          <div class="bg-slate-50 dark:bg-[#1a263d] rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between mb-4">
+              <label for="forceKeySelect" class="text-sm font-bold text-slate-700 dark:text-slate-200">Force specific Key:</label>
+              <select id="forceKeySelect" class="p-1.5 text-sm rounded bg-white dark:bg-[#070c18] border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200" onchange="window.forceKeyIndex = this.value === 'auto' ? null : parseInt(this.value)">
+                <option value="auto">Auto (Round-robin)</option>
+                <!-- populated via JS -->
+              </select>
+            </div>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs" id="keyUsageStats">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openQuotaModal() {
+      const modal = document.getElementById('quotaModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('div').classList.remove('scale-95');
+      }, 10);
+      renderQuotaStats();
+    }
+    
+    function closeQuotaModal() {
+      const modal = document.getElementById('quotaModal');
+      modal.classList.add('opacity-0');
+      modal.querySelector('div').classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+    
+    function renderQuotaStats() {
+      // Models
+      const stats = JSON.parse(localStorage.getItem('fayzar_usage_stats')) || { models: {}, keys: {} };
+      const modelContainer = document.getElementById('modelUsageStats');
+      modelContainer.innerHTML = '';
+      
+      const knownModels = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'pro-bridge'];
+      knownModels.forEach(m => {
+        const count = stats.models[m] || 0;
+        modelContainer.innerHTML += `
+          <div class="bg-white dark:bg-[#070c18] border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex justify-between items-center shadow-2xs">
+            <span class="font-semibold text-slate-700 dark:text-slate-300 text-xs">${m}</span>
+            <span class="font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-lg text-xs">${count} calls</span>
+          </div>
+        `;
+      });
+
+      // Keys
+      const keyContainer = document.getElementById('keyUsageStats');
+      const forceSelect = document.getElementById('forceKeySelect');
+      keyContainer.innerHTML = '';
+      
+      // Preserve current selection
+      const currentSelection = forceSelect.value;
+      forceSelect.innerHTML = '<option value="auto">Auto (Round-robin)</option>';
+
+      for (let i = 0; i < 19; i++) {
+        const count = stats.keys[i] || 0;
+        const isExhausted = window.keyExhaustionMap && window.keyExhaustionMap.has(i) && window.keyExhaustionMap.get(i) > Date.now();
+        const statusClass = isExhausted ? 'text-red-500 bg-red-50 dark:bg-red-900/30' : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30';
+        
+        keyContainer.innerHTML += `
+          <div class="flex flex-col items-center justify-center p-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#070c18]">
+            <span class="text-[10px] text-slate-500 mb-1">Key ${i+1}</span>
+            <span class="font-black ${statusClass} px-1.5 py-0.5 rounded text-[10px]">${count}</span>
+          </div>
+        `;
+        
+        forceSelect.innerHTML += `<option value="${i}">Force Key ${i+1}</option>`;
+      }
+      forceSelect.value = currentSelection;
+    }
+  </script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
 
   <!-- Core JavaScript Engines -->
   <script src="js/vendor/pdf.min.js"></script>
@@ -1603,8 +1717,8 @@
   <script src="js/xlsx-handler.js"></script>
   <script src="js/pptx-handler.js"></script>
   <script src="js/fayzar-ocr-config.js"></script>
-  <script src="js/ai-ocr-engine.js"></script>
-  <script src="js/main.js" defer></script>
+  <script src="js/ai-ocr-engine.js?v=bridge-pro-final"></script>
+  <script src="js/main.js?v=bridge-pro-final" defer></script>
 
   <!-- Floating CTA Stack -->
   <div class="floating-cta-stack" aria-label="দ্রুত যোগাযোগ">

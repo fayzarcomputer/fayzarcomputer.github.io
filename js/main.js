@@ -2869,6 +2869,11 @@ function initUnifiedConverterEngine() {
         }
       );
 
+      if (!res) {
+        // Conversion was cancelled by user or aborted
+        return;
+      }
+
       if (wizardPreviewContent) {
         wizardPreviewContent.value = (res && res.unicode) || (window.FayzarAiOcrEngine && window.FayzarAiOcrEngine.state && window.FayzarAiOcrEngine.state.unicodeText) || wizardPreviewContent.value || '';
       }

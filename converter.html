@@ -323,6 +323,12 @@
 
         <!-- Controls: AI Badge & Settings -->
         <div class="flex items-center gap-2">
+          <!-- Live Pro Model Badge (Dynamically shown only when Desktop Pro 3.1 service is running) -->
+          <span id="pro-model-status-badge" class="hidden px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-purple-700 via-indigo-600 to-emerald-600 text-white border border-purple-400/80 shadow-md items-center gap-1.5 animate-pulse cursor-default" title="ডেস্কটপ Gemini 3.1 Pro ইঞ্জিন সক্রিয় ও প্রস্তুত">
+            <span class="w-2 h-2 rounded-full bg-emerald-300 shadow-sm animate-ping"></span>
+            <span>⚡ প্রো মডেল এ্যাভেলএবেল আছে</span>
+          </span>
+
           <span id="ai-ocr-mode-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 inline-flex items-center gap-1.5 shadow-2xs">
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span> লাইভ AI সচল
           </span>
@@ -452,7 +458,7 @@
                 </h4>
                 <p class="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5">নিচের বাটনে ক্লিক করে সরাসরি কনভার্ট শুরু করুন (কনভার্ট শেষে ৩টি ওয়ার্ড ফরম্যাটেই ডাউনলোড করতে পারবেন)</p>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300">Gemini AI + ফয়জার ইঞ্জিন</span>
+              <span id="ai-model-type-pill" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300">Gemini AI + ফয়জার ইঞ্জিন</span>
             </div>
 
             <!-- AI Execute Button -->
@@ -1717,8 +1723,8 @@
   <script src="js/xlsx-handler.js"></script>
   <script src="js/pptx-handler.js"></script>
   <script src="js/fayzar-ocr-config.js"></script>
-  <script src="js/ai-ocr-engine.js?v=bridge-pro-eq3"></script>
-  <script src="js/main.js?v=bridge-pro-eq2" defer></script>
+  <script src="js/ai-ocr-engine.js?v=bridge-pro-live4"></script>
+  <script src="js/main.js?v=bridge-pro-live4" defer></script>
 
   <!-- Floating CTA Stack -->
   <div class="floating-cta-stack" aria-label="দ্রুত যোগাযোগ">

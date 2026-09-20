@@ -1018,8 +1018,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   // ---------------------------------------------------------
   // HYBRID PRO-BRIDGE: SEND TO FIREBASE
   // ---------------------------------------------------------
+  // ---------------------------------------------------------
+  // HYBRID PRO-BRIDGE: SEND TO FIREBASE VIA NATIVE REST
+  // ---------------------------------------------------------
   async function runFirebaseBridgeOcr() {
-    if (!ocrDatabase) return;
     const queue = state.filesQueue.length > 0
       ? state.filesQueue
       : [{ file: state.selectedFile, mimeType: state.imageMimeType, base64: state.imageBase64, name: 'ফাইল' }];
@@ -1038,54 +1040,62 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       const combinedBase64 = mediaItems.map(m => m.data.includes('base64,') ? m.data.split('base64,')[1] : m.data).join('|||');
 
       const jobId = 'job_' + Date.now();
-      const requestRef = ocrDatabase.ref('requests/' + jobId);
-      const responseRef = ocrDatabase.ref('responses/' + jobId);
 
-      await requestRef.set({
-        status: 'pending',
-        imageBase64: combinedBase64,
-        prompt: GEMINI_PROMPT,
-        timestamp: Date.now()
+      await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'pending',
+          imageBase64: combinedBase64,
+          prompt: GEMINI_PROMPT,
+          timestamp: Date.now()
+        })
       });
 
-      setLoading(true, 'Pro Desktop আপনার ব্রাউজারে কাজটি করছে। অপেক্ষা করুন...', 50);
+      setLoading(true, '⚡ Pro Desktop Bridge আপনার জেমিনি সেশনে কাজ করছে। অপেক্ষা করুন...', 50);
 
-      // Listen for response
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          responseRef.off();
-          requestRef.remove();
-          reject(new Error("Timeout waiting for Desktop Bridge"));
-        }, REQUEST_TIMEOUT_MS);
+      const timeoutMs = REQUEST_TIMEOUT_MS;
+      const start = Date.now();
+      let resultText = null;
 
-        responseRef.on('value', (snapshot) => {
-          const val = snapshot.val();
+      while (Date.now() - start < timeoutMs) {
+        await sleep(1500);
+        try {
+          const resp = await fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json?t=${Date.now()}`, {
+            cache: 'no-store'
+          });
+          const val = await resp.json();
           if (val) {
-            clearTimeout(timeout);
-            responseRef.off();
-            responseRef.remove(); // Cleanup
-            
+            fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
             if (val.status === 'success') {
-              setLoading(false);
-              
-              // Track Usage Stats for pro-bridge
-              try {
-                const stats = JSON.parse(localStorage.getItem('fayzar_usage_stats')) || { models: {}, keys: {} };
-                stats.models['pro-bridge'] = (stats.models['pro-bridge'] || 0) + 1;
-                localStorage.setItem('fayzar_usage_stats', JSON.stringify(stats));
-              } catch (e) { /* ignore */ }
-              
-              handleExtractionSuccess(val.text, false);
-              showToast('Pro Desktop Bridge দিয়ে সফলভাবে রূপান্তর সম্পন্ন হয়েছে!', 'success');
-              resolve(val.text);
+              resultText = val.text;
+              break;
             } else {
-              setLoading(false);
-              showToast(`Desktop Bridge ত্রুটি: ${val.error}`, 'error');
-              reject(new Error(val.error));
+              throw new Error(val.error || 'Desktop Bridge error');
             }
           }
-        });
-      });
+        } catch (pollErr) {
+          if (pollErr.message && !pollErr.message.includes('fetch')) throw pollErr;
+        }
+      }
+
+      if (!resultText) {
+        fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+        throw new Error("Pro Desktop Bridge থেকে রেসপন্স পেতে নির্ধারিত সময় অতিক্রান্ত হয়েছে");
+      }
+
+      setLoading(false);
+
+      // Track Usage Stats for pro-bridge
+      try {
+        const stats = JSON.parse(localStorage.getItem('fayzar_usage_stats')) || { models: {}, keys: {} };
+        stats.models['pro-bridge'] = (stats.models['pro-bridge'] || 0) + 1;
+        localStorage.setItem('fayzar_usage_stats', JSON.stringify(stats));
+      } catch (e) { /* ignore */ }
+
+      handleExtractionSuccess(resultText, false);
+      showToast('⚡ Pro Desktop Bridge দিয়ে সফলভাবে রূপান্তর সম্পন্ন হয়েছে!', 'success');
+      return resultText;
 
     } catch (err) {
       setLoading(false);

@@ -893,6 +893,27 @@
       if (!text) return text;
       let s = text;
 
+      // 0. Convert Unicode superscripts & subscripts to standard ASCII LaTeX format
+      const supChars = '[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]';
+      const subChars = '[₀₁₂₃₄₅₆₇₈₉₊₋]';
+      const supMap = {'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'-'};
+      const subMap = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','₊':'+','₋':'-'};
+
+      s = s.replace(new RegExp('(' + supChars + '+)', 'g'), (m, g) => {
+        let digits = g.split('').map(c => supMap[c] || c).join('');
+        return '^{' + digits + '}';
+      });
+
+      s = s.replace(new RegExp('(' + subChars + '+)', 'g'), (m, g) => {
+        let digits = g.split('').map(c => subMap[c] || c).join('');
+        return '_{' + digits + '}';
+      });
+
+      // Fix lowercase typos in common chemical formulas like Na_{2}co_{3} -> Na_{2}CO_{3}
+      s = s.replace(/\b([A-Z][a-z]?)_\{?(\d+)\}?co_\{?(\d+)\}?/g, '$1_{$2}CO_{$3}');
+      s = s.replace(/([A-Z][a-z]?)_\{?(\d+)\}?co([0-9])/g, '$1_{$2}CO$3');
+      s = s.replace(/\b([a-z]{1,2})_\{?(\d+)\}?/g, (m, el, sub) => el.toUpperCase() + '_{' + sub + '}');
+
       // 1. Repair broken powers with newlines e.g. "6.023×10\n23\nটি" -> "6.023 × 10^{23} টি"
       s = s.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})\s*\n+(?=[^\s])/g, '$1^{$2} ');
       s = s.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})/g, '$1^{$2}');
@@ -922,26 +943,36 @@
         return str.replace(/(?<!(?:\$|\\times\s*|[×*]\s*))\b10\s*\^\s*\{?(-?\d{1,3})\}?(?![\$\w])/g, (m, g1) => `$10^{${g1}}$`);
       });
 
-      // 3. Fix broken spaces in split formulas: "H_2 O" -> "H_2O", "H_2 SO_4" -> "H_2SO_4", "H2 SO4" -> "H2SO4"
-      s = s.replace(/\b([A-Z][a-z]?(?:_\d+|\d+))\s+([A-Z][a-z]?(?:[A-Z][a-z]?)?(?:_\d+|\d+))\b/g, '$1$2');
-      s = s.replace(/\b([A-Z][a-z]?(?:_\d+|\d+))\s+([A-Z][a-z]?(?:_\d+|\d+)?)\b/g, '$1$2');
-
-      // 4. Match and wrap chemical reaction equations e.g. "N_2 + 3H_2 = 2NH_3" or "2H_2 + O_2 = 2H_2O" or with arrows
+      // 3. Slash units: mol/L, g/L, L/mol, g/mol, km/h, m/s -> $\frac{mol}{L}$, etc.
       s = DocxHandler.processOutsideMath(s, str => {
-        const chemReaction = /(?<![\$a-zA-Z0-9])(\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+(?:\s*[-+]\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+)*\s*(?:=|→|->|──>)\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+(?:\s*[-+]\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+)*)(?![\$a-zA-Z0-9])/g;
-        return str.replace(chemReaction, (m, eq) => {
-          if (!/\d|_/.test(eq)) return m;
-          let cleanEq = eq.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
-          cleanEq = cleanEq.replace(/_(\d+)(?!\})/g, '_{$1}');
-          return `$${cleanEq}$`;
+        return str.replace(/\b(mol\/L|g\/L|L\/mol|g\/mol|km\/h|m\/s|m\/s\^2)\b/gi, (m) => {
+          let parts = m.split('/');
+          return `$\\frac{${parts[0]}}{${parts[1]}}$`;
         });
       });
 
-      // 5. Wrap chemical formulas with or without existing subscripts outside $...$
+      // 4. Fix broken spaces in split formulas: "H_2 O" -> "H_2O", "H_2 SO_4" -> "H_2SO_4", "H2 SO4" -> "H2SO4"
+      s = s.replace(/\b([A-Z][a-z]?(?:_\d+|\d+))\s+([A-Z][a-z]?(?:[A-Z][a-z]?)?(?:_\d+|\d+))\b/g, '$1$2');
+      s = s.replace(/\b([A-Z][a-z]?(?:_\d+|\d+))\s+([A-Z][a-z]?(?:_\d+|\d+)?)\b/g, '$1$2');
+
+      // 5. Match and wrap chemical reaction equations e.g. "N_2 + 3H_2 = 2NH_3" or "2H_2 + O_2 = 2H_2O" or "(2H_2 + O_2 = 2H_2O)"
+      s = DocxHandler.processOutsideMath(s, str => {
+        const chemReaction = /(\(?\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+(?:\s*[-+]\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+)*\s*(?:=|→|->|──>)\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+(?:\s*[-+]\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+)*\)?)/g;
+        return str.replace(chemReaction, (m) => {
+          if (!/_{|\d/.test(m)) return m;
+          let hasParen = m.startsWith('(') && m.endsWith(')');
+          let clean = hasParen ? m.slice(1, -1) : m;
+          clean = clean.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
+          clean = clean.replace(/_(\d+)(?!\})/g, '_{$1}');
+          return hasParen ? '($' + clean + '$)' : '$' + clean + '$';
+        });
+      });
+
+      // 6. Wrap chemical formulas with or without existing subscripts outside $...$
       s = DocxHandler.processOutsideMath(s, str => {
         const chemUnit = /(?<![\$a-zA-Z0-9])(\d*)((?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+)(?![\$a-zA-Z0-9])/g;
         return str.replace(chemUnit, (m, coeff, formula) => {
-          if (!/\d|_/.test(formula)) return m;
+          if (!/_{|\d/.test(formula)) return m;
           if (/^(?:MCQ|CQ|CPU|RAM|LED|DNA|RNA|A4|B5|Q\d+|P\d+|ID|OK|AM|PM|US|UK|BD|HTML|CSS|JS|PDF|DOC|DOCX)$/i.test(m)) return m;
           let cleanFormula = formula.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
           cleanFormula = cleanFormula.replace(/_(\d+)(?!\})/g, '_{$1}');

@@ -30,16 +30,20 @@
   const FIREBASE_BRIDGE_URL = "https://fayzar-ocr-bridge-default-rtdb.asia-southeast1.firebasedatabase.app";
   let cachedBridgeOnline = false;
   let lastBridgeCheckTime = 0;
+  let activeAbortController = null;
+  let activeBridgeJobId = null;
 
   function updateProModelStatusUI(isOnline) {
-    const badge = document.getElementById('pro-model-status-badge');
-    if (badge) {
+    const modeBadge = (elements && elements.modeBadge) || document.getElementById('ai-ocr-mode-badge');
+    if (modeBadge) {
       if (isOnline) {
-        badge.classList.remove('hidden');
-        badge.classList.add('inline-flex');
+        modeBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-purple-700 via-indigo-600 to-emerald-600 text-white border border-purple-400/80 shadow-md inline-flex items-center gap-1.5 animate-pulse cursor-pointer transition-all duration-300";
+        modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-300 shadow-sm animate-ping"></span> ⚡ প্রো মডেল একটিভ আছে`;
+        modeBadge.title = "ডেস্কটপ Gemini 3.1 Pro ইঞ্জিন সক্রিয় ও প্রস্তুত";
       } else {
-        badge.classList.add('hidden');
-        badge.classList.remove('inline-flex');
+        modeBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all duration-300";
+        modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> লাইভ API সচল`;
+        modeBadge.title = "Google Gemini Live Cloud API সক্রিয়";
       }
     }
     const pill = document.getElementById('ai-model-type-pill');
@@ -55,7 +59,7 @@
     const btnText = document.getElementById('executeAiConversionBtnText');
     if (btnText && (!state || !state.isProcessing)) {
       if (isOnline) {
-        btnText.textContent = '⚡ প্রো মডেল (3.1 Pro) দিয়ে সরাসরি কনভার্ট শুরু করুন';
+        btnText.textContent = '⚡ প্রো মডেল দিয়ে সরাসরি কনভার্ট শুরু করুন';
       } else {
         btnText.textContent = 'AI দিয়ে সরাসরি কনভার্ট শুরু করুন';
       }
@@ -63,7 +67,7 @@
   }
 
   async function checkDesktopBridgeOnline(forceRefresh = false) {
-    if (!forceRefresh && (Date.now() - lastBridgeCheckTime < 4000)) {
+    if (!forceRefresh && (Date.now() - lastBridgeCheckTime < 2000)) {
       return cachedBridgeOnline;
     }
     const controller = new AbortController();
@@ -314,6 +318,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     autoVerify: localStorage.getItem('ai_ocr_auto_verify') === 'true',
 
     filesQueue: [],
+    deletedPagesHistory: [],
+    currentZoomIndex: 0,
+    currentZoomScale: 1.0,
     selectedFile: null,
     imageBase64: '',
     imageMimeType: '',
@@ -362,11 +369,12 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     setupEvents();
     loadConverterDictionary();
     checkDesktopBridgeOnline(true);
+    // Poll bridge every 2.5s for instant status sync
     setInterval(() => {
       if (!state.isProcessing) {
-        checkDesktopBridgeOnline(true);
+        checkDesktopBridgeOnline(false);
       }
-    }, 5000);
+    }, 2500);
     window.addEventListener('focus', () => {
       if (!state.isProcessing) {
         checkDesktopBridgeOnline(true);
@@ -403,6 +411,23 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
       creditBadge: document.getElementById('ai-ocr-credit-badge'),
       modeBadge: document.getElementById('ai-ocr-mode-badge'),
+
+      undoPageDeleteBtn: document.getElementById('undoPageDeleteBtn'),
+      undoPageDeleteBtnText: document.getElementById('undoPageDeleteBtnText'),
+      cancelConversionBtn: document.getElementById('wizardCancelConversionBtn'),
+
+      // Page Zoom Modal Elements
+      pageZoomModal: document.getElementById('pageZoomModal'),
+      pageZoomTitle: document.getElementById('pageZoomTitle'),
+      pageZoomSubtitle: document.getElementById('pageZoomSubtitle'),
+      pageZoomImg: document.getElementById('pageZoomImg'),
+      pageZoomImgWrapper: document.getElementById('pageZoomImgWrapper'),
+      pageZoomInBtn: document.getElementById('pageZoomInBtn'),
+      pageZoomOutBtn: document.getElementById('pageZoomOutBtn'),
+      pageZoomResetBtn: document.getElementById('pageZoomResetBtn'),
+      pageZoomPrevBtn: document.getElementById('pageZoomPrevBtn'),
+      pageZoomNextBtn: document.getElementById('pageZoomNextBtn'),
+      pageZoomCloseBtn: document.getElementById('pageZoomCloseBtn'),
 
       outputUnicodeArea: document.getElementById('wizardPreviewContent') || document.getElementById('ai-ocr-output-unicode'),
       outputBijoyArea: document.getElementById('ai-ocr-output-bijoy'),
@@ -464,18 +489,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         elements.creditBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-300";
       }
     }
-    if (elements.modeBadge) {
-      if (state.demoMode) {
-        elements.modeBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300 inline-flex items-center gap-1.5";
-        elements.modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> অফলাইন ডেমো`;
-      } else if (state.byokApiKey) {
-        elements.modeBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 inline-flex items-center gap-1.5";
-        elements.modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> লাইভ API সচল`;
-      } else {
-        elements.modeBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-300 inline-flex items-center gap-1.5";
-        elements.modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-500"></span> ফ্রি প্রক্সি`;
-      }
-    }
+    updateProModelStatusUI(cachedBridgeOnline);
   }
 
   function setupEvents() {
@@ -585,6 +599,50 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         showToast('অডিট লগ ফাইল সফলভাবে ডাউনলোড হয়েছে!', 'success');
       });
     }
+
+    if (elements.undoPageDeleteBtn) {
+      elements.undoPageDeleteBtn.addEventListener('click', undoPageDelete);
+    }
+    if (elements.cancelConversionBtn) {
+      elements.cancelConversionBtn.addEventListener('click', cancelCurrentConversion);
+    }
+
+    // Lightbox Zoom Modal Controls
+    if (elements.pageZoomCloseBtn) elements.pageZoomCloseBtn.addEventListener('click', closePageZoom);
+    if (elements.pageZoomInBtn) elements.pageZoomInBtn.addEventListener('click', () => setZoomScale(state.currentZoomScale + 0.25));
+    if (elements.pageZoomOutBtn) elements.pageZoomOutBtn.addEventListener('click', () => setZoomScale(state.currentZoomScale - 0.25));
+    if (elements.pageZoomResetBtn) elements.pageZoomResetBtn.addEventListener('click', () => setZoomScale(1.0));
+    if (elements.pageZoomPrevBtn) elements.pageZoomPrevBtn.addEventListener('click', () => navPageZoom(-1));
+    if (elements.pageZoomNextBtn) elements.pageZoomNextBtn.addEventListener('click', () => navPageZoom(1));
+    if (elements.pageZoomImg) {
+      elements.pageZoomImg.addEventListener('click', () => {
+        setZoomScale(state.currentZoomScale > 1.2 ? 1.0 : 1.8);
+      });
+    }
+
+    if (elements.pageZoomModal) {
+      elements.pageZoomModal.addEventListener('click', (e) => {
+        if (e.target === elements.pageZoomModal || e.target === elements.pageZoomImgWrapper) {
+          closePageZoom();
+        }
+      });
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const zoomModal = elements.pageZoomModal || document.getElementById('pageZoomModal');
+      if (zoomModal && !zoomModal.classList.contains('hidden')) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closePageZoom();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          navPageZoom(-1);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          navPageZoom(1);
+        }
+      }
+    });
   }
 
   // Extract all pages from a PDF as crisp images
@@ -780,8 +838,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       return;
     }
 
-    // Multiple files/pages handling: All pages will be sent to Gemini in a SINGLE request!
+    // All pages will be sent to Gemini in a SINGLE request!
     state.selectedFile = state.filesQueue[0].file;
+    state.deletedPagesHistory = [];
+
     if (elements.fileName) elements.fileName.textContent = `${toBengaliNumber(state.filesQueue.length)}টি পেজ নির্বাচিত`;
     if (elements.fileSize) elements.fileSize.textContent = `মোট ${formatBytes(totalBytes)}`;
     if (elements.fileCountBadge) elements.fileCountBadge.textContent = `${toBengaliNumber(state.filesQueue.length)}টি পেজ একসাথে প্রসেস হবে`;
@@ -791,38 +851,266 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     elements.uploadPrompt?.classList.add('hidden');
     elements.previewContainer?.classList.remove('hidden');
 
-    const multiThumbsContainer = document.getElementById('aiOcrMultiThumbsContainer');
-    if (multiThumbsContainer) multiThumbsContainer.classList.remove('hidden');
-
-    if (elements.multiThumbs) {
-      elements.multiThumbs.innerHTML = '';
-      elements.multiThumbs.classList.remove('hidden');
-
-      state.filesQueue.forEach((item, idx) => {
-        const thumbDiv = document.createElement('div');
-        thumbDiv.className = 'w-14 h-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative flex-shrink-0';
-        if (item.base64) {
-          thumbDiv.innerHTML = `<img src="${item.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
-        } else if (item.isPdf) {
-          thumbDiv.innerHTML = `<i class="fa-solid fa-file-pdf text-rose-500 text-lg"></i><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
-          fastOptimizeImageFile(item.file).then(opt => {
-            item.base64 = opt.base64;
-            item.mimeType = opt.mimeType;
-          });
-        } else {
-          fastOptimizeImageFile(item.file).then(opt => {
-            item.base64 = opt.base64;
-            item.mimeType = opt.mimeType;
-            thumbDiv.innerHTML = `<img src="${opt.base64}" class="w-full h-full object-cover"><span class="absolute bottom-0 inset-x-0 bg-slate-900/80 text-[7px] text-white text-center truncate px-0.5">P${idx+1}: ${item.name}</span>`;
-          });
-        }
-        elements.multiThumbs.appendChild(thumbDiv);
-      });
-    }
+    renderThumbnails();
 
     if (elements.convertBtn) elements.convertBtn.disabled = false;
     elements.successCard?.classList.add('hidden');
     showToast(`মোট ${toBengaliNumber(state.filesQueue.length)}টি পেজ প্রস্তুত! সবগুলো একসাথে সম্পূর্ণ রূপান্তর হবে।`, 'info');
+  }
+
+  // Render rich interactive thumbnail cards with Zoom & Delete
+  function renderThumbnails() {
+    const multiThumbsContainer = document.getElementById('aiOcrMultiThumbsContainer');
+    const thumbsList = elements.multiThumbs || document.getElementById('aiOcrThumbsList');
+    if (!thumbsList) return;
+
+    if (state.filesQueue.length === 0) {
+      if (multiThumbsContainer) multiThumbsContainer.classList.add('hidden');
+      thumbsList.innerHTML = '';
+      if (elements.convertBtn) elements.convertBtn.disabled = true;
+      return;
+    }
+
+    if (multiThumbsContainer) {
+      multiThumbsContainer.classList.remove('hidden');
+      multiThumbsContainer.classList.add('flex');
+    }
+    thumbsList.innerHTML = '';
+    thumbsList.classList.remove('hidden');
+
+    // Update Undo Button state
+    const undoBtn = elements.undoPageDeleteBtn || document.getElementById('undoPageDeleteBtn');
+    const undoText = elements.undoPageDeleteBtnText || document.getElementById('undoPageDeleteBtnText');
+    if (undoBtn) {
+      if (state.deletedPagesHistory && state.deletedPagesHistory.length > 0) {
+        undoBtn.classList.remove('hidden');
+        undoBtn.classList.add('inline-flex');
+        if (undoText) undoText.textContent = `মুছে ফেলা পেজ ফেরত আনুন (${toBengaliNumber(state.deletedPagesHistory.length)}টি)`;
+      } else {
+        undoBtn.classList.add('hidden');
+        undoBtn.classList.remove('inline-flex');
+      }
+    }
+
+    state.filesQueue.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'w-24 sm:w-28 h-32 sm:h-36 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a263d] p-1.5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative group overflow-hidden flex-shrink-0 cursor-pointer';
+
+      // Top Bar: Page Badge & Delete Button
+      const topBar = document.createElement('div');
+      topBar.className = 'flex items-center justify-between w-full px-1 z-10';
+      topBar.innerHTML = `
+        <span class="px-1.5 py-0.5 rounded-md bg-slate-900/85 text-[10px] font-bold text-white shadow-xs">পৃ: ${toBengaliNumber(idx + 1)}</span>
+        <button type="button" class="thumb-delete-btn w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] shadow-sm transition opacity-80 hover:opacity-100 cursor-pointer" title="এই পৃষ্ঠাটি বাদ দিন">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      `;
+
+      // Middle: Image Preview & Zoom Overlay
+      const previewArea = document.createElement('div');
+      previewArea.className = 'flex-1 my-1 w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative';
+
+      const img = document.createElement('img');
+      img.className = 'w-full h-full object-cover';
+
+      const zoomOverlay = document.createElement('div');
+      zoomOverlay.className = 'absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[11px] font-bold gap-1';
+      zoomOverlay.innerHTML = '<i class="fa-solid fa-magnifying-glass-plus text-base"></i><span>বড় দেখুন</span>';
+
+      if (item.base64) {
+        img.src = item.base64;
+        previewArea.appendChild(img);
+      } else if (item.isPdf) {
+        previewArea.innerHTML = `<i class="fa-solid fa-file-pdf text-rose-500 text-2xl"></i>`;
+        fastOptimizeImageFile(item.file).then(opt => {
+          item.base64 = opt.base64;
+          item.mimeType = opt.mimeType;
+          img.src = opt.base64;
+          previewArea.innerHTML = '';
+          previewArea.appendChild(img);
+          previewArea.appendChild(zoomOverlay);
+        });
+      } else {
+        fastOptimizeImageFile(item.file).then(opt => {
+          item.base64 = opt.base64;
+          item.mimeType = opt.mimeType;
+          img.src = opt.base64;
+          previewArea.innerHTML = '';
+          previewArea.appendChild(img);
+          previewArea.appendChild(zoomOverlay);
+        });
+      }
+      previewArea.appendChild(zoomOverlay);
+
+      // Bottom: Truncated Filename
+      const label = document.createElement('div');
+      label.className = 'w-full text-center text-[9px] font-semibold text-slate-600 dark:text-slate-300 truncate px-0.5';
+      label.textContent = item.name || `পৃষ্ঠা ${idx + 1}`;
+
+      card.appendChild(topBar);
+      card.appendChild(previewArea);
+      card.appendChild(label);
+
+      // Card Click -> Open Lightbox Zoom
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.thumb-delete-btn')) return;
+        openPageZoom(idx);
+      });
+
+      // Delete Button Click
+      const delBtn = topBar.querySelector('.thumb-delete-btn');
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deletePage(idx);
+      });
+
+      thumbsList.appendChild(card);
+    });
+
+    if (elements.convertBtn) elements.convertBtn.disabled = false;
+  }
+
+  // Remove a single page with undo recording
+  function deletePage(idx) {
+    if (idx < 0 || idx >= state.filesQueue.length) return;
+    const removed = state.filesQueue.splice(idx, 1)[0];
+    state.deletedPagesHistory.push({ item: removed, originalIndex: idx });
+
+    const totalBytes = state.filesQueue.reduce((acc, f) => acc + (f.file ? f.file.size : (f.size || 0)), 0);
+    if (elements.fileName) elements.fileName.textContent = `${toBengaliNumber(state.filesQueue.length)}টি পেজ নির্বাচিত`;
+    if (elements.fileSize) elements.fileSize.textContent = `মোট ${formatBytes(totalBytes)}`;
+    if (elements.fileCountBadge) elements.fileCountBadge.textContent = `${toBengaliNumber(state.filesQueue.length)}টি পেজ একসাথে প্রসেস হবে`;
+
+    const scanFileSize = document.getElementById('scanFileSize');
+    if (scanFileSize) scanFileSize.textContent = `${toBengaliNumber(state.filesQueue.length)}টি পেজ (${formatBytes(totalBytes)})`;
+
+    renderThumbnails();
+    showToast(`পৃষ্ঠা ${toBengaliNumber(idx + 1)} বাদ দেওয়া হয়েছে। প্রয়োজনে আনডু করুন।`, 'info');
+  }
+
+  // Restore the last deleted page
+  function undoPageDelete() {
+    if (!state.deletedPagesHistory || state.deletedPagesHistory.length === 0) return;
+    const record = state.deletedPagesHistory.pop();
+    const insertIdx = Math.min(record.originalIndex, state.filesQueue.length);
+    state.filesQueue.splice(insertIdx, 0, record.item);
+
+    const totalBytes = state.filesQueue.reduce((acc, f) => acc + (f.file ? f.file.size : (f.size || 0)), 0);
+    if (elements.fileName) elements.fileName.textContent = `${toBengaliNumber(state.filesQueue.length)}টি পেজ নির্বাচিত`;
+    if (elements.fileSize) elements.fileSize.textContent = `মোট ${formatBytes(totalBytes)}`;
+    if (elements.fileCountBadge) elements.fileCountBadge.textContent = `${toBengaliNumber(state.filesQueue.length)}টি পেজ একসাথে প্রসেস হবে`;
+
+    const scanFileSize = document.getElementById('scanFileSize');
+    if (scanFileSize) scanFileSize.textContent = `${toBengaliNumber(state.filesQueue.length)}টি পেজ (${formatBytes(totalBytes)})`;
+
+    renderThumbnails();
+    showToast('মুছে ফেলা পৃষ্ঠা সফলভাবে ফিরিয়ে আনা হয়েছে!', 'success');
+  }
+
+  // ---------------------------------------------------------
+  // LIGHTBOX PAGE ZOOM & FULLSCREEN PREVIEW
+  // ---------------------------------------------------------
+  function openPageZoom(index) {
+    if (index < 0 || index >= state.filesQueue.length) return;
+    state.currentZoomIndex = index;
+    state.currentZoomScale = 1.0;
+    updatePageZoomView();
+    const modal = elements.pageZoomModal || document.getElementById('pageZoomModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+  }
+
+  function closePageZoom() {
+    const modal = elements.pageZoomModal || document.getElementById('pageZoomModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    state.currentZoomScale = 1.0;
+  }
+
+  function updatePageZoomView() {
+    const item = state.filesQueue[state.currentZoomIndex];
+    if (!item) return;
+
+    const img = elements.pageZoomImg || document.getElementById('pageZoomImg');
+    const title = elements.pageZoomTitle || document.getElementById('pageZoomTitle');
+    const subtitle = elements.pageZoomSubtitle || document.getElementById('pageZoomSubtitle');
+    const resetBtn = elements.pageZoomResetBtn || document.getElementById('pageZoomResetBtn');
+
+    if (title) title.textContent = `পৃষ্ঠা ${toBengaliNumber(state.currentZoomIndex + 1)} প্রিভিউ`;
+    if (subtitle) subtitle.textContent = `পৃষ্ঠা ${toBengaliNumber(state.currentZoomIndex + 1)} / ${toBengaliNumber(state.filesQueue.length)} (${item.name || ''})`;
+
+    if (img) {
+      img.style.transform = `scale(${state.currentZoomScale})`;
+      if (item.base64) {
+        img.src = item.base64;
+      } else {
+        fastOptimizeImageFile(item.file).then(opt => {
+          item.base64 = opt.base64;
+          img.src = opt.base64;
+        });
+      }
+    }
+
+    if (resetBtn) {
+      resetBtn.textContent = `${Math.round(state.currentZoomScale * 100)}%`;
+    }
+  }
+
+  function setZoomScale(scale) {
+    state.currentZoomScale = Math.max(0.5, Math.min(3.0, scale));
+    const img = elements.pageZoomImg || document.getElementById('pageZoomImg');
+    const resetBtn = elements.pageZoomResetBtn || document.getElementById('pageZoomResetBtn');
+    if (img) img.style.transform = `scale(${state.currentZoomScale})`;
+    if (resetBtn) resetBtn.textContent = `${Math.round(state.currentZoomScale * 100)}%`;
+  }
+
+  function navPageZoom(step) {
+    if (state.filesQueue.length <= 1) return;
+    state.currentZoomIndex = (state.currentZoomIndex + step + state.filesQueue.length) % state.filesQueue.length;
+    state.currentZoomScale = 1.0;
+    updatePageZoomView();
+  }
+
+  // ---------------------------------------------------------
+  // CONVERSION CANCELLATION (রূপান্তর বাতিল / বন্ধ করার অপশন)
+  // ---------------------------------------------------------
+  function cancelCurrentConversion() {
+    if (!state.isProcessing) return;
+    state.isProcessing = false;
+
+    if (activeAbortController) {
+      try {
+        activeAbortController.abort();
+      } catch (e) {}
+      activeAbortController = null;
+    }
+
+    if (activeBridgeJobId) {
+      fetch(`${FIREBASE_BRIDGE_URL}/requests/${activeBridgeJobId}.json`, { method: 'DELETE' }).catch(() => {});
+      activeBridgeJobId = null;
+    }
+
+    setLoading(false);
+
+    // Hide progress card and return user to Step 2 options
+    const progressCard = document.getElementById('wizardProgressCard') || elements.progressContainer;
+    const step2 = document.getElementById('wizard-step-2');
+    const step3 = document.getElementById('wizard-step-3');
+    if (progressCard) {
+      progressCard.classList.add('hidden');
+      progressCard.classList.remove('flex');
+    }
+    if (step3) step3.classList.add('hidden');
+    if (step2) step2.classList.remove('hidden');
+
+    if (elements.convertBtn) elements.convertBtn.disabled = false;
+    updateProModelStatusUI(cachedBridgeOnline);
+
+    showToast('রূপান্তর সফলভাবে বাতিল করা হয়েছে।', 'info');
   }
 
   function clearImage() {
@@ -830,6 +1118,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     state.imageBase64 = '';
     state.imageMimeType = '';
     state.filesQueue = [];
+    state.deletedPagesHistory = [];
+    closePageZoom();
     if (elements.fileInput) elements.fileInput.value = '';
     if (elements.imagePreview) elements.imagePreview.src = '';
     if (elements.previewContainer) elements.previewContainer.classList.add('hidden');
@@ -960,6 +1250,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       
       const combinedBase64 = mediaItems.map(m => m.data.includes('base64,') ? m.data.split('base64,')[1] : m.data).join('|||');
       const jobId = 'job_' + Date.now();
+      activeBridgeJobId = jobId;
 
       try {
         await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
@@ -981,7 +1272,17 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         let workerPickedUp = false;
 
         while (Date.now() - bridgeStart < maxWaitMs) {
+          if (!state.isProcessing) {
+            fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+            activeBridgeJobId = null;
+            return null;
+          }
           await sleep(1500);
+          if (!state.isProcessing) {
+            fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+            activeBridgeJobId = null;
+            return null;
+          }
 
           // Fast check: if after 10s job is still pending, worker is closed or inactive!
           if (!workerPickedUp && (Date.now() - bridgeStart > 10000)) {
@@ -1020,6 +1321,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
         // Clean up pending request
         fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+        activeBridgeJobId = null;
 
         if (bridgeSuccess && rawText) {
           if (onStream) onStream(rawText);
@@ -1099,6 +1401,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       }
     }
 
+    if (!state.isProcessing) return null;
+
     // Now emit the single final verified output
     handleExtractionSuccess(finalExtractedText, state.autoVerify);
 
@@ -1130,7 +1434,25 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   function fetchWithTimeout(url, options, timeoutMs) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
-    return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+
+    let cleanupAbort = null;
+    if (activeAbortController) {
+      const onMainAbort = () => {
+        try { controller.abort(); } catch (e) {}
+      };
+      activeAbortController.signal.addEventListener('abort', onMainAbort, { once: true });
+      cleanupAbort = () => {
+        if (activeAbortController) {
+          try { activeAbortController.signal.removeEventListener('abort', onMainAbort); } catch (e) {}
+        }
+      };
+    }
+
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => {
+        clearTimeout(timer);
+        if (cleanupAbort) cleanupAbort();
+      });
   }
 
   // ---------------------------------------------------------
@@ -1271,14 +1593,17 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
   // Gemini Execution Engine: sends media parts with Google's official system_instruction & live SSE Streaming
   async function executeGeminiRequest(apiKey, mediaInput, onStreamChunk = null, customPrompt = null, extraTextContent = null) {
-    let mediaItems = [];
-    if (Array.isArray(mediaInput)) {
-      mediaItems = mediaInput;
-    } else if (typeof mediaInput === 'object' && mediaInput.data) {
-      mediaItems = [mediaInput];
-    } else if (typeof mediaInput === 'string') {
-      mediaItems = [{ data: mediaInput, mimeType: 'image/jpeg' }];
-    }
+    if (!state.isProcessing) return '';
+    activeAbortController = new AbortController();
+    try {
+      let mediaItems = [];
+      if (Array.isArray(mediaInput)) {
+        mediaItems = mediaInput;
+      } else if (typeof mediaInput === 'object' && mediaInput.data) {
+        mediaItems = [mediaInput];
+      } else if (typeof mediaInput === 'string') {
+        mediaItems = [{ data: mediaInput, mimeType: 'image/jpeg' }];
+      }
 
     // Build media items array (JPEG / PDF)
     const mediaParts = [];
@@ -1715,7 +2040,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       }
     }
 
-    throw new Error(lastError?.message || 'Gemini API-র সকল কি ব্যস্ত বা কোটা পূর্ণ। অনুগ্রহ করে কয়েক মুহূর্ত পর পুনরায় চেষ্টা করুন।');
+      throw new Error(lastError?.message || 'Gemini API-র সকল কি ব্যস্ত বা কোটা পূর্ণ। অনুগ্রহ করে কয়েক মুহূর্ত পর পুনরায় চেষ্টা করুন।');
+    } finally {
+      activeAbortController = null;
+    }
   }
 
   async function runGasProxyOcr() {
@@ -3111,6 +3439,12 @@ ${bodyContentXml}
     init,
     startOcrConversion,
     startUnifiedOcr,
+    cancelCurrentConversion,
+    renderThumbnails,
+    deletePage,
+    undoPageDelete,
+    openPageZoom,
+    closePageZoom,
     runVerificationPipeline,
     extractAuditNote,
     downloadWordDocument,

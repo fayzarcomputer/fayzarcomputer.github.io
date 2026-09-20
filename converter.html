@@ -323,14 +323,9 @@
 
         <!-- Controls: AI Badge & Settings -->
         <div class="flex items-center gap-2">
-          <!-- Live Pro Model Badge (Dynamically shown only when Desktop Pro 3.1 service is running) -->
-          <span id="pro-model-status-badge" class="hidden px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-purple-700 via-indigo-600 to-emerald-600 text-white border border-purple-400/80 shadow-md items-center gap-1.5 animate-pulse cursor-default" title="ডেস্কটপ Gemini 3.1 Pro ইঞ্জিন সক্রিয় ও প্রস্তুত">
-            <span class="w-2 h-2 rounded-full bg-emerald-300 shadow-sm animate-ping"></span>
-            <span>⚡ প্রো মডেল এ্যাভেলএবেল আছে</span>
-          </span>
-
-          <span id="ai-ocr-mode-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 inline-flex items-center gap-1.5 shadow-2xs">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> লাইভ AI সচল
+          <!-- Live Unified Status Badge: Automatically updates between 'লাইভ API সচল' and 'প্রো মডেল একটিভ আছে' -->
+          <span id="ai-ocr-mode-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 inline-flex items-center gap-1.5 shadow-2xs transition-all duration-300 cursor-pointer" title="Google Gemini Live Cloud API সক্রিয়">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> লাইভ API সচল
           </span>
           
           <button type="button" id="ai-ocr-open-settings-btn" aria-label="Gemini AI সেটিংস ও API Key" class="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-[#1a263d] hover:bg-slate-200 dark:hover:bg-[#23324f] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition shadow-2xs cursor-pointer" title="Gemini API Key ও AI সেটিংস">
@@ -442,9 +437,17 @@
           </div>
 
           <!-- Multi-Page Thumbnails Preview (When Images/PDF dropped) -->
-          <div id="aiOcrMultiThumbsContainer" class="hidden p-4 bg-slate-50 dark:bg-[#162238] rounded-2xl border border-slate-200 dark:border-slate-700 flex-col gap-2">
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">আপলোড করা পেজ প্রিভিউ (সবগুলো একসাথে প্রসেস হবে):</span>
-            <div id="aiOcrThumbsList" class="flex flex-wrap gap-2 max-h-28 overflow-y-auto"></div>
+          <div id="aiOcrMultiThumbsContainer" class="hidden p-4 sm:p-5 bg-slate-50 dark:bg-[#162238] rounded-2xl border border-slate-200 dark:border-slate-700 flex-col gap-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-images text-emerald-600 dark:text-emerald-400"></i> আপলোড করা পেজ তালিকা (বড় করে দেখতে ছবিতে ক্লিক করুন):
+              </span>
+              <button type="button" id="undoPageDeleteBtn" class="hidden px-3 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold text-xs items-center gap-1.5 transition shadow-2xs cursor-pointer">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span id="undoPageDeleteBtnText">মুছে ফেলা পেজ ফেরত আনুন (Undo)</span>
+              </button>
+            </div>
+            <div id="aiOcrThumbsList" class="flex flex-wrap gap-3 max-h-72 overflow-y-auto p-1"></div>
           </div>
 
           <!-- -------------------------------------------------------------
@@ -627,6 +630,14 @@
             <div class="mt-5 p-2.5 px-4 rounded-xl bg-white/80 dark:bg-[#1a263d]/80 border border-slate-200 dark:border-slate-700/80 text-[11px] text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-2 max-w-md mx-auto shadow-2xs">
               <i class="fa-solid fa-lightbulb text-amber-500 text-xs flex-shrink-0 animate-bounce" aria-hidden="true"></i>
               <span>সমীকরণ ও জটিল যুক্তবর্ণ নির্ভুল করতে কয়েক সেকেন্ড সময় লাগে, অনুগ্রহ করে অপেক্ষা করুন</span>
+            </div>
+
+            <!-- রূপান্তর বাতিল / বন্ধ করার বাটন -->
+            <div class="mt-4">
+              <button type="button" id="wizardCancelConversionBtn" class="px-5 py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-700 font-bold text-xs sm:text-sm inline-flex items-center gap-2 transition shadow-sm cursor-pointer hover:shadow-md">
+                <i class="fa-solid fa-ban text-rose-500"></i>
+                <span>রূপান্তর বাতিল / বন্ধ করুন</span>
+              </button>
             </div>
 
           </div>
@@ -1712,6 +1723,64 @@
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
 
+  <!-- =================================================================
+       পৃষ্ঠা জুম ও ফুলস্ক্রিন প্রিভিউ লাইটবক্স মোডাল (Page Zoom & Inspect Lightbox)
+       ================================================================= -->
+  <div id="pageZoomModal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between p-3 sm:p-6 animate-fade-in select-none">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between gap-3 text-white pb-3 border-b border-white/15">
+      <div class="flex items-center gap-3">
+        <span class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 text-base shadow-sm">
+          <i class="fa-solid fa-file-image"></i>
+        </span>
+        <div>
+          <h4 id="pageZoomTitle" class="text-sm sm:text-base font-black">পৃষ্ঠা প্রিভিউ ও জুম</h4>
+          <span id="pageZoomSubtitle" class="text-xs text-slate-300 font-medium">পৃষ্ঠা ১ / ১</span>
+        </div>
+      </div>
+
+      <!-- Controls: Zoom In, Zoom Out, Reset, Close -->
+      <div class="flex items-center gap-2">
+        <button type="button" id="pageZoomOutBtn" title="ছোট করুন (Zoom Out)" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-sm transition cursor-pointer">
+          <i class="fa-solid fa-magnifying-glass-minus"></i>
+        </button>
+        <button type="button" id="pageZoomResetBtn" title="রিসেট করুন (Reset 100%)" class="px-2.5 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold transition cursor-pointer">
+          ১০০%
+        </button>
+        <button type="button" id="pageZoomInBtn" title="বড় করুন (Zoom In)" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-sm transition cursor-pointer">
+          <i class="fa-solid fa-magnifying-glass-plus"></i>
+        </button>
+        <button type="button" id="pageZoomCloseBtn" title="বন্ধ করুন (Esc)" class="w-9 h-9 rounded-xl bg-rose-500/80 hover:bg-rose-600 text-white flex items-center justify-center text-base transition cursor-pointer ml-2">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Image Area with Prev / Next Navigation -->
+    <div class="relative flex-1 flex items-center justify-center overflow-hidden my-3">
+      <!-- Prev Button -->
+      <button type="button" id="pageZoomPrevBtn" title="পূর্ববর্তী পৃষ্ঠা (Left Arrow)" class="absolute left-2 sm:left-4 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-black/60 hover:bg-black/90 text-white border border-white/20 flex items-center justify-center text-lg sm:text-xl transition cursor-pointer backdrop-blur-xs shadow-lg">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+
+      <!-- Main Zoomable Image -->
+      <div id="pageZoomImgWrapper" class="w-full h-full flex items-center justify-center overflow-auto cursor-zoom-in">
+        <img id="pageZoomImg" src="" alt="Page Full Preview" class="max-h-[80vh] max-w-[92vw] object-contain rounded-lg shadow-2xl transition-transform duration-200">
+      </div>
+
+      <!-- Next Button -->
+      <button type="button" id="pageZoomNextBtn" title="পরবর্তী পৃষ্ঠা (Right Arrow)" class="absolute right-2 sm:right-4 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-black/60 hover:bg-black/90 text-white border border-white/20 flex items-center justify-center text-lg sm:text-xl transition cursor-pointer backdrop-blur-xs shadow-lg">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Modal Footer Hint -->
+    <div class="flex items-center justify-between text-[11px] text-slate-400 px-2 pt-2 border-t border-white/10">
+      <span><i class="fa-solid fa-keyboard mr-1"></i> শর্টকাট: <kbd class="px-1.5 py-0.5 bg-white/10 rounded">←</kbd> পূর্ববর্তী, <kbd class="px-1.5 py-0.5 bg-white/10 rounded">→</kbd> পরবর্তী, <kbd class="px-1.5 py-0.5 bg-white/10 rounded">Esc</kbd> বন্ধ</span>
+      <span>ছবিতে ক্লিক করলে জুম ইন/আউট হবে</span>
+    </div>
+  </div>
+
   <!-- Core JavaScript Engines -->
   <script src="js/vendor/pdf.min.js"></script>
   <script src="js/jszip.min.js"></script>
@@ -1719,12 +1788,12 @@
   <script src="js/equation-converter.js"></script>
   <script src="js/docx-to-doc-engine.js"></script>
   <script src="js/doc-binary-engine.js"></script>
-  <script src="js/docx-handler.js?v=bridge-pro-eq3"></script>
+  <script src="js/docx-handler.js?v=bridge-features-v5"></script>
   <script src="js/xlsx-handler.js"></script>
   <script src="js/pptx-handler.js"></script>
   <script src="js/fayzar-ocr-config.js"></script>
-  <script src="js/ai-ocr-engine.js?v=bridge-pro-live4"></script>
-  <script src="js/main.js?v=bridge-pro-live4" defer></script>
+  <script src="js/ai-ocr-engine.js?v=bridge-features-v5"></script>
+  <script src="js/main.js?v=bridge-features-v5" defer></script>
 
   <!-- Floating CTA Stack -->
   <div class="floating-cta-stack" aria-label="দ্রুত যোগাযোগ">

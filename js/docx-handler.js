@@ -1177,12 +1177,22 @@
       // Convert e.g. "cm 3", "cm 2", "cm^3", "m 3", "m^3" to superscripts
       sanitizedText = sanitizedText.replace(/\b(cm|mm|m|km)\s*(\^?([23]))\b/gi, '$1<sup>$3</sup>');
 
-      // 1b. Auto-format common chemical formulas (e.g. KNO3, KNO2, H2O, HO2, 2H2O, H2O2, CO2, O2, SO4, CaCO3) to have proper HTML subscripts
-      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
-      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?[A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
-      sanitizedText = sanitizedText.replace(/\b([A-Z][a-z]?[A-Z][a-z]?[A-Z][a-z]?)([0-9]+)\b/g, '$1<sub>$2</sub>');
-      sanitizedText = sanitizedText.replace(/\b([0-9]*[A-Z][a-z]?)([0-9]+)([A-Z][a-z]?)([0-9]+)?\b/g, (m, g1, g2, g3, g4) => {
-        return `${g1}<sub>${g2}</sub>${g3}${g4 ? `<sub>${g4}</sub>` : ''}`;
+      // 1a. Pre-repair broken powers with newlines e.g. "6.023×10\n23\nটি" -> "$6.023 \times 10^{23}$ টি"
+      sanitizedText = sanitizedText.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})\s*\n+(?=[^\s])/g, '$1^{$2} ');
+      sanitizedText = sanitizedText.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})/g, '$1^{$2}');
+
+      // 1b. Wrap "6.023×10^{23}" or "10^{23}" in $...$ if not already in $...$
+      sanitizedText = sanitizedText.replace(/(?<!\$)\b((\d+(?:\.\d+)?\s*[×x*\u00D7\u2A2F]\s*)?10\s*\^\s*\{?\d+\}?)(?!\$)/g, (m) => {
+        let clean = m.replace(/[\s×x*\u00D7\u2A2F]+(?=10)/g, ' \\times ');
+        return '$' + clean + '$';
+      });
+
+      // 1c. Auto-wrap chemical formulas with subscripts outside $...$ (e.g. H2SO4, CO2, KNO3, CaCO3, KMnO4, C6H12O6, N2, NH3, 3H2, 2NH3)
+      sanitizedText = sanitizedText.replace(/(?<![\$\w])(\d*)([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)*|[A-Z][a-z]?\d+)(?![\$\w])/g, (match, coeff, formula) => {
+        if (!/\d/.test(formula)) return match;
+        if (/^(?:MCQ|CQ|CPU|RAM|LED|DNA|RNA|A4|B5|Q\d+|P\d+|ID|OK|AM|PM|US|UK|BD|HTML|CSS|JS|PDF|DOC|DOCX)$/i.test(match)) return match;
+        const latexFormula = formula.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
+        return '$' + (coeff ? coeff : '') + latexFormula + '$';
       });
 
       // 2. UNWRAP comma-separated lists of numbers (e.g. 75, 65, 80... in Q11)

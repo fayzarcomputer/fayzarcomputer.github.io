@@ -2484,23 +2484,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       return numPart.replace(/[0-9]/g, d => enToBn[d] || d) + (trailingUnit || '');
     });
 
-    // 3d. Auto-heal broken powers with newlines e.g. "6.023×10\n23\nটি" -> "$6.023 \times 10^{23}$ টি"
-    text = text.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})\s*\n+(?=[^\s])/g, '$1^{$2} ');
-    text = text.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})/g, '$1^{$2}');
-    text = text.replace(/(?<!\$)\b((\d+(?:\.\d+)?\s*[×x*\u00D7\u2A2F]\s*)?10\s*\^\s*\{?\d+\}?)(?!\$)/g, (m) => {
-      let clean = m.replace(/[\s×x*\u00D7\u2A2F]+(?=10)/g, ' \\times ');
-      return '$' + clean + '$';
-    });
-
-    // 3e. Auto-wrap chemical formulas with subscripts outside $...$ (e.g. H2SO4, CO2, KNO3, CaCO3, KMnO4, C6H12O6, N2, NH3, 3H2, 2NH3)
-    text = text.replace(/(?<![\$\w])(\d*)([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)*|[A-Z][a-z]?\d+)(?![\$\w])/g, (match, coeff, formula) => {
-      if (!/\d/.test(formula)) return match;
-      if (/^(?:MCQ|CQ|CPU|RAM|LED|DNA|RNA|A4|B5|Q\d+|P\d+|ID|OK|AM|PM|US|UK|BD|HTML|CSS|JS|PDF|DOC|DOCX)$/i.test(match)) return match;
-      const latexFormula = formula.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
-      return '$' + (coeff ? coeff : '') + latexFormula + '$';
-    });
-
-    // 3f. Auto-heal un-exponented algebraic powers e.g. 4x2-3y+7z, 2a3×3a2, a2-b2+c2, (x+y)2=(x-y)2+4xy
+    // 3d. Auto-heal scientific notation, broken powers and chemical formulas/reactions
+    if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.healScientificAndChemical === 'function') {
+      text = DocxHandler.healScientificAndChemical(text);
+    }
+    // 3e. Auto-heal un-exponented algebraic powers e.g. 4x2-3y+7z, 2a3×3a2, a2-b2+c2, (x+y)2=(x-y)2+4xy
     if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.healAlgebraicPowers === 'function') {
       text = DocxHandler.healAlgebraicPowers(text);
     }

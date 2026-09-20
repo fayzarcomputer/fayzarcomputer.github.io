@@ -874,9 +874,9 @@
       // Simple measurement units e.g. "cm", "m", "kg"
       if (/^(?:cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)$/i.test(s)) return false;
 
-      // Complex mathematical structures requiring Word EQ switch commands:
-      // (Pure superscripts/subscripts like 10^{23}, CO_2, H_2SO_4 are rendered as crisp, error-free native Word HTML <sup>/<sub>)
-      return /\\frac|\\dfrac|\\tfrac|\\sqrt|\\int|\\sum|\\prod|\\lim|\\matrix|\\binom|\\overline|\\underline|\\vec|\\dot|\\ddot|\\partial/.test(s);
+      // Mathematical or scientific structures requiring Word EQ switch commands or Office Math:
+      // Fractions, roots, superscripts, subscripts, scientific multiplication, integrals, matrices, etc.
+      return /\\frac|\\dfrac|\\tfrac|\\sqrt|\\int|\\sum|\\prod|\\lim|\\matrix|\\binom|\\overline|\\underline|\\vec|\\dot|\\ddot|\\partial|\^|_|\\times/.test(s);
     }
 
     /**

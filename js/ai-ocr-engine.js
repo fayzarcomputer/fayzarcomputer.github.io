@@ -1099,8 +1099,16 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     }
 
     if (activeBridgeJobId) {
-      fetch(`${FIREBASE_BRIDGE_URL}/requests/${activeBridgeJobId}.json`, { method: 'DELETE' }).catch(() => {});
+      const jId = activeBridgeJobId;
       activeBridgeJobId = null;
+      fetch(`${FIREBASE_BRIDGE_URL}/requests/${jId}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' })
+      }).catch(() => {});
+      setTimeout(() => {
+        fetch(`${FIREBASE_BRIDGE_URL}/requests/${jId}.json`, { method: 'DELETE' }).catch(() => {});
+      }, 1500);
     }
 
     setLoading(false);
@@ -1277,29 +1285,43 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
         let bridgeSuccess = false;
         const bridgeStart = Date.now();
-        const maxWaitMs = 50000; // 50 seconds max wait for Pro Model
+        const maxWaitMs = 120000; // 120 seconds max wait for Pro Model
         let workerPickedUp = false;
 
         while (Date.now() - bridgeStart < maxWaitMs) {
           if (!state.isProcessing) {
-            fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+            fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'cancelled' })
+            }).catch(() => {});
+            setTimeout(() => {
+              fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+            }, 1500);
             activeBridgeJobId = null;
             return null;
           }
           await sleep(1500);
           if (!state.isProcessing) {
-            fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+            fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'cancelled' })
+            }).catch(() => {});
+            setTimeout(() => {
+              fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+            }, 1500);
             activeBridgeJobId = null;
             return null;
           }
 
-          // Fast check: if after 10s job is still pending, worker is closed or inactive!
-          if (!workerPickedUp && (Date.now() - bridgeStart > 10000)) {
+          // Check if worker picked up the job (allow up to 40s for Chrome account selection and upload)
+          if (!workerPickedUp && (Date.now() - bridgeStart > 40000)) {
             try {
               const reqCheck = await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}/status.json?t=${Date.now()}`, { cache: 'no-store' });
               const reqStatus = await reqCheck.json();
               if (reqStatus === 'pending') {
-                console.warn('Bridge worker is inactive (job still pending after 10s). Aborting early to save time...');
+                console.warn('Bridge worker is inactive (job still pending after 40s). Aborting early to save time...');
                 break;
               } else if (reqStatus === 'processing') {
                 workerPickedUp = true;
@@ -1633,11 +1655,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     const activePrompt = customPrompt || GEMINI_PROMPT;
 
     const allActiveModels = [
-      'gemini-3-flash-preview',   // #1: 19/19 keys active (100% reliable, 1.1s response, 1,500 RPD)
-      'gemini-3.1-pro-preview',   // #2: PRO quality OCR! Best for complex math/Bengali documents (if quota available)
-      'gemini-3.6-flash',         // #3: Balanced flagship
-      'gemini-2.5-flash',         // #4: Deep reasoning fallback
-      'gemini-3.5-flash'          // #5: Standard flash fallback
+      'gemini-3-flash-preview',   // #1: 100% active, fast, ultra-reliable
+      'gemini-3.6-flash',         // #2: 100% active, balanced flagship
+      'gemini-3.1-pro-preview'    // #3: Pro quality OCR
     ];
 
     // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
@@ -1720,8 +1740,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.selectedModel && state.selectedModel !== 'auto') {
       candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
     } else {
-      // PROVEN RELIABILITY STRATEGY: Start with 100% active gemini-3-flash-preview, fallback to pro, then 3.6-flash
-      candidateModels = ['gemini-3-flash-preview', 'gemini-3.1-pro-preview', 'gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash'];
+      candidateModels = ['gemini-3-flash-preview', 'gemini-3.6-flash', 'gemini-3.1-pro-preview'];
     }
 
     // ⚡ COMPREHENSIVE ONE-SHOT PRE-FLIGHT KEY TEST (একবারে সকল কি টেস্ট করে সঠিক সক্রিয় কি নির্বাচন)
@@ -1731,7 +1750,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         setLoading(true, '⚡ সকল কি ও মডেল একবারে যাচাই করে সেরা সক্রিয় চ্যানেল নির্বাচন হচ্ছে...', 48);
 
         const preferredModel = candidateModels[0];
-        const singleProbe = async (k, mod, timeoutMs = 3500) => {
+        const singleProbe = async (k, mod, timeoutMs = 6000) => {
           const controller = new AbortController();
           const tId = setTimeout(() => controller.abort(), timeoutMs);
           try {

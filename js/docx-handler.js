@@ -873,9 +873,88 @@
       return text;
     }
 
-    static healAlgebraicPowers(text) {
+    /**
+     * Safely executes a regex transform on segments outside LaTeX math blocks ($...$ or $$...$$)
+     */
+    static processOutsideMath(text, fn) {
+      if (!text) return text;
+      const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[^\$]+?\$)/g);
+      for (let i = 0; i < parts.length; i += 2) {
+        if (parts[i]) parts[i] = fn(parts[i]);
+      }
+      return parts.join('');
+    }
+
+    /**
+     * Cleanly heals broken scientific notations (e.g. 6.023imes1022, 6.023\times 1023, 6.023*10^23)
+     * and chemical formulas (e.g. H2SO4, CO2, CCl4, CaCO3, N2+3H2=2NH3) into valid math blocks.
+     */
+    static healScientificAndChemical(text) {
       if (!text) return text;
       let s = text;
+
+      // 1. Repair broken powers with newlines e.g. "6.023×10\n23\nটি" -> "6.023 × 10^{23} টি"
+      s = s.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})\s*\n+(?=[^\s])/g, '$1^{$2} ');
+      s = s.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})/g, '$1^{$2}');
+
+      // 2. Fix scientific notation variants e.g. "6.023imes1022", "6.023 imes 1023", "6.023\times 1023", "6.023×10^23", "6.023 \times 10^{23}"
+      s = DocxHandler.processOutsideMath(s, str => {
+        return str.replace(/(?<![\$\d])(\d+(?:\.\d+)?)\s*(?:\\*times|imes|[×x*\u00D7\u2A2F])\s*10\s*(?:\^\s*\{?(\d{1,3})\}?|\^?\{?(\d{1,3})\}?)(?!\d)/gi, (m, coeff, exp1, exp2) => {
+          let exp = exp1 || exp2;
+          return `$${coeff} \\times 10^{${exp}}$`;
+        });
+      });
+
+      // 2b. If there was no multiplication sign but wrote "6.023 10^23" or "6.023 1023"
+      s = DocxHandler.processOutsideMath(s, str => {
+        return str.replace(/(?<![\$\d])(\d+(?:\.\d+)?)\s+10\s*(?:\^\s*\{?(\d{1,3})\}?|(?:1[0-9]|2[0-9]|3[0-9]))\b(?!\$)/g, (m, coeff, exp1) => {
+          let exp = exp1;
+          if (!exp) {
+            const match10 = m.match(/10(1[0-9]|2[0-9]|3[0-9])/);
+            if (match10) exp = match10[1];
+          }
+          return exp ? `$${coeff} \\times 10^{${exp}}$` : m;
+        });
+      });
+
+      // 2c. Match standalone "10^23" or "10^{23}" or "10^{-3}"
+      s = DocxHandler.processOutsideMath(s, str => {
+        return str.replace(/(?<!(?:\$|\\times\s*|[×*]\s*))\b10\s*\^\s*\{?(-?\d{1,3})\}?(?![\$\w])/g, (m, g1) => `$10^{${g1}}$`);
+      });
+
+      // 3. Fix broken spaces in split formulas: "H_2 O" -> "H_2O", "H_2 SO_4" -> "H_2SO_4", "H2 SO4" -> "H2SO4"
+      s = s.replace(/\b([A-Z][a-z]?(?:_\d+|\d+))\s+([A-Z][a-z]?(?:[A-Z][a-z]?)?(?:_\d+|\d+))\b/g, '$1$2');
+      s = s.replace(/\b([A-Z][a-z]?(?:_\d+|\d+))\s+([A-Z][a-z]?(?:_\d+|\d+)?)\b/g, '$1$2');
+
+      // 4. Match and wrap chemical reaction equations e.g. "N_2 + 3H_2 = 2NH_3" or "2H_2 + O_2 = 2H_2O" or with arrows
+      s = DocxHandler.processOutsideMath(s, str => {
+        const chemReaction = /(?<![\$a-zA-Z0-9])(\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+(?:\s*[-+]\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+)*\s*(?:=|→|->|──>)\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+(?:\s*[-+]\s*\d*(?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+)*)(?![\$a-zA-Z0-9])/g;
+        return str.replace(chemReaction, (m, eq) => {
+          if (!/\d|_/.test(eq)) return m;
+          let cleanEq = eq.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
+          cleanEq = cleanEq.replace(/_(\d+)(?!\})/g, '_{$1}');
+          return `$${cleanEq}$`;
+        });
+      });
+
+      // 5. Wrap chemical formulas with or without existing subscripts outside $...$
+      s = DocxHandler.processOutsideMath(s, str => {
+        const chemUnit = /(?<![\$a-zA-Z0-9])(\d*)((?:[A-Z][a-z]?(?:_\{?\d+\}?|\d+)?)+)(?![\$a-zA-Z0-9])/g;
+        return str.replace(chemUnit, (m, coeff, formula) => {
+          if (!/\d|_/.test(formula)) return m;
+          if (/^(?:MCQ|CQ|CPU|RAM|LED|DNA|RNA|A4|B5|Q\d+|P\d+|ID|OK|AM|PM|US|UK|BD|HTML|CSS|JS|PDF|DOC|DOCX)$/i.test(m)) return m;
+          let cleanFormula = formula.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
+          cleanFormula = cleanFormula.replace(/_(\d+)(?!\})/g, '_{$1}');
+          return '$' + (coeff || '') + cleanFormula + '$';
+        });
+      });
+
+      return s;
+    }
+
+    static healAlgebraicPowers(text) {
+      if (!text) return text;
+      let s = DocxHandler.healScientificAndChemical(text);
 
       // 1. Parenthesized expressions followed by a power e.g. (x+y)2 -> $(x+y)^2$, (x-y)2 -> $(x-y)^2$
       s = s.replace(/(\([a-zA-Z0-9\s_+\-*\/=]+\))\s*([2-9]|\d{2,})(?![\$\w])/g, (m, g1, g2) => '$(' + g1.slice(1, -1) + ')^{' + g2 + '}$');
@@ -1216,23 +1295,8 @@
       // Convert e.g. "cm 3", "cm 2", "cm^3", "m 3", "m^3" to superscripts
       sanitizedText = sanitizedText.replace(/\b(cm|mm|m|km)\s*(\^?([23]))\b/gi, '$1<sup>$3</sup>');
 
-      // 1a. Pre-repair broken powers with newlines e.g. "6.023×10\n23\nটি" -> "$6.023 \times 10^{23}$ টি"
-      sanitizedText = sanitizedText.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})\s*\n+(?=[^\s])/g, '$1^{$2} ');
-      sanitizedText = sanitizedText.replace(/([×x*\u00D7\u2A2F]?\s*10)\s*\n+(\d{1,3})/g, '$1^{$2}');
-
-      // 1b. Wrap "6.023×10^{23}" or "10^{23}" in $...$ if not already in $...$
-      sanitizedText = sanitizedText.replace(/(?<!\$)\b((\d+(?:\.\d+)?\s*[×x*\u00D7\u2A2F]\s*)?10\s*\^\s*\{?\d+\}?)(?!\$)/g, (m) => {
-        let clean = m.replace(/[\s×x*\u00D7\u2A2F]+(?=10)/g, ' \\times ');
-        return '$' + clean + '$';
-      });
-
-      // 1c. Auto-wrap chemical formulas with subscripts outside $...$ (e.g. H2SO4, CO2, KNO3, CaCO3, KMnO4, C6H12O6, N2, NH3, 3H2, 2NH3)
-      sanitizedText = sanitizedText.replace(/(?<![\$\w])(\d*)([A-Z][a-z]?\d*(?:[A-Z][a-z]?\d*)*|[A-Z][a-z]?\d+)(?![\$\w])/g, (match, coeff, formula) => {
-        if (!/\d/.test(formula)) return match;
-        if (/^(?:MCQ|CQ|CPU|RAM|LED|DNA|RNA|A4|B5|Q\d+|P\d+|ID|OK|AM|PM|US|UK|BD|HTML|CSS|JS|PDF|DOC|DOCX)$/i.test(match)) return match;
-        const latexFormula = formula.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
-        return '$' + (coeff ? coeff : '') + latexFormula + '$';
-      });
+      // 1. Auto-heal all scientific notation (e.g. 6.023 \times 10^{23}, 6.023imes1023) and chemical formulas/reactions
+      sanitizedText = DocxHandler.healScientificAndChemical(sanitizedText);
 
       // 2. UNWRAP comma-separated lists of numbers (e.g. 75, 65, 80... in Q11)
       // These must NEVER be treated as EQ fields, which cause Word's "!Syntax Error" / "Error!"
@@ -1322,6 +1386,14 @@
 
       function renderSuperscriptsAndSubscripts(str, isBijoy, fontName, baseFontSizePt) {
         let s = str;
+        // Pre-replace LaTeX math operators so \times never collides with Word \t tab character
+        s = s.replace(/\\times\b/g, ' × ').replace(/×/g, ' × ');
+        s = s.replace(/\\div\b/g, ' ÷ ');
+        s = s.replace(/\\pm\b/g, ' ± ');
+        s = s.replace(/\\cdot\b/g, ' · ');
+        s = s.replace(/\\(?:rightarrow|longrightarrow|to)\b/g, ' → ');
+        s = s.replace(/\s+/g, ' ').trim();
+
         const scriptSize = '8.0'; // crisp small font size for superscripts & subscripts
 
         s = s.replace(/\^\{([^}]+)\}|\^\(([^)]+)\)|\^([a-zA-Z0-9\u09E6-\u09EF+\-]+)/g, (m, g1, g2, g3) => {

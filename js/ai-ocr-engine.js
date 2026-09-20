@@ -28,17 +28,61 @@
   // HYBRID PRO-BRIDGE: NATIVE REST API (ZERO SDK DEPENDENCY)
   // ---------------------------------------------------------
   const FIREBASE_BRIDGE_URL = "https://fayzar-ocr-bridge-default-rtdb.asia-southeast1.firebasedatabase.app";
+  let cachedBridgeOnline = false;
+  let lastBridgeCheckTime = 0;
 
-  async function checkDesktopBridgeOnline() {
+  function updateProModelStatusUI(isOnline) {
+    const badge = document.getElementById('pro-model-status-badge');
+    if (badge) {
+      if (isOnline) {
+        badge.classList.remove('hidden');
+        badge.classList.add('inline-flex');
+      } else {
+        badge.classList.add('hidden');
+        badge.classList.remove('inline-flex');
+      }
+    }
+    const pill = document.getElementById('ai-model-type-pill');
+    if (pill) {
+      if (isOnline) {
+        pill.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 inline-flex items-center gap-1.5 shadow-2xs";
+        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ⚡ প্রো মডেল (3.1 Pro) প্রস্তুত`;
+      } else {
+        pill.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300 inline-flex items-center gap-1.5";
+        pill.innerHTML = `Gemini AI + ফয়জার ইঞ্জিন`;
+      }
+    }
+    const btnText = document.getElementById('executeAiConversionBtnText');
+    if (btnText && (!state || !state.isProcessing)) {
+      if (isOnline) {
+        btnText.textContent = '⚡ প্রো মডেল (3.1 Pro) দিয়ে সরাসরি কনভার্ট শুরু করুন';
+      } else {
+        btnText.textContent = 'AI দিয়ে সরাসরি কনভার্ট শুরু করুন';
+      }
+    }
+  }
+
+  async function checkDesktopBridgeOnline(forceRefresh = false) {
+    if (!forceRefresh && (Date.now() - lastBridgeCheckTime < 4000)) {
+      return cachedBridgeOnline;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1800);
     try {
       const res = await fetch(`${FIREBASE_BRIDGE_URL}/status/desktop.json?t=${Date.now()}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        signal: controller.signal
       });
+      clearTimeout(timer);
       const val = await res.json();
-      return val === 'online';
+      cachedBridgeOnline = (val === 'online');
     } catch (e) {
-      return false;
+      clearTimeout(timer);
+      cachedBridgeOnline = false;
     }
+    lastBridgeCheckTime = Date.now();
+    updateProModelStatusUI(cachedBridgeOnline);
+    return cachedBridgeOnline;
   }
   // ---------------------------------------------------------
 
@@ -317,6 +361,17 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     updateBadges();
     setupEvents();
     loadConverterDictionary();
+    checkDesktopBridgeOnline(true);
+    setInterval(() => {
+      if (!state.isProcessing) {
+        checkDesktopBridgeOnline(true);
+      }
+    }, 5000);
+    window.addEventListener('focus', () => {
+      if (!state.isProcessing) {
+        checkDesktopBridgeOnline(true);
+      }
+    });
   }
 
   function bindElements() {
@@ -898,7 +953,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     // ---------------------------------------------------------
     // HYBRID PRO-BRIDGE: PRE-FLIGHT CHECK & DIRECT REST EXECUTION
     // ---------------------------------------------------------
-    const isDesktopOnline = await checkDesktopBridgeOnline();
+    const isDesktopOnline = await checkDesktopBridgeOnline(false);
 
     if (isDesktopOnline) {
       if (onProgress) onProgress('⚡ Pro Desktop Bridge সংযুক্ত! রিকোয়েস্ট পাঠানো হচ্ছে...', 40);
@@ -906,51 +961,101 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       const combinedBase64 = mediaItems.map(m => m.data.includes('base64,') ? m.data.split('base64,')[1] : m.data).join('|||');
       const jobId = 'job_' + Date.now();
 
-      await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: 'pending',
-          imageBase64: combinedBase64,
-          prompt: GEMINI_PROMPT,
-          timestamp: Date.now()
-        })
-      });
+      try {
+        await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'pending',
+            imageBase64: combinedBase64,
+            prompt: GEMINI_PROMPT,
+            timestamp: Date.now()
+          })
+        });
 
-      if (onProgress) onProgress('⚡ Pro Desktop Bridge আপনার জেমিনি সেশনে কাজ করছে। অপেক্ষা করুন...', 65);
+        if (onProgress) onProgress('⚡ Pro Desktop Bridge আপনার জেমিনি সেশনে কাজ করছে। অপেক্ষা করুন...', 60);
 
-      const timeoutMs = REQUEST_TIMEOUT_MS;
-      const start = Date.now();
-      let bridgeSuccess = false;
+        let bridgeSuccess = false;
+        const bridgeStart = Date.now();
+        const maxWaitMs = 50000; // 50 seconds max wait for Pro Model
+        let workerPickedUp = false;
 
-      while (Date.now() - start < timeoutMs) {
-        await sleep(1500);
-        try {
-          const resp = await fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json?t=${Date.now()}`, {
-            cache: 'no-store'
-          });
-          const val = await resp.json();
-          if (val) {
-            fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
-            if (val.status === 'success') {
-              rawText = val.text;
-              bridgeSuccess = true;
-              break;
-            } else {
-              throw new Error(val.error || 'Desktop Bridge error');
-            }
+        while (Date.now() - bridgeStart < maxWaitMs) {
+          await sleep(1500);
+
+          // Fast check: if after 10s job is still pending, worker is closed or inactive!
+          if (!workerPickedUp && (Date.now() - bridgeStart > 10000)) {
+            try {
+              const reqCheck = await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}/status.json?t=${Date.now()}`, { cache: 'no-store' });
+              const reqStatus = await reqCheck.json();
+              if (reqStatus === 'pending') {
+                console.warn('Bridge worker is inactive (job still pending after 10s). Aborting early to save time...');
+                break;
+              } else if (reqStatus === 'processing') {
+                workerPickedUp = true;
+              }
+            } catch (e) {}
           }
-        } catch (pollErr) {
-          if (pollErr.message && !pollErr.message.includes('fetch')) throw pollErr;
+
+          try {
+            const resp = await fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json?t=${Date.now()}`, {
+              cache: 'no-store'
+            });
+            const val = await resp.json();
+            if (val) {
+              fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+              if (val.status === 'success') {
+                rawText = val.text;
+                bridgeSuccess = true;
+                break;
+              } else {
+                console.warn('Desktop Bridge error:', val.error);
+                break;
+              }
+            }
+          } catch (pollErr) {
+            // Ignore temporary network glitch during polling
+          }
+        }
+
+        // Clean up pending request
+        fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+
+        if (bridgeSuccess && rawText) {
+          if (onStream) onStream(rawText);
+        } else {
+          // Instant graceful fallback to Gemini API without waiting or blocking
+          console.warn('Pro Bridge did not complete in time. Auto-falling back to API pool seamlessly...');
+          cachedBridgeOnline = false;
+          updateProModelStatusUI(false);
+          showToast('⚡ প্রো মডেল সাড়া দেয়নি, ক্লাউড এপিআই দিয়ে দ্রুত সম্পন্ন করা হচ্ছে...', 'info');
+
+          if (apiKey) {
+            if (onProgress) onProgress('⚡ সরাসরি ক্লাউড API দিয়ে দ্রুত রূপান্তর হচ্ছে...', 50);
+            rawText = await executeGeminiRequest(apiKey, mediaItems, (liveChunk) => {
+              if (onStream) onStream(liveChunk);
+              if (onProgress) onProgress(`লাইভ স্ট্রিমিং চলছে (${toBengaliNumber(liveChunk.length)} অক্ষর)...`, Math.min(95, 45 + Math.round(liveChunk.length / 30)));
+            });
+          } else {
+            throw new Error("প্রো মডেল সাড়া দেয়নি এবং কোনো Gemini API Key পাওয়া যায়নি।");
+          }
+        }
+      } catch (bridgeErr) {
+        console.warn('Bridge execution exception:', bridgeErr);
+        fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+        cachedBridgeOnline = false;
+        updateProModelStatusUI(false);
+        if (apiKey) {
+          showToast('⚡ ক্লাউড এপিআই দিয়ে দ্রুত সম্পন্ন করা হচ্ছে...', 'info');
+          if (onProgress) onProgress('⚡ সরাসরি ক্লাউড API দিয়ে দ্রুত রূপান্তর হচ্ছে...', 50);
+          rawText = await executeGeminiRequest(apiKey, mediaItems, (liveChunk) => {
+            if (onStream) onStream(liveChunk);
+            if (onProgress) onProgress(`লাইভ স্ট্রিমিং চলছে (${toBengaliNumber(liveChunk.length)} অক্ষর)...`, Math.min(95, 45 + Math.round(liveChunk.length / 30)));
+          });
+        } else {
+          throw bridgeErr;
         }
       }
-
-      if (!bridgeSuccess) {
-        fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
-        throw new Error("Pro Desktop Bridge থেকে রেসপন্স পেতে নির্ধারিত সময় অতিক্রান্ত হয়েছে");
-      }
-
-      if (onStream) onStream(rawText);
     } else if (state.demoMode || !apiKey) {
       if (state.demoMode) {
         if (onProgress) onProgress('অফলাইন ডেমো সিমুলেশন চলছে...', 60);

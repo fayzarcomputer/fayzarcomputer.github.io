@@ -875,8 +875,8 @@
       if (/^(?:cm|mm|m|km|gm|kg|sec|s|hr|min|V|W|kW|A|mA|Hz|N|Pa|J)$/i.test(s)) return false;
 
       // Complex mathematical structures requiring Word EQ switch commands:
-      return /\\frac|\\dfrac|\\tfrac|\\sqrt|\\int|\\sum|\\prod|\\lim|\\matrix|\\binom|\\overline|\\underline|\\vec|\\dot|\\ddot|\\partial/.test(s) ||
-             (/[_^]/.test(s) && !/^(?:cm|mm|m|km)\s*[\^][23]$/i.test(s));
+      // (Pure superscripts/subscripts like 10^{23}, CO_2, H_2SO_4 are rendered as crisp, error-free native Word HTML <sup>/<sub>)
+      return /\\frac|\\dfrac|\\tfrac|\\sqrt|\\int|\\sum|\\prod|\\lim|\\matrix|\\binom|\\overline|\\underline|\\vec|\\dot|\\ddot|\\partial/.test(s);
     }
 
     /**

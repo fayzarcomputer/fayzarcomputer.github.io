@@ -152,6 +152,18 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
       * ইংরেজি '8' এবং বাংলা '৮' এর দৃষ্টিবিভ্রম কঠোরভাবে পরিহার করুন: কোনো সংখ্যার ভেতরে কখনোই ইংরেজি ও বাংলার বিকৃত সংমিশ্রণ (যেমন: 8.8৮ L ❌) করা যাবে না!
       * বিজ্ঞানের বহুনির্বাচনী ও গাণিতিক প্রশ্নে যেসকল অপশনে বৈজ্ঞানিক রাশি বা ইংরেজি একক রয়েছে, সেই অপশনগুলোর সকল সংখ্যা বাধ্যতামূলকভাবে ১০০% খাঁটি ইংরেজিতে (যেমন: 2.55 L ✅, 8.88 L ✅, 0.4 ✅, 0.2 ✅) উপস্থাপন করবেন।
       * বৈজ্ঞানিক ঘাত বা এক্সপোনেন্ট সমীকরণ (যেমন: $6.023 \\times 10^{23}$, $3.011 \\times 10^{23}$, $10^{-3}$, $10^5$ ইত্যাদি) বাধ্যতামূলকভাবে সম্পূর্ণ অংশ LaTeX ($...$) ব্লকে লিখবেন; কোনো অবস্থাতেই ঘাত বা সংখ্যা ভেঙে আলাদা লাইনে নেওয়া যাবে না!
+    - বীজগণিতীয় রাশি, সমীকরণ ও ঘাত/পাওয়ারের জন্য বিশেষ কঠোর নিয়ম (ALGEBRAIC POWERS & EQUATIONS):
+      * প্রশ্নপত্রে যখন কোনো চলকের উপর ঘাত/বর্গ/ঘন (squares, cubes) থাকে, সেগুলোকে কখনোই সমতল সাধারণ সংখ্যা (যেমন: 4x2 ❌, 8x2 ❌, 2a3 ❌, 3a2 ❌, a2-b2+c2 ❌, (x+y)2 ❌) আকারে লিখবেন না!
+      * বাধ্যতামূলকভাবে সকল বীজগণিতীয় রাশি ও সমীকরণ সম্পূর্ণ অংশ LaTeX ($...$) ব্লকে লিখবেন:
+        - $4x^2 - 3y + 7z$ ✅
+        - $8x^2 + 5y - 3z$ ✅
+        - $2a^3 \times 3a^2$ ✅
+        - $a^2 - b^2 + c^2$ ✅
+        - $(x+y)^2 = (x-y)^2 + 4xy$ ✅
+        - $a = 7x - 5y + 7z$ ✅
+        - $a + b + c = 17x + 4y + z$ ✅
+        - $a = 2, b = 3, c = 1$ ✅
+        - $x = 3, y = 5, z = 2$ ✅
     - Write mathematical formulas, algebraic equations, variables, sets, and expressions in LaTeX ($...$).
     - CRITICAL: DO NOT wrap plain numbers, lists of numbers, counts, or simple measurements in $...$!
       - Plain numbers & counts: 50 জন (NOT $50$ জন), 30 জন (NOT $30$ জন), 65, 62.5 (NOT $65$, $62.5$)
@@ -2054,6 +2066,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       const latexFormula = formula.replace(/([A-Z][a-z]?)(\d+)/g, '$1_{$2}');
       return '$' + (coeff ? coeff : '') + latexFormula + '$';
     });
+
+    // 3f. Auto-heal un-exponented algebraic powers e.g. 4x2-3y+7z, 2a3×3a2, a2-b2+c2, (x+y)2=(x-y)2+4xy
+    if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.healAlgebraicPowers === 'function') {
+      text = DocxHandler.healAlgebraicPowers(text);
+    }
 
     const rawLines = text.split('\n');
     const cleanedLines = [];

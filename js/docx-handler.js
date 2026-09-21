@@ -642,8 +642,9 @@
       if (DocxHandler.isEnglishQuestionLine(line)) return line;
 
       // Unicode Bengali Question: e.g. ১. or ১) or ১: or 1. (with Bengali text)
+      // Must NOT match multi-part or decimal numbered clauses like ৪.১., ৫.২.
       if (/[\u0980-\u09FF]/.test(line)) {
-        return line.replace(/^[ \t]*(?:প্রশ্ন|প্রশ্ন নং|প্রশ্ননং|Question)?\s*([০-৯0-9]+)[\.\)\:\-]\s*/i, (match, p1) => {
+        return line.replace(/^[ \t]*(?:প্রশ্ন|প্রশ্ন নং|প্রশ্ননং|Question)?\s*([০-৯0-9]+)[\.\)\:\-](?!\s*[০-৯0-9])\s*/i, (match, p1) => {
           const bnDigits = p1.replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
           return `${bnDigits}। `;
         });
@@ -651,11 +652,11 @@
 
       // Bijoy Question: 1. or 1) or 1:
       if (isBijoy || /[\u0080-\u00FF‡‰†Š&|]/.test(line)) {
-        if (/^[ \t]*(?:cÖkœ|cÖkœ bs)?\s*([0-9]+)[\.\)\:\-]\s*/i.test(line)) {
-          return line.replace(/^[ \t]*(?:cÖkœ|cÖkœ bs)?\s*([0-9]+)[\.\)\:\-]\s*/i, '$1| ');
+        if (/^[ \t]*(?:cÖkœ|cÖkœ bs)?\s*([0-9]+)[\.\)\:\-](?!\s*[0-9])\s*/i.test(line)) {
+          return line.replace(/^[ \t]*(?:cÖkœ|cÖkœ bs)?\s*([0-9]+)[\.\)\:\-](?!\s*[0-9])\s*/i, '$1| ');
         }
-        if (/^[ \t]*([0-9]+)[\.\)\:\-]\s*/.test(line)) {
-          return line.replace(/^[ \t]*([0-9]+)[\.\)\:\-]\s*/, '$1| ');
+        if (/^[ \t]*([0-9]+)[\.\)\:\-](?!\s*[0-9])\s*/.test(line)) {
+          return line.replace(/^[ \t]*([0-9]+)[\.\)\:\-](?!\s*[0-9])\s*/, '$1| ');
         }
       }
 
@@ -1475,13 +1476,13 @@
         let out = "";
         for (const part of mixedParts) {
           const escaped = (part.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const leadSpMatch = part.text.match(/^\s+/);
+          const trailSpMatch = part.text.match(/\s+$/);
+          const leadSp = leadSpMatch ? DocxHandler.renderWordWhitespace(leadSpMatch[0]) : "";
+          const trailSp = trailSpMatch ? DocxHandler.renderWordWhitespace(trailSpMatch[0]) : "";
           if (part.type === 'english') {
             const trimmedEn = part.text.trim();
-            const leadSpMatch = part.text.match(/^\s+/);
-            const trailSpMatch = part.text.match(/\s+$/);
-            const leadSp = leadSpMatch ? DocxHandler.renderWordWhitespace(leadSpMatch[0]) : "";
-            const trailSp = trailSpMatch ? DocxHandler.renderWordWhitespace(trailSpMatch[0]) : "";
-            const formattedEn = escaped.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
+            const formattedEn = escaped.trim().replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
             // Single math variable letter (e.g. x, y, n, a, b, N) -> render in italic!
             if (/^[a-hj-zA-HJ-Z]$/.test(trimmedEn)) {
               out += `${leadSp}<i style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${escaped.trim()}</i>${trailSp}`;
@@ -1490,100 +1491,112 @@
               const varPart = trimmedEn.slice(-1);
               out += `${leadSp}<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${numPart}<i>${varPart}</i></span>${trailSp}`;
             } else if (/^[a-zA-Z]\([a-zA-Z0-9,\s]+\)$/.test(trimmedEn)) { // e.g. P(A), f(x)
-              const formattedFn = formattedEn.trim().replace(/([a-zA-Z])/g, '<i>$1</i>');
+              const formattedFn = formattedEn.replace(/([a-zA-Z])/g, '<i>$1</i>');
               out += `${leadSp}<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${formattedFn}</span>${trailSp}`;
             } else if (/[=+\-*/<>]/.test(trimmedEn)) {
               // Mathematical expression containing variable letters and operators e.g. y - x = -1}
-              const formattedExpr = formattedEn.trim().replace(/\b([a-zA-Z])\b/g, '<i>$1</i>');
+              const formattedExpr = formattedEn.replace(/\b([a-zA-Z])\b/g, '<i>$1</i>');
               out += `${leadSp}<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${formattedExpr}</span>${trailSp}`;
             } else {
-              out += `<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${formattedEn}</span>`;
+              out += `${leadSp}<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${formattedEn}</span>${trailSp}`;
             }
           } else {
             const targetText = (isBijoy && !isInputBijoy && typeof BanglaConverter !== 'undefined') ? BanglaConverter.unicodeToBijoy(part.text) : part.text;
+            if (!targetText || !targetText.trim()) {
+              out += DocxHandler.renderWordWhitespace(part.text);
+              continue;
+            }
             if (isBijoy && /[-–—−‒―]/.test(targetText)) {
-              const dParts = targetText.split(/([-–—−‒―]+)/);
+              const dParts = targetText.trim().split(/([-–—−‒―]+)/);
+              let splitBn = '';
               for (let dp of dParts) {
                 if (!dp) continue;
                 const escDp = dp.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const fmtDp = escDp.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
                 if (/[-–—−‒―]/.test(dp)) {
-                  out += `<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${fmtDp}</span>`;
+                  splitBn += `<span lang="EN-US" style="font-family:'Times New Roman',serif;mso-ascii-font-family:'Times New Roman';mso-hansi-font-family:'Times New Roman';">${fmtDp}</span>`;
                 } else {
-                  out += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${fmtDp}</span>`;
+                  splitBn += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${fmtDp}</span>`;
                 }
               }
+              out += `${leadSp}${splitBn}${trailSp}`;
             } else {
               const escapedBn = (targetText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-              const formattedBn = escapedBn.replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
-              out += `<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${formattedBn}</span>`;
+              const formattedBn = escapedBn.trim().replace(/\t/g, "<span style='mso-tab-count:1'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>");
+              out += `${leadSp}<span style="font-family:'${fontName}',Arial,sans-serif;mso-ascii-font-family:'${fontName}';mso-hansi-font-family:'${fontName}';mso-bidi-font-family:'${fontName}';">${formattedBn}</span>${trailSp}`;
             }
           }
         }
         return out;
       }
 
-      const lines = sanitizedText.split(/\r?\n/).map(l => DocxHandler.formatQuestionPaperLine(l, isBijoy));
-      let i = 0;
-      const htmlBlocks = [];
+      let paragraphsHtml = '';
 
-      let isInsideNote = false;
+      if (typeof MarkdownLayoutEngine !== 'undefined' && typeof MarkdownLayoutEngine.parse === 'function') {
+        const blocks = MarkdownLayoutEngine.parse(sanitizedText);
+        paragraphsHtml = MarkdownLayoutEngine.renderToWord2003Html(blocks, isBijoy, fontName, baseFontSizePt, renderFormattedRun);
+      } else {
+        const lines = sanitizedText.split(/\r?\n/).map(l => DocxHandler.formatQuestionPaperLine(l, isBijoy));
+        let i = 0;
+        const htmlBlocks = [];
+        let isInsideNote = false;
 
-      while (i < lines.length) {
-        const line = lines[i];
-        const trimmed = line.trim();
+        while (i < lines.length) {
+          const line = lines[i];
+          const trimmed = line.trim();
 
-        // Check if line is a markdown table row
-        if (trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.includes('|')) {
-          const tableLines = [];
-          while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
-            tableLines.push(lines[i].trim());
-            i++;
-          }
-
-          const parsedRows = [];
-          for (const tLine of tableLines) {
-            if (/^\|[\s\-:]+(\|[\s\-:]+)+\|$/.test(tLine)) continue; // skip markdown divider |:---|:---|
-            const cells = tLine.split('|').slice(1, -1).map(c => c.trim());
-            if (cells.length > 0) parsedRows.push(cells);
-          }
-
-          if (parsedRows.length > 0) {
-            let tableHtml = `<table class="MsoTableGrid" border="1" cellspacing="0" cellpadding="0" align="center" style="border-collapse:collapse; border:none; mso-border-alt:solid windowtext .5pt; mso-yfti-tbllook:1184; mso-padding-alt:2.0pt 5.4pt 2.0pt 5.4pt; margin:4pt auto; width:auto;">\n`;
-            for (let rIdx = 0; rIdx < parsedRows.length; rIdx++) {
-              const row = parsedRows[rIdx];
-              tableHtml += `  <tr class="MsoTableRow" style="mso-yfti-irow:${rIdx};">\n`;
-              for (let cIdx = 0; cIdx < row.length; cIdx++) {
-                const cellVal = row[cIdx];
-                const renderedCell = renderFormattedRun(cellVal);
-                tableHtml += `    <td class="MsoTableCell" style="border:solid windowtext 1.0pt; mso-border-alt:solid windowtext .5pt; padding:2.0pt 5.4pt 2.0pt 5.4pt; text-align:center; vertical-align:middle;">\n`;
-                tableHtml += `      <p class="MsoNormal" align="center" style="margin:0cm;margin-bottom:.0001pt;text-align:center;line-height:normal;mso-line-height-rule:auto;font-size:${baseFontSizePt}pt;">${renderedCell || '&nbsp;'}</p>\n`;
-                tableHtml += `    </td>\n`;
-              }
-              tableHtml += `  </tr>\n`;
+          // Check if line is a markdown table row
+          if (trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.includes('|')) {
+            const tableLines = [];
+            while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
+              tableLines.push(lines[i].trim());
+              i++;
             }
-            tableHtml += `</table>`;
-            htmlBlocks.push(tableHtml);
-            continue;
-          }
-        }
 
-        // Regular paragraph line (skip empty lines / extra enters)
-        if (!trimmed) {
+            const parsedRows = [];
+            for (const tLine of tableLines) {
+              if (/^\|[\s\-:]+(\|[\s\-:]+)+\|$/.test(tLine)) continue; // skip markdown divider |:---|:---|
+              const cells = tLine.split('|').slice(1, -1).map(c => c.trim());
+              if (cells.length > 0) parsedRows.push(cells);
+            }
+
+            if (parsedRows.length > 0) {
+              let tableHtml = `<table class="MsoTableGrid" border="1" cellspacing="0" cellpadding="0" align="center" style="border-collapse:collapse; border:none; mso-border-alt:solid windowtext .5pt; mso-yfti-tbllook:1184; mso-padding-alt:2.0pt 5.4pt 2.0pt 5.4pt; margin:4pt auto; width:auto;">\n`;
+              for (let rIdx = 0; rIdx < parsedRows.length; rIdx++) {
+                const row = parsedRows[rIdx];
+                tableHtml += `  <tr class="MsoTableRow" style="mso-yfti-irow:${rIdx};">\n`;
+                for (let cIdx = 0; cIdx < row.length; cIdx++) {
+                  const cellVal = row[cIdx];
+                  const renderedCell = renderFormattedRun(cellVal);
+                  tableHtml += `    <td class="MsoTableCell" style="border:solid windowtext 1.0pt; mso-border-alt:solid windowtext .5pt; padding:2.0pt 5.4pt 2.0pt 5.4pt; text-align:center; vertical-align:middle;">\n`;
+                  tableHtml += `      <p class="MsoNormal" align="center" style="margin:0cm;margin-bottom:.0001pt;text-align:center;line-height:normal;mso-line-height-rule:auto;font-size:${baseFontSizePt}pt;">${renderedCell || '&nbsp;'}</p>\n`;
+                  tableHtml += `    </td>\n`;
+                }
+                tableHtml += `  </tr>\n`;
+              }
+              tableHtml += `</table>`;
+              htmlBlocks.push(tableHtml);
+              continue;
+            }
+          }
+
+          // Regular paragraph line (skip empty lines / extra enters)
+          if (!trimmed) {
+            i++;
+            continue;
+          } else {
+            const contentHtml = renderFormattedRun(line);
+            const isNoteHeader = /^\s*\[\s*নোট/i.test(trimmed);
+            if (isNoteHeader) isInsideNote = true;
+            const isNoteLine = isNoteHeader || isInsideNote;
+            const noteStyle = isNoteLine ? (isNoteHeader ? 'color:#334155;font-weight:bold;padding-top:6pt;' : 'color:#334155;padding-left:10pt;') : '';
+            if (trimmed.endsWith(']')) isInsideNote = false;
+            htmlBlocks.push(`<p class="MsoNormal" style="margin:0cm;margin-bottom:.0001pt;line-height:normal;mso-line-height-rule:auto;font-size:${baseFontSizePt}pt;${noteStyle}">${contentHtml || '&nbsp;'}</p>`);
+          }
           i++;
-          continue;
-        } else {
-          const contentHtml = renderFormattedRun(line);
-          const isNoteHeader = /^\s*\[\s*নোট/i.test(trimmed);
-          if (isNoteHeader) isInsideNote = true;
-          const isNoteLine = isNoteHeader || isInsideNote;
-          const noteStyle = isNoteLine ? (isNoteHeader ? 'color:#334155;font-weight:bold;padding-top:6pt;' : 'color:#334155;padding-left:10pt;') : '';
-          if (trimmed.endsWith(']')) isInsideNote = false;
-          htmlBlocks.push(`<p class="MsoNormal" style="margin:0cm;margin-bottom:.0001pt;line-height:normal;mso-line-height-rule:auto;font-size:${baseFontSizePt}pt;${noteStyle}">${contentHtml || '&nbsp;'}</p>`);
         }
-        i++;
+        paragraphsHtml = htmlBlocks.join('\n');
       }
-      const paragraphsHtml = htmlBlocks.join('\n');
 
       const docHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>

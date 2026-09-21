@@ -1,0 +1,11 @@
+const fs = require('fs');
+const docHtml = fs.readFileSync('./scratch/sample_output_word2003.doc', 'utf-8');
+const pMatches = docHtml.match(/<p class="MsoNormal"[^>]*>[\s\S]*?<\/p>/g);
+console.log('--- P1 (Vision & Mission) ---');
+console.log(pMatches[0]);
+console.log('\n--- P3 (Clause 4.1) ---');
+console.log(pMatches[2]);
+console.log('\n--- P6 (চিত্রাঙ্কন ব্যবস্থা) ---');
+console.log(pMatches[5]);
+console.log('\n--- P11 (টেবিল থাকবে) ---');
+console.log(pMatches[10]);

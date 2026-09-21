@@ -1,0 +1,30 @@
+const fs = require('fs');
+
+// Mock browser objects
+global.window = global;
+require('../js/bangla-converter-engine.js');
+require('../js/equation-converter.js');
+require('../js/docx-handler.js');
+
+const sampleText = `দ্বিতীয় অধ্যায়: লক্ষ্য, উদ্দেশ্য ও রূপকল্প (Vision & Mission)
+
+ধারা ৪: মূল উদ্দেশ্যসমূহ
+৪.১. শিবনগর ইউনিয়নসহ ফুলবাড়ী উপজেলার শিশুদের জন্য আধুনিক, যুগোপযোগী এবং মানসম্মত প্রাথমিক শিক্ষা নিশ্চিত করা।
+৪.২. শিক্ষার্থীদের নৈতিকতা, শিষ্টাচার, দেশপ্রেম এবং মুক্তিযুদ্ধের চেতনায় উদ্বুদ্ধ করে সুনাগরিক হিসেবে গড়ে তোলা।
+৪.৩. মুখস্থ বিদ্যার পরিবর্তে সৃজনশীল মেধা বিকাশ এবং একটি ভয়হীন, আনন্দদায়ক পরিবেশে শিক্ষাদান করা।
+৪.৪. শিক্ষার্থীদের শারীরিক ও মানসিক বিকাশের জন্য নিয়মিত খেলাধুলা, শিল্প-সংস্কৃতি এবং সহশিক্ষামূলক কার্যক্রমের (যেমন: বিতর্ক, বিজ্ঞান মেলা, চিত্রাঙ্কন) ব্যবস্থা করা।
+৪.৫. সমাজের পিছিয়ে পড়া, সুবিধাবঞ্চিত ও বিশেষ চাহিদাসম্পন্ন শিশুদের জন্য শিক্ষার সমান সুযোগ সৃষ্টি করা।
+
+তৃতীয় অধ্যায়: অবকাঠামো, পরিবেশ ও সুবিধা
+
+ধারা ৫: জমি ও ভবন
+৫.১. সরকারি বিধি মোতাবেক ইউনিয়ন পর্যায়ের জন্য নির্ধারিত আয়তনের নিজস্ব বা ভাড়াকৃত জমিতে বিদ্যালয়ের নিরাপদ ভবন থাকবে।
+৫.২. শ্রেণিকক্ষগুলোতে পর্যাপ্ত আলো-বাতাস চলাচলের ব্যবস্থা এবং প্রতিটি শিশুর জন্য বয়স ও উচ্চতা অনুযায়ী স্বাচ্ছন্দ্যদায়ক বসার ব্যবস্থা (বেঞ্চ/টেবিল) থাকবে।`;
+
+console.log("=== DocxHandler.formatQuestionPaper ===");
+console.log(DocxHandler.formatQuestionPaper(sampleText, false));
+
+console.log("\n=== DocxHandler.createDocFromText ===");
+const blob = DocxHandler.createDocFromText(sampleText, 'SutonnyMJ', true, 12);
+// Let's see what HTML was generated
+fs.writeFileSync('./scratch/test_out.doc', blob.data || (blob.text ? blob.text : 'blob'));

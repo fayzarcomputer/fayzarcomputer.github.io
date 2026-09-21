@@ -27,7 +27,7 @@ async function updateFile(relPath) {
 
   const putUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`;
   const putBody = {
-    message: 'Remove lite models and optimize active Gemini OCR models',
+    message: 'Fix Word equations: heal Unicode scripts to LaTeX, auto-generate real Word EQ fields and Office Math OMML for formulas, powers, and fractions',
     content: base64Content,
     sha: remoteSha,
     branch: config.branch
@@ -57,8 +57,12 @@ async function updateFile(relPath) {
 async function run() {
   const ok1 = await updateFile('converter.html');
   await new Promise(r => setTimeout(r, 1200));
-  const ok2 = await updateFile('js/ai-ocr-engine.js');
-  if (ok1 && ok2) {
+  const ok2 = await updateFile('js/equation-converter.js');
+  await new Promise(r => setTimeout(r, 1200));
+  const ok3 = await updateFile('js/docx-handler.js');
+  await new Promise(r => setTimeout(r, 1200));
+  const ok4 = await updateFile('js/ai-ocr-engine.js');
+  if (ok1 && ok2 && ok3 && ok4) {
     console.log('ALL FILES UPDATED SUCCESSFULLY ON GITHUB!');
   }
 }

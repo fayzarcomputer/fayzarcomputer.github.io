@@ -147,9 +147,12 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
    - If absolutely NO changes or corrections were made and the output is 100% identical to the source:
      [নোট: মূল ফাইলের সাথে সম্পূর্ণ যাচাইকৃত, কোনো পরিবর্তন করা হয়নি।]
 
-6. NO REFERENCES OR CITATIONS (কোন প্রকার রেফারেন্স বা উৎস রাখা যাবে না):
-   - CRITICAL: DO NOT include any references, board tags, school/college names, exam years, citations, or source brackets!
-   - Completely omit brackets and tags such as: [ঢাকা বোর্ড-২০২৩], [দিনাজপুর বোর্ড ২০২১], [কুমিল্লা ক্যাডেট কলেজ], [রাজশাহী জিলা স্কুল], (বোর্ড প্রশ্ন), [অধ্যায়-৩], মান: ১০ ইত্যাদি সম্পূর্ণ বাদ দিন।
+6. NO EXAM BOARD REFERENCES OR CITATIONS (কোন প্রকার পরীক্ষার বোর্ড রেফারেন্স বা উৎস ট্যাগ রাখা যাবে না, তবে ডকুমেন্টের বিষয়বস্তুর বন্ধনী, ইংরেজি ও হাইফেন ১০০% অক্ষত রাখতে হবে):
+   - CRITICAL: Omit only exam board question references/tags such as: [ঢাকা বোর্ড-২০২৩], [দিনাজপুর বোর্ড ২০২১], [কুমিল্লা ক্যাডেট কলেজ], [রাজশাহী জিলা স্কুল], (বোর্ড প্রশ্ন), মান: ১০ ইত্যাদি।
+   - STRICT PRESERVATION OF CONTENT PARENTHESES & ENGLISH GLOSSES (ডকুমেন্টের মূল বিষয়বস্তু, বন্ধনী, ইংরেজি শব্দ ও হাইফেন অক্ষত রাখার বাধ্যবাধকতা):
+     * সাধারণ নথিপত্র, গঠনতন্ত্র, বিধিমালা, চুক্তিনামা বা প্রশ্নপত্রের মূল বিষয়বস্তুর ভেতরের কোনো বন্ধনী বা উদাহরণ যেমন: (Vision & Mission), (যেমন: ...), (বেঞ্চ/টেবিল), (ক), (খ) ইত্যাদি কখনোই বাদ দেওয়া যাবে না! এগুলো অবিকল রাখতে হবে।
+     * বাংলা শব্দের পাশে ইংরেজি বন্ধনী (যেমন: রূপকল্প (Vision & Mission)) সম্পূর্ণ অক্ষত রাখতে হবে।
+     * যুক্ত বা হাইফেনযুক্ত বাংলা শব্দসমূহ (যেমন: শিল্প-সংস্কৃতি, আলো-বাতাস, শিক্ষক-শিক্ষিকাদের, যুগোপযোগী, আর্থ-সামাজিক) এর ভেতরের হাইফেন (-) কোনোভাবেই বাদ বা মুছে ফেলা যাবে না!
 
 7. DIAGRAMS & IMAGES (ছবি বা ডায়াগ্রামের ক্ষেত্রে শুধুমাত্র পেজ নম্বর উল্লেখ, কোনো বর্ণনা নয়):
    - Whenever there is a diagram, geometric figure, circuit, chart, or image, DO NOT write any description or details of the picture.
@@ -160,9 +163,11 @@ ABSOLUTE ZERO-HALLUCINATION & SOURCE FIDELITY MANDATE:
    - CRITICAL MANDATE: NEVER use markdown bold asterisks (**). NEVER write **পঞ্চম শ্রেণি** or **১. সঠিক উত্তর:**. Output completely plain text without any ** asterisks.
    - DO NOT add introductory greetings, explanations, chat preamble, or markdown code fences (\`\`\`).
 
-9. NO EXTRA ENTERS OR BLANK LINES (অতিরিক্ত ফাঁকা লাইন বা ডাবল এন্টার নিষেধ):
-   - CRITICAL: DO NOT insert empty blank lines or double Enters between questions, sub-questions, or lines.
-   - Each question, sub-question, and option must follow immediately on the next line without empty blank lines in between.
+9. NO EXTRA ENTERS OR BLANK LINES (অতিরিক্ত ফাঁকা লাইন বা ডাবল এন্টার নিষেধ, তবে প্রতিটি অনুচ্ছেদ ও উপ-ধারা অবশ্যই আলাদা লাইনে থাকবে):
+   - CRITICAL: DO NOT insert empty blank lines or double Enters between consecutive questions, sub-questions, or lines.
+   - PRESERVE EVERY ARTICLE / SUB-ARTICLE ON ITS OWN LINE (প্রতিটি ধারা, উপ-ধারা ও প্যারাগ্রাফের নিজস্ব লাইন বজায় রাখা):
+     * কোনো অনুচ্ছেদ, ধারা বা উপ-ধারা (যেমন: ধারা ৪: মূল উদ্দেশ্যসমূহ, ৪.১., ৪.২., ৪.৩., ৪.৪., ৪.৫., ধারা ৫: জমি ও ভবন, ৫.১., ৫.২. ইত্যাদি) কখনোই একসাথে এক লাইনে বা একটিমাত্র প্যারাগ্রাফে জোড়া লাগানো (collapse/merge) যাবে না! কখনোই পাইপ ' | ' দিয়ে এক লাইনে যুক্ত করবেন না!
+     * প্রতিটি উপ-ধারা, তালিকা আইটেম বা অনুচ্ছেদ অবশ্যই তার নিজস্ব আলাদা নতুন লাইনে (Enter / newline) থাকবে।
 
 10. ROMAN NUMERALS & MCQ FORMATTING (রোমান সংখ্যা ও বহুনির্বাচনী প্রশ্ন):
     - CRITICAL: MCQ প্রশ্নের ক্রমিক নম্বর ১।, ২।, ৩।, ... ৩০। সতন্ত্রভাবে ১ থেকে শুরু করতে হবে (সৃজনশীল প্রশ্নের ক্রমিকের সাথে মিলিয়ে নয়)।
@@ -285,7 +290,9 @@ SPECIFIC DEFECTS YOU MUST AUDIT AND FIX:
      * সংক্ষিপ্ত প্রশ্ন: সতন্ত্রভাবে ১।, ২।, ৩।, ...
      * রাসায়নিক সংকেত ও সমীকরণ: বিজ্ঞানের সকল রাসায়নিক সংকেত ও যৌগ (যেমন: $KNO_3$, $KOH$, $2H_2O$, $H_2SO_4$, $CO_2$, $N_2 + 3H_2 = 2NH_3$ ইত্যাদি) এবং বৈজ্ঞানিক ঘাত ($6.023 \\times 10^{23}$) সাবস্ক্রিপ্ট ও সুপারস্ক্রিপ্ট সহ বাধ্যতামূলকভাবে LaTeX ($...$) ব্লকে রাখবেন; কোনো অবস্থাতেই এগুলোকে সাধারণ টেক্সটে বা ভাঙা লাইনে রাখবেন না। বিক্রিয়ার তীর চিহ্ন সরাসরি '→' বা '──[...]──>' লিখবেন।
      * সার্বজনীন স্ক্রিপ্ট ও ডিজিট অডিট (Universal Script & Digit Fidelity): সৃজনশীল উদ্দীপক, উপ-প্রশ্ন (ক., খ., গ., ঘ.), বহুনির্বাচনী, সংক্ষিপ্ত প্রশ্ন বা ফর্ম—যেকোনো কাজের ক্ষেত্রে মূল ছবিতে যেখানেই ইংরেজি অক্ষর, প্রতীক বা সংখ্যা (যেমন: A, B, C, Cu, Fe, FeCl3, 20, 4, 6 বা অপশনে 1, 2, 9, 10 বা 0, 1, 2, 3) রয়েছে, খসড়ায় তা ভুলবশত বাংলায় রূপান্তর হয়ে থাকলে অবশ্যই মূল ছবির মতো খাঁটি ইংরেজিতে (ASCII English) সংশোধন করুন। ইংরেজি '8' এবং বাংলা '৮' এর মিশ্রণ (যেমন: 8.8৮ L ❌) দূর করে খাঁটি ইংরেজিতে সংশোধন করুন। বিজ্ঞানের বহুনির্বাচনীতে এককযুক্ত সকল অপশনের সংখ্যা একরূপ খাঁটি ইংরেজিতে রাখবেন।
-   - No board tags/references (e.g., omit [ঢাকা বোর্ড-২০২৩]).
+   - No exam board tags/references (e.g., omit [ঢাকা বোর্ড-২০২৩]).
+   - Preserve all legitimate content parentheses e.g. (Vision & Mission), (যেমন: ...), (বেঞ্চ/টেবিল), and retain hyphens in compound words (শিল্প-সংস্কৃতি, আলো-বাতাস, শিক্ষক-শিক্ষিকাদের).
+   - Never merge or collapse sub-articles or clause lines (৪.১, ৪.২, ৫.১, ৫.২); ensure each remains on its own separate line.
    - For diagrams/images, simply write: [ছবি আছে-পৃ:০১].
    - No markdown bold asterisks (**). No asterisks on roman numerals (*i.* -> i.).
    - No empty blank lines or double Enters between consecutive questions or lines.
@@ -2557,8 +2564,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       }
 
       // 4a. Remove references & source brackets (e.g. [ঢাকা বোর্ড-২০২৩], [ক্যাডেট কলেজ], (দিনাজপুর বোর্ড), [অধ্যায়-৩], মান: ১ ইত্যাদি)
-      l = l.replace(/\s*\[\s*(?:[^\]\n]*(?:বোর্ড|কলেজ|স্কুল|মাদ্রাসা|ক্যাডেট|অধ্যায়|অনুশীলনী|পরিপত্র|[০-৯0-9]{4}))[^\]\n]*\]\s*/gi, ' ');
-      l = l.replace(/\s*\(\s*(?:[^\)\n]*(?:বোর্ড|কলেজ|স্কুল|মাদ্রাসা|ক্যাডেট|অধ্যায়|অনুশীলনী|[০-৯0-9]{4}))[^\)\n]*\)\s*/gi, ' ');
+      // Strictly constrained to exam board tags so legitimate content parentheses like (Vision & Mission), (যেমন: ...), (বেঞ্চ/টেবিল) are never stripped
+      l = l.replace(/\s*\[\s*(?:[^\]\n]*(?:(?:ঢাকা|রাজশাহী|দিনাজপুর|কুমিল্লা|চট্টগ্রাম|সিলেট|বরিশাল|যশোর|ময়মনসিংহ|মাদ্রাসা|কারিগরি|সকল)?\s*বোর্ড|ক্যাডেট\s*কলেজ|জিলা\s*স্কুল|অধ্যায়\s*[-–—:]\s*[০-৯0-9]+|অনুশীলনী\s*[-–—:]\s*[০-৯0-9]+|পরিপত্র\s*[-–—:]\s*[০-৯0-9]+))[^\]\n]*\]\s*/gi, ' ');
+      l = l.replace(/\s*\(\s*(?:[^\)\n]*(?:(?:ঢাকা|রাজশাহী|দিনাজপুর|কুমিল্লা|চট্টগ্রাম|সিলেট|বরিশাল|যশোর|ময়মনসিংহ|মাদ্রাসা|কারিগরি|সকল)\s*বোর্ড|বোর্ড\s*[-–—]?\s*[০-৯0-9]{4}|ক্যাডেট\s*কলেজ|জিলা\s*স্কুল))[^\)\n]*\)\s*/gi, ' ');
       l = l.replace(/(\?|।|[a-zA-Z\u0980-\u09FF])\s*মান\s*[:\s]*[০-৯0-9]+\s*$/g, '$1');
 
       // 4b. Format diagram/image tags strictly as [ছবি আছে-পৃ:০১] without any description

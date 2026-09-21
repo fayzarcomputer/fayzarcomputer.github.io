@@ -1285,23 +1285,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
         let bridgeSuccess = false;
         const bridgeStart = Date.now();
-        const maxWaitMs = 120000; // 120 seconds max wait for Pro Model
+        let lastKnownActivity = Date.now();
         let workerPickedUp = false;
 
-        while (Date.now() - bridgeStart < maxWaitMs) {
-          if (!state.isProcessing) {
-            fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'cancelled' })
-            }).catch(() => {});
-            setTimeout(() => {
-              fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
-            }, 1500);
-            activeBridgeJobId = null;
-            return null;
-          }
-          await sleep(1500);
+        while (true) {
           if (!state.isProcessing) {
             fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
               method: 'PATCH',
@@ -1315,20 +1302,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             return null;
           }
 
-          // Check if worker picked up the job (allow up to 40s for Chrome account selection and upload)
-          if (!workerPickedUp && (Date.now() - bridgeStart > 40000)) {
-            try {
-              const reqCheck = await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}/status.json?t=${Date.now()}`, { cache: 'no-store' });
-              const reqStatus = await reqCheck.json();
-              if (reqStatus === 'pending') {
-                console.warn('Bridge worker is inactive (job still pending after 40s). Aborting early to save time...');
-                break;
-              } else if (reqStatus === 'processing') {
-                workerPickedUp = true;
-              }
-            } catch (e) {}
-          }
-
+          // 1. Immediate Response Check (Success OR Desktop Error)
           try {
             const resp = await fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json?t=${Date.now()}`, {
               cache: 'no-store'
@@ -1340,14 +1314,57 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                 rawText = val.text;
                 bridgeSuccess = true;
                 break;
-              } else {
-                console.warn('Desktop Bridge error:', val.error);
+              } else if (val.status === 'error') {
+                console.warn('Desktop Bridge reported immediate error:', val.error);
+                // INSTANT FAILOVER TO CLOUD API IN 0ms!
                 break;
               }
             }
           } catch (pollErr) {
             // Ignore temporary network glitch during polling
           }
+
+          // 2. Adaptive Heartbeat & Processing Status Check
+          try {
+            const reqCheck = await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json?t=${Date.now()}`, { cache: 'no-store' });
+            const reqData = await reqCheck.json();
+            
+            if (!reqData) {
+              // Job was removed or completed elsewhere
+              break;
+            }
+
+            if (reqData.status === 'processing') {
+              workerPickedUp = true;
+              if (reqData.lastActive) {
+                lastKnownActivity = reqData.lastActive;
+              }
+              const elapsedSec = Math.round((Date.now() - bridgeStart) / 1000);
+              const stageMsg = reqData.isGenerating
+                ? `⚡ জেমিনি প্রো নির্ভুল সমীকরণ ও বাংলা টেক্সট টাইপ করছে (${toBengaliNumber(elapsedSec)} সে)...`
+                : `⚡ প্রো ডেস্কটপ জেমিনি সেশনে প্রসেস করছে (${toBengaliNumber(elapsedSec)} সে)...`;
+              if (onProgress) onProgress(stageMsg, Math.min(88, 40 + Math.round(elapsedSec / 3)));
+            } else if (!workerPickedUp && (Date.now() - bridgeStart > 25000)) {
+              // Worker never picked up the job within 25 seconds -> immediate failover!
+              console.warn('Desktop bridge is idle/unresponsive (not picked up in 25s). Instant failover...');
+              break;
+            }
+          } catch (e) {}
+
+          // 3. Heartbeat Guard:
+          // If worker picked up but stopped heartbeating for > 25s (e.g. app killed / network dead) -> failover!
+          if (workerPickedUp && (Date.now() - lastKnownActivity > 25000)) {
+            console.warn('Desktop bridge heartbeat lost for 25s. Failover to cloud API...');
+            break;
+          }
+
+          // Hard safety limit: max 5 minutes (300 seconds)
+          if (Date.now() - bridgeStart > 300000) {
+            console.warn('Desktop job exceeded 5-minute safety threshold. Failover to cloud API...');
+            break;
+          }
+
+          await sleep(1500);
         }
 
         // Clean up pending request
@@ -1655,9 +1672,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     const activePrompt = customPrompt || GEMINI_PROMPT;
 
     const allActiveModels = [
-      'gemini-3-flash-preview',   // #1: 100% active, fast, ultra-reliable
-      'gemini-3.6-flash',         // #2: 100% active, balanced flagship
-      'gemini-3.1-pro-preview'    // #3: Pro quality OCR
+      'gemini-2.5-flash',         // #1: Ultra-fast, zero reasoning delay, 100% active
+      'gemini-3-flash-preview',   // #2: Deep reasoning Flash flagship
+      'gemini-2.5-pro'            // #3: Pro quality OCR
     ];
 
     // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
@@ -1740,17 +1757,16 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.selectedModel && state.selectedModel !== 'auto') {
       candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
     } else {
-      candidateModels = ['gemini-3-flash-preview', 'gemini-3.6-flash', 'gemini-3.1-pro-preview'];
+      candidateModels = ['gemini-2.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-pro'];
     }
 
-    // ⚡ COMPREHENSIVE ONE-SHOT PRE-FLIGHT KEY TEST (একবারে সকল কি টেস্ট করে সঠিক সক্রিয় কি নির্বাচন)
-    // Runs parallel micro-probes across key batches so active working key is guaranteed BEFORE heavy OCR upload
+    // ⚡ FAST PRE-FLIGHT MICRO-PROBE (সর্বোচ্চ ২ সেকেন্ডে সক্রিয় কি নির্বাচন)
     if (keyPool.length > 0) {
       try {
-        setLoading(true, '⚡ সকল কি ও মডেল একবারে যাচাই করে সেরা সক্রিয় চ্যানেল নির্বাচন হচ্ছে...', 48);
+        setLoading(true, '⚡ সক্রিয় ক্লাউড চ্যানেল নির্বাচন হচ্ছে...', 48);
 
         const preferredModel = candidateModels[0];
-        const singleProbe = async (k, mod, timeoutMs = 6000) => {
+        const singleProbe = async (k, mod, timeoutMs = 2500) => {
           const controller = new AbortController();
           const tId = setTimeout(() => controller.abort(), timeoutMs);
           try {
@@ -1766,14 +1782,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             });
             clearTimeout(tId);
             if (pRes.ok) return { key: k, model: mod, ok: true };
-            if (pRes.status === 400) {
-              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyInvalid === 'function') {
-                FayzarOcrConfig.markKeyInvalid(k);
-              }
-            } else if (pRes.status === 429) {
-              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyCooldown === 'function') {
-                FayzarOcrConfig.markKeyCooldown(k, 30);
-              }
+            if (pRes.status === 400 && typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyInvalid === 'function') {
+              FayzarOcrConfig.markKeyInvalid(k);
+            } else if (pRes.status === 429 && typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyCooldown === 'function') {
+              FayzarOcrConfig.markKeyCooldown(k, 30);
             }
             return { key: k, model: mod, ok: false, status: pRes.status };
           } catch (e) {
@@ -1782,44 +1794,20 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           }
         };
 
-        let winner = null;
-        // Test keys in parallel batches of 5 across the full pool
-        const batchSize = 5;
-        for (let b = 0; b < keyPool.length; b += batchSize) {
-          const batchKeys = keyPool.slice(b, b + batchSize);
-          const batchPromises = batchKeys.map(k => singleProbe(k, preferredModel));
-          try {
-            winner = await Promise.any(batchPromises.map(p => p.then(res => {
-              if (res.ok) return res;
-              throw res;
-            })));
-            if (winner && winner.key) break;
-          } catch (_) {
-            // Current batch had no quota on preferredModel, advance to next batch
-          }
-        }
-
-        // If preferred model exhausted across all keys and candidateModels has fallbacks, test backup
-        if ((!winner || !winner.key) && candidateModels.length > 1) {
-          const backupModel = candidateModels[1];
-          const backupPromises = keyPool.slice(0, 6).map(k => singleProbe(k, backupModel));
-          try {
-            winner = await Promise.any(backupPromises.map(p => p.then(res => {
-              if (res.ok) return res;
-              throw res;
-            })));
-          } catch (_) {}
-        }
+        // Test top 3 rotated keys in parallel for ultra-fast response (<= 2s)
+        const topBatch = keyPool.slice(0, 3);
+        const winner = await Promise.any(topBatch.map(k => singleProbe(k, preferredModel).then(res => {
+          if (res.ok) return res;
+          throw res;
+        }))).catch(() => null);
 
         if (winner && winner.key && winner.model) {
-          // Elevate winning key to the very front of keyPool
           keyPool = [winner.key, ...keyPool.filter(k => k !== winner.key)];
-          // Elevate winning model to the very front of candidateModels
           candidateModels = [winner.model, ...candidateModels.filter(m => m !== winner.model)];
-          setLoading(true, `⚡ সক্রিয় কি [${winner.model}] চূড়ান্ত নির্বাচিত! ডকুমেন্ট বিশ্লেষণ চলছে...`, 52);
+          setLoading(true, `⚡ সক্রিয় চ্যানেল [${winner.model}] চূড়ান্ত নির্বাচিত! রূপান্তর চলছে...`, 52);
         }
       } catch (probeErr) {
-        // Fallback to pool if probe interrupted
+        // Fallback directly to candidate pool without delay
       }
     }
 
@@ -1848,8 +1836,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
         let currentPayload = buildModelPayload(model, false);
 
-        // 25s realistic connect timeout: gives full time for multi-MB image upload without premature abort
-        const CONNECT_TIMEOUT_MS = 25000;
+        // 60s realistic connect timeout: gives full time for multi-MB image upload and thinking models without premature abort
+        const CONNECT_TIMEOUT_MS = 60000;
         try {
           if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.logAudit === 'function') {
             FayzarOcrConfig.logAudit('KEY_ATTEMPT', { keyMask: currentKey.slice(0, 8) + '...', model });
@@ -3047,6 +3035,14 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
 
     const rawName = state.selectedFile?.name || state.filesQueue?.[0]?.name || 'Question_Paper';
     const baseName = rawName.replace(/\.[^/.]+$/, '');
+
+    // FORMAT 0: Raw Markdown .MD (Direct pure text with full LaTeX equations intact)
+    if (format === 'md' || format === 'markdown') {
+      const mdBlob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+      triggerDownload(mdBlob, `${baseName}_Equations.md`);
+      showToast(`মার্কডাউন (.md) ফাইল সফলভাবে ডাউনলোড হয়েছে!`, 'success');
+      return;
+    }
 
     // FORMAT 1: Word 2003 .DOC (Direct Full-Fidelity Word 2003 SutonnyMJ Document)
     if (format === 'doc') {

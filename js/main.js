@@ -2294,6 +2294,7 @@ function initUnifiedConverterEngine() {
   const wizardDlDocxBtn = document.getElementById('wizardDlDocxBtn');
   const wizardDlDocBtn = document.getElementById('wizardDlDocBtn');
   const wizardDlUnicodeDocxBtn = document.getElementById('wizardDlUnicodeDocxBtn');
+  const wizardDlMdBtn = document.getElementById('wizardDlMdBtn');
   const wizardDlXlsxBtn = document.getElementById('wizardDlXlsxBtn');
   const wizardDlPptxBtn = document.getElementById('wizardDlPptxBtn');
   const wizardConvertAnotherBtn = document.getElementById('wizardConvertAnotherBtn');
@@ -2898,6 +2899,10 @@ function initUnifiedConverterEngine() {
         wizardDlUnicodeDocxBtn.classList.remove('hidden');
         wizardDlUnicodeDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('unicode_docx');
       }
+      if (wizardDlMdBtn) {
+        wizardDlMdBtn.classList.remove('hidden');
+        wizardDlMdBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('md');
+      }
       if (wizardCopyTextBtn) {
         wizardCopyTextBtn.classList.remove('hidden');
       }
@@ -3163,7 +3168,7 @@ function initUnifiedConverterEngine() {
     }
 
     // Download Buttons Setup
-    [wizardDlDocxBtn, wizardDlDocBtn, wizardDlUnicodeDocxBtn, wizardDlXlsxBtn, wizardDlPptxBtn].forEach(b => b?.classList.add('hidden'));
+    [wizardDlDocxBtn, wizardDlDocBtn, wizardDlUnicodeDocxBtn, wizardDlMdBtn, wizardDlXlsxBtn, wizardDlPptxBtn].forEach(b => b?.classList.add('hidden'));
 
     if (scan.isWord) {
       if (docxBlob && (!wizardOutputFormat || wizardOutputFormat.value !== 'doc')) {

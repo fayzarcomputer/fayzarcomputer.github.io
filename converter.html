@@ -742,7 +742,7 @@
             </div>
 
             <!-- 1-Click Multi-Format Download Action Grid (3 Word Formats + Copy Text) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               
               <!-- 1. Download Word 2003 .DOC (SutonnyMJ) -->
               <button type="button" id="wizardDlDocBtn" class="py-4 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition cursor-pointer transform hover:-translate-y-0.5 text-center">
@@ -771,7 +771,16 @@
                 <span class="text-[10px] font-normal opacity-90">কালপুরুষ / নিকোশ ফন্ট</span>
               </button>
 
-              <!-- 4. Copy Text & Preview -->
+              <!-- 4. Download Markdown .MD (Raw LaTeX & Text) -->
+              <button type="button" id="wizardDlMdBtn" class="py-4 px-3 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 hover:from-amber-500 hover:to-orange-600 text-white font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition cursor-pointer transform hover:-translate-y-0.5 text-center">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-code text-lg text-amber-100" aria-hidden="true"></i>
+                  <span>মার্কডাউন (.MD)</span>
+                </div>
+                <span class="text-[10px] font-normal opacity-90">LaTeX সমীকরণ ও টেক্সট ফাইল</span>
+              </button>
+
+              <!-- 5. Copy Text & Preview -->
               <button type="button" id="wizardCopyTextBtn" class="py-4 px-3 rounded-2xl bg-white dark:bg-[#1a263d] hover:bg-slate-100 dark:hover:bg-[#23324f] text-slate-800 dark:text-slate-100 border-2 border-slate-200 dark:border-slate-700 font-black text-xs sm:text-sm flex flex-col items-center justify-center gap-1 transition cursor-pointer shadow-xs text-center">
                 <div class="flex items-center gap-2">
                   <i class="fa-solid fa-copy text-indigo-500 text-lg" aria-hidden="true"></i>

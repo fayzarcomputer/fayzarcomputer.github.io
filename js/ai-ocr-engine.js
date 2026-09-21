@@ -1263,7 +1263,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     const isDesktopOnline = await checkDesktopBridgeOnline(false);
 
     if (isDesktopOnline) {
-      if (onProgress) onProgress('⚡ Pro Desktop Bridge সংযুক্ত! রিকোয়েস্ট পাঠানো হচ্ছে...', 40);
+      if (onProgress) onProgress('⚡ ১. ফাইল ও ছবি আপলোড হচ্ছে...', 35, 1);
       
       const combinedBase64 = mediaItems.map(m => m.data.includes('base64,') ? m.data.split('base64,')[1] : m.data).join('|||');
       const jobId = 'job_' + Date.now();
@@ -1281,7 +1281,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           })
         });
 
-        if (onProgress) onProgress('⚡ Pro Desktop Bridge আপনার জেমিনি সেশনে কাজ করছে। অপেক্ষা করুন...', 60);
+        if (onProgress) onProgress('⚡ ২. জেমিনি ৩.১ প্রো-তে প্রমট সেন্ট হয়েছে। অপেক্ষা করুন...', 50, 2);
 
         let bridgeSuccess = false;
         const bridgeStart = Date.now();
@@ -1340,10 +1340,21 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                 lastKnownActivity = reqData.lastActive;
               }
               const elapsedSec = Math.round((Date.now() - bridgeStart) / 1000);
-              const stageMsg = reqData.isGenerating
-                ? `⚡ জেমিনি প্রো নির্ভুল সমীকরণ ও বাংলা টেক্সট টাইপ করছে (${toBengaliNumber(elapsedSec)} সে)...`
-                : `⚡ প্রো ডেস্কটপ জেমিনি সেশনে প্রসেস করছে (${toBengaliNumber(elapsedSec)} সে)...`;
-              if (onProgress) onProgress(stageMsg, Math.min(88, 40 + Math.round(elapsedSec / 3)));
+              
+              if (reqData.stage === 'uploading') {
+                if (onProgress) onProgress(`⚡ ১. ফাইল আপলোড হচ্ছে (${toBengaliNumber(elapsedSec)} সে)...`, 25, 1);
+              } else if (reqData.stage === 'prompt_sent') {
+                if (onProgress) onProgress(`⚡ ২. প্রমট সেন্ট হয়েছে (${toBengaliNumber(elapsedSec)} সে)...`, 45, 2);
+              } else if (reqData.stage === 'generating') {
+                if (onProgress) onProgress(`⚡ ৩. জেমিনি ৩.১ প্রো প্রসেসিং ও সমীকরণ সমাধান করছে (${toBengaliNumber(elapsedSec)} সে)...`, Math.min(88, 50 + Math.round(elapsedSec / 4)), 3);
+              } else if (reqData.stage === 'extracting') {
+                if (onProgress) onProgress(`⚡ ৪. ওয়েটিং ফর ফাইনাল আউটপুট (${toBengaliNumber(elapsedSec)} সে)...`, 95, 4);
+              } else {
+                const stageMsg = reqData.isGenerating
+                  ? `⚡ ৩. জেমিনি ৩.১ প্রো প্রসেসিং চলছে (${toBengaliNumber(elapsedSec)} সে)...`
+                  : `⚡ ৩. প্রো ডেস্কটপ জেমিনি সেশনে প্রসেস করছে (${toBengaliNumber(elapsedSec)} সে)...`;
+                if (onProgress) onProgress(stageMsg, Math.min(88, 40 + Math.round(elapsedSec / 3)), 3);
+              }
             } else if (!workerPickedUp && (Date.now() - bridgeStart > 25000)) {
               // Worker never picked up the job within 25 seconds -> immediate failover!
               console.warn('Desktop bridge is idle/unresponsive (not picked up in 25s). Instant failover...');
@@ -1423,13 +1434,13 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       });
     }
 
-    if (onProgress) onProgress('আউটপুট প্রসেসিং ও ফরম্যাটিং সম্পন্ন হচ্ছে...', 92);
+    if (onProgress) onProgress('৪. ওয়েটিং ফর ফাইনাল আউটপুট ও সমীকরণ...', 95, 4);
 
     let finalExtractedText = rawText;
 
     // Auto verification pipeline if enabled - run in single continuous flow BEFORE showing final output
     if (state.autoVerify && state.lastMediaItems && state.lastMediaItems.length > 0 && !state.demoMode && apiKey) {
-      if (onProgress) onProgress('স্বয়ংক্রিয় অডিট ও যাচাই চলছে (বানান, উদ্দীপক ও মিসিং প্রশ্ন)...', 96);
+      if (onProgress) onProgress('স্বয়ংক্রিয় অডিট ও যাচাই চলছে (বানান, উদ্দীপক ও মিসিং প্রশ্ন)...', 97, 4);
       try {
         const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${rawText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো পরিবর্তন করলে নিচে [নোট ও পরিবর্তনসমূহ: ...] আকারে লিখে দিন।]`;
         const verifiedRaw = await executeGeminiRequest(
@@ -1459,7 +1470,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       await downloadWordDocument(targetFormat);
     }
 
-    if (onProgress) onProgress('রূপান্তর সফলভাবে সম্পন্ন হয়েছে!', 100);
+    if (onProgress) onProgress('রূপান্তর সফলভাবে সম্পন্ন হয়েছে!', 100, 4);
 
     return {
       unicodeText: state.unicodeText,

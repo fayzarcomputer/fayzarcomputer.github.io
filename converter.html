@@ -597,18 +597,18 @@
             </div>
 
             <!-- 4-Step Animated Pipeline Workflow -->
-            <div class="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5 text-[11px] font-bold">
-              <div id="pipeStep1" class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs transition-all">
-                <i class="fa-solid fa-circle-check text-emerald-600" aria-hidden="true"></i> ১. ফাইল পার্সিং
+            <div class="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5 text-[10px] sm:text-[11px] font-bold">
+              <div id="pipeStep1" class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs transition-all text-center">
+                <i class="fa-solid fa-cloud-arrow-up text-emerald-600" aria-hidden="true"></i> ১. ফাইল আপলোড
               </div>
-              <div id="pipeStep2" class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 flex items-center justify-center gap-1.5 shadow-2xs transition-all animate-pulse">
-                <i class="fa-solid fa-wand-magic-sparkles text-indigo-600" aria-hidden="true"></i> ২. AI OCR বিশ্লেষণ
+              <div id="pipeStep2" class="p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5 transition-all text-center">
+                <i class="fa-solid fa-paper-plane text-indigo-500" aria-hidden="true"></i> ২. প্রমট সেন্ট
               </div>
-              <div id="pipeStep3" class="p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5 transition-all">
-                <i class="fa-solid fa-square-root-variable text-amber-500" aria-hidden="true"></i> ৩. সমীকরণ ও বিজয়
+              <div id="pipeStep3" class="p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5 transition-all text-center">
+                <i class="fa-solid fa-brain text-amber-500" aria-hidden="true"></i> ৩. প্রসেসিং
               </div>
-              <div id="pipeStep4" class="p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5 transition-all">
-                <i class="fa-solid fa-file-word text-blue-500" aria-hidden="true"></i> ৪. ওয়ার্ড প্রস্তুত
+              <div id="pipeStep4" class="p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5 transition-all text-center">
+                <i class="fa-solid fa-hourglass-half text-blue-500" aria-hidden="true"></i> ৪. ওয়েটিং ফর ফাইনাল আউটপুট
               </div>
             </div>
 
@@ -627,9 +627,20 @@
               </div>
             </div>
 
-            <div class="mt-5 p-2.5 px-4 rounded-xl bg-white/80 dark:bg-[#1a263d]/80 border border-slate-200 dark:border-slate-700/80 text-[11px] text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-2 max-w-md mx-auto shadow-2xs">
-              <i class="fa-solid fa-lightbulb text-amber-500 text-xs flex-shrink-0 animate-bounce" aria-hidden="true"></i>
-              <span>সমীকরণ ও জটিল যুক্তবর্ণ নির্ভুল করতে কয়েক সেকেন্ড সময় লাগে, অনুগ্রহ করে অপেক্ষা করুন</span>
+            <!-- Pro Model Waiting & Accuracy Alert Banner -->
+            <div id="wizardProNoticeBanner" class="mt-5 p-3.5 px-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border-2 border-amber-400/80 dark:border-amber-600/80 text-xs text-amber-900 dark:text-amber-200 font-bold flex items-start sm:items-center gap-3 max-w-lg mx-auto shadow-sm">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center flex-shrink-0 text-lg shadow-sm">
+                <i class="fa-solid fa-clock-rotate-left animate-spin" style="animation-duration: 6s;"></i>
+              </div>
+              <div class="text-left leading-snug">
+                <div class="flex items-center gap-2 text-[13px] font-black text-amber-900 dark:text-amber-100">
+                  <span>⚡ প্রো মডেল জেমিনি ৩.১ সক্রিয়</span>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 font-black border border-amber-300">Deep Reasoning</span>
+                </div>
+                <p class="text-[11px] font-medium text-amber-800 dark:text-amber-300 mt-1">
+                  জটিল গাণিতিক সমীকরণ, চিত্র ও বাংলা যুক্তবর্ণ ১০০% নির্ভুল করতে <strong>২ থেকে ৪ মিনিট</strong> পর্যন্ত অপেক্ষা করতে হতে পারে। অনুগ্রহ করে ধৈর্য ধরুন, নির্ভুল আউটপুট স্বয়ংক্রিয়ভাবে ডাউনলোড হবে।
+                </p>
+              </div>
             </div>
 
             <!-- রূপান্তর বাতিল / বন্ধ করার বাটন -->
@@ -1801,8 +1812,8 @@
   <script src="js/xlsx-handler.js"></script>
   <script src="js/pptx-handler.js"></script>
   <script src="js/fayzar-ocr-config.js"></script>
-  <script src="js/ai-ocr-engine.js?v=pro-v12-live"></script>
-  <script src="js/main.js?v=pro-v12-live" defer></script>
+  <script src="js/ai-ocr-engine.js?v=pro-v13-live"></script>
+  <script src="js/main.js?v=pro-v13-live" defer></script>
 
   <!-- Floating CTA Stack -->
   <div class="floating-cta-stack" aria-label="দ্রুত যোগাযোগ">

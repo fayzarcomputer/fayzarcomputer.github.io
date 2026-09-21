@@ -2833,36 +2833,36 @@ function initUnifiedConverterEngine() {
       const targetFmt = selectedAiTargetFormat || 'doc';
       const res = await window.FayzarAiOcrEngine.startUnifiedOcr(
         targetFmt,
-        (statusText, pct) => {
+        (statusText, pct, stepNum) => {
           const pt = document.getElementById('wizardProgressTitle') || wizardProgressTitle;
           if (pt) pt.textContent = statusText;
           if (wizardProgressPctText) wizardProgressPctText.textContent = `${pct}%`;
           if (wizardProgressBar) wizardProgressBar.style.width = `${pct}%`;
 
-          // Dynamic Pipeline Step Highlights
-          const s1 = document.getElementById('pipeStep1');
-          const s2 = document.getElementById('pipeStep2');
-          const s3 = document.getElementById('pipeStep3');
-          const s4 = document.getElementById('pipeStep4');
+          // Dynamic Pipeline Step Highlights (১. ফাইল আপলোড, ২. প্রমট সেন্ট, ৩. প্রসেসিং, ৪. ওয়েটিং ফর ফাইনাল আউটপুট)
+          const steps = [
+            document.getElementById('pipeStep1'),
+            document.getElementById('pipeStep2'),
+            document.getElementById('pipeStep3'),
+            document.getElementById('pipeStep4')
+          ];
 
-          if (s1 && s2 && s3 && s4) {
-            if (pct >= 90) {
-              s1.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
-              s2.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
-              s3.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
-              s4.className = 'p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 flex items-center justify-center gap-1.5 shadow-2xs animate-pulse';
-            } else if (pct >= 60) {
-              s1.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
-              s2.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
-              s3.className = 'p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 flex items-center justify-center gap-1.5 shadow-2xs animate-pulse';
-              s4.className = 'p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5';
-            } else if (pct >= 30) {
-              s1.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
-              s2.className = 'p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 flex items-center justify-center gap-1.5 shadow-2xs animate-pulse';
-              s3.className = 'p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5';
-              s4.className = 'p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5';
+          let currentStep = stepNum || (pct >= 95 ? 4 : (pct >= 60 ? 3 : (pct >= 30 ? 2 : 1)));
+
+          steps.forEach((stepEl, idx) => {
+            if (!stepEl) return;
+            const stepIdx = idx + 1;
+            if (pct >= 100 || stepIdx < currentStep) {
+              // Completed step (Green with checkmark)
+              stepEl.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs font-bold transition-all text-center';
+            } else if (stepIdx === currentStep) {
+              // Active step (Pulsing high-tech indicator)
+              stepEl.className = 'p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-500 dark:border-indigo-400 flex items-center justify-center gap-1.5 shadow-sm font-black animate-pulse transition-all text-center';
+            } else {
+              // Upcoming step (Muted slate)
+              stepEl.className = 'p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5 font-medium transition-all text-center';
             }
-          }
+          });
         },
         (liveChunk) => {
           if (wizardPreviewContent) {

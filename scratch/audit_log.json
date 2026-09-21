@@ -1,0 +1,1484 @@
+[
+  {
+    "timestamp": "2026-09-21T11:50:25.139Z",
+    "timeStr": "5:50:25 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:50:25.138Z",
+    "timeStr": "5:50:25 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:49:59.339Z",
+    "timeStr": "5:49:59 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:47:46.086Z",
+    "timeStr": "5:47:46 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:47:46.085Z",
+    "timeStr": "5:47:46 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "Failed to fetch"
+  },
+  {
+    "timestamp": "2026-09-21T11:47:27.139Z",
+    "timeStr": "5:47:27 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:47:27.138Z",
+    "timeStr": "5:47:27 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:47:01.131Z",
+    "timeStr": "5:47:01 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:47:01.130Z",
+    "timeStr": "5:47:01 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:46:35.132Z",
+    "timeStr": "5:46:35 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:46:35.131Z",
+    "timeStr": "5:46:35 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:46:09.971Z",
+    "timeStr": "5:46:09 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:46:09.970Z",
+    "timeStr": "5:46:09 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:45:44.956Z",
+    "timeStr": "5:45:44 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:32:47.193Z",
+    "timeStr": "5:32:47 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 3726
+  },
+  {
+    "timestamp": "2026-09-21T11:32:16.129Z",
+    "timeStr": "5:32:16 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:32:16.129Z",
+    "timeStr": "5:32:16 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyA1...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:31:16.126Z",
+    "timeStr": "5:31:16 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyA1...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:31:16.125Z",
+    "timeStr": "5:31:16 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:30:16.134Z",
+    "timeStr": "5:30:16 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:30:16.133Z",
+    "timeStr": "5:30:16 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:29:35.133Z",
+    "timeStr": "5:29:35 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:29:35.132Z",
+    "timeStr": "5:29:35 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:29:09.130Z",
+    "timeStr": "5:29:09 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:29:09.130Z",
+    "timeStr": "5:29:09 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyBq...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:28:43.548Z",
+    "timeStr": "5:28:43 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyBq...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:28:43.548Z",
+    "timeStr": "5:28:43 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:28:18.544Z",
+    "timeStr": "5:28:18 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:28:18.544Z",
+    "timeStr": "5:28:18 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:27:53.542Z",
+    "timeStr": "5:27:53 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:27:53.541Z",
+    "timeStr": "5:27:53 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:27:28.537Z",
+    "timeStr": "5:27:28 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:27:28.537Z",
+    "timeStr": "5:27:28 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:27:03.524Z",
+    "timeStr": "5:27:03 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:23:56.319Z",
+    "timeStr": "5:23:56 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:23:56.318Z",
+    "timeStr": "5:23:56 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "Failed to fetch"
+  },
+  {
+    "timestamp": "2026-09-21T11:23:53.203Z",
+    "timeStr": "5:23:53 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T11:23:53.203Z",
+    "timeStr": "5:23:53 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T11:23:51.888Z",
+    "timeStr": "5:23:51 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:12:21.321Z",
+    "timeStr": "3:12:21 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 3922
+  },
+  {
+    "timestamp": "2026-09-21T09:11:47.158Z",
+    "timeStr": "3:11:47 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:11:47.157Z",
+    "timeStr": "3:11:47 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:11:21.149Z",
+    "timeStr": "3:11:21 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:11:21.149Z",
+    "timeStr": "3:11:21 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:10:55.156Z",
+    "timeStr": "3:10:55 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:10:55.156Z",
+    "timeStr": "3:10:55 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:10:29.155Z",
+    "timeStr": "3:10:29 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:10:29.154Z",
+    "timeStr": "3:10:29 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:10:03.908Z",
+    "timeStr": "3:10:03 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:10:02.157Z",
+    "timeStr": "3:10:02 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:10:02.156Z",
+    "timeStr": "3:10:02 PM",
+    "event": "MODEL_FAILOVER",
+    "failedModel": "gemini-3.6-flash",
+    "error": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+    "timestamp": "2026-09-21T09:09:44.157Z",
+    "timeStr": "3:09:44 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-21T09:09:44.157Z",
+    "timeStr": "3:09:44 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:09:18.156Z",
+    "timeStr": "3:09:18 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-21T09:09:18.155Z",
+    "timeStr": "3:09:18 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3.6-flash",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:08:53.032Z",
+    "timeStr": "3:08:53 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-21T09:08:53.032Z",
+    "timeStr": "3:08:53 PM",
+    "event": "MODEL_FAILOVER",
+    "failedModel": "gemini-3-flash-preview",
+    "error": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+    "timestamp": "2026-09-21T09:08:43.155Z",
+    "timeStr": "3:08:43 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:08:43.154Z",
+    "timeStr": "3:08:43 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:08:17.159Z",
+    "timeStr": "3:08:17 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:08:17.158Z",
+    "timeStr": "3:08:17 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyA1...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:07:52.036Z",
+    "timeStr": "3:07:52 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyA1...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:07:52.035Z",
+    "timeStr": "3:07:52 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:07:27.034Z",
+    "timeStr": "3:07:27 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:07:27.033Z",
+    "timeStr": "3:07:27 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:07:02.030Z",
+    "timeStr": "3:07:02 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:07:02.029Z",
+    "timeStr": "3:07:02 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:06:37.026Z",
+    "timeStr": "3:06:37 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:06:37.026Z",
+    "timeStr": "3:06:37 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyBq...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:06:12.024Z",
+    "timeStr": "3:06:12 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyBq...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:06:12.023Z",
+    "timeStr": "3:06:12 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:05:47.020Z",
+    "timeStr": "3:05:47 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:05:47.020Z",
+    "timeStr": "3:05:47 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:05:22.007Z",
+    "timeStr": "3:05:22 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-21T09:05:22.007Z",
+    "timeStr": "3:05:22 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-21T09:04:56.987Z",
+    "timeStr": "3:04:56 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:32:47.176Z",
+    "timeStr": "10:32:47 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:32:47.175Z",
+    "timeStr": "10:32:47 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:32:22.159Z",
+    "timeStr": "10:32:22 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:32:22.159Z",
+    "timeStr": "10:32:22 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:31:57.157Z",
+    "timeStr": "10:31:57 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:31:57.156Z",
+    "timeStr": "10:31:57 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:31:32.153Z",
+    "timeStr": "10:31:32 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:31:32.152Z",
+    "timeStr": "10:31:32 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:31:07.148Z",
+    "timeStr": "10:31:07 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:31:07.147Z",
+    "timeStr": "10:31:07 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:30:42.143Z",
+    "timeStr": "10:30:42 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:30:42.143Z",
+    "timeStr": "10:30:42 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:30:16.165Z",
+    "timeStr": "10:30:16 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:30:16.164Z",
+    "timeStr": "10:30:16 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:29:51.159Z",
+    "timeStr": "10:29:51 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:29:51.158Z",
+    "timeStr": "10:29:51 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:29:25.148Z",
+    "timeStr": "10:29:25 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:29:25.147Z",
+    "timeStr": "10:29:25 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:28:59.931Z",
+    "timeStr": "10:28:59 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:28:01.374Z",
+    "timeStr": "10:28:01 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:28:01.373Z",
+    "timeStr": "10:28:01 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "Failed to fetch"
+  },
+  {
+    "timestamp": "2026-09-20T16:27:51.152Z",
+    "timeStr": "10:27:51 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:27:51.151Z",
+    "timeStr": "10:27:51 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:27:25.627Z",
+    "timeStr": "10:27:25 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:27:25.627Z",
+    "timeStr": "10:27:25 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyA1...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:27:21.693Z",
+    "timeStr": "10:27:21 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyA1...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:22:32.056Z",
+    "timeStr": "10:22:32 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 3941
+  },
+  {
+    "timestamp": "2026-09-20T16:22:00.183Z",
+    "timeStr": "10:22:00 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:22:00.183Z",
+    "timeStr": "10:22:00 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:21:35.179Z",
+    "timeStr": "10:21:35 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:21:35.178Z",
+    "timeStr": "10:21:35 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:21:10.160Z",
+    "timeStr": "10:21:10 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:21:10.159Z",
+    "timeStr": "10:21:10 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyBq...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:20:45.157Z",
+    "timeStr": "10:20:45 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyBq...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:20:45.156Z",
+    "timeStr": "10:20:45 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:20:19.155Z",
+    "timeStr": "10:20:19 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:20:19.154Z",
+    "timeStr": "10:20:19 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:19:53.154Z",
+    "timeStr": "10:19:53 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:19:53.153Z",
+    "timeStr": "10:19:53 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:19:27.390Z",
+    "timeStr": "10:19:27 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T16:19:27.390Z",
+    "timeStr": "10:19:27 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T16:19:23.741Z",
+    "timeStr": "10:19:23 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T15:52:02.506Z",
+    "timeStr": "9:52:02 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 2422
+  },
+  {
+    "timestamp": "2026-09-20T15:51:40.867Z",
+    "timeStr": "9:51:40 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T12:52:51.453Z",
+    "timeStr": "6:52:51 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 2638
+  },
+  {
+    "timestamp": "2026-09-20T12:52:29.186Z",
+    "timeStr": "6:52:29 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T11:52:03.896Z",
+    "timeStr": "5:52:03 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 5654
+  },
+  {
+    "timestamp": "2026-09-20T11:51:32.512Z",
+    "timeStr": "5:51:32 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T11:51:32.512Z",
+    "timeStr": "5:51:32 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T11:51:07.476Z",
+    "timeStr": "5:51:07 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T11:51:07.476Z",
+    "timeStr": "5:51:07 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T11:50:42.448Z",
+    "timeStr": "5:50:42 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T11:49:21.618Z",
+    "timeStr": "5:49:21 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 5348
+  },
+  {
+    "timestamp": "2026-09-20T11:48:56.326Z",
+    "timeStr": "5:48:56 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T11:48:56.325Z",
+    "timeStr": "5:48:56 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T11:48:31.287Z",
+    "timeStr": "5:48:31 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T04:40:40.169Z",
+    "timeStr": "10:40:40 AM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-2.5-flash",
+    "length": 4823
+  },
+  {
+    "timestamp": "2026-09-20T04:40:30.010Z",
+    "timeStr": "10:40:30 AM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-2.5-flash"
+  },
+  {
+    "timestamp": "2026-09-20T04:40:30.010Z",
+    "timeStr": "10:40:30 AM",
+    "event": "MODEL_FAILOVER",
+    "failedModel": "gemini-3.6-flash",
+    "error": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+    "timestamp": "2026-09-20T04:40:25.214Z",
+    "timeStr": "10:40:25 AM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-20T04:40:24.239Z",
+    "timeStr": "10:40:24 AM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.1-pro-preview"
+  },
+  {
+    "timestamp": "2026-09-20T04:40:24.239Z",
+    "timeStr": "10:40:24 AM",
+    "event": "MODEL_FAILOVER",
+    "failedModel": "gemini-3-flash-preview",
+    "error": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+    "timestamp": "2026-09-20T04:40:20.501Z",
+    "timeStr": "10:40:20 AM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T04:40:20.500Z",
+    "timeStr": "10:40:20 AM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T04:39:55.482Z",
+    "timeStr": "10:39:55 AM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T04:39:55.481Z",
+    "timeStr": "10:39:55 AM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-20T04:39:30.468Z",
+    "timeStr": "10:39:30 AM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-20T04:39:11.735Z",
+    "timeStr": "10:39:11 AM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 3825
+  },
+  {
+    "timestamp": "2026-09-20T04:38:52.523Z",
+    "timeStr": "10:38:52 AM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T12:56:44.562Z",
+    "timeStr": "6:56:44 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 4932
+  },
+  {
+    "timestamp": "2026-09-19T12:56:19.471Z",
+    "timeStr": "6:56:19 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T12:56:17.290Z",
+    "timeStr": "6:56:17 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 4650
+  },
+  {
+    "timestamp": "2026-09-19T12:55:52.194Z",
+    "timeStr": "6:55:52 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T11:54:44.199Z",
+    "timeStr": "5:54:44 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 2272
+  },
+  {
+    "timestamp": "2026-09-19T11:54:25.104Z",
+    "timeStr": "5:54:25 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T11:54:11.408Z",
+    "timeStr": "5:54:11 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 2197
+  },
+  {
+    "timestamp": "2026-09-19T11:53:54.633Z",
+    "timeStr": "5:53:54 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T11:53:44.627Z",
+    "timeStr": "5:53:44 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3-flash-preview",
+    "length": 1696
+  },
+  {
+    "timestamp": "2026-09-19T11:53:32.126Z",
+    "timeStr": "5:53:32 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyC1...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T11:27:47.138Z",
+    "timeStr": "5:27:47 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 4075
+  },
+  {
+    "timestamp": "2026-09-19T11:27:19.551Z",
+    "timeStr": "5:27:19 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T11:27:19.550Z",
+    "timeStr": "5:27:19 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 15
+  },
+  {
+    "timestamp": "2026-09-19T11:27:19.048Z",
+    "timeStr": "5:27:19 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T11:27:19.047Z",
+    "timeStr": "5:27:19 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-19T11:26:54.041Z",
+    "timeStr": "5:26:54 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-19T11:26:51.554Z",
+    "timeStr": "5:26:51 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview",
+    "length": 3648
+  },
+  {
+    "timestamp": "2026-09-19T11:26:25.580Z",
+    "timeStr": "5:26:25 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3-flash-preview"
+  },
+  {
+    "timestamp": "2026-09-18T15:06:06.380Z",
+    "timeStr": "9:06:06 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash",
+    "length": 1287
+  },
+  {
+    "timestamp": "2026-09-18T15:05:51.732Z",
+    "timeStr": "9:05:51 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-18T15:05:51.731Z",
+    "timeStr": "9:05:51 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-18T15:05:26.724Z",
+    "timeStr": "9:05:26 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-18T15:05:26.723Z",
+    "timeStr": "9:05:26 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-18T15:05:01.713Z",
+    "timeStr": "9:05:01 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-18T15:05:01.713Z",
+    "timeStr": "9:05:01 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-18T15:04:36.707Z",
+    "timeStr": "9:04:36 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-18T15:04:36.706Z",
+    "timeStr": "9:04:36 PM",
+    "event": "KEY_ATTEMPT_FAILED",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash",
+    "error": "signal is aborted without reason"
+  },
+  {
+    "timestamp": "2026-09-18T15:04:11.697Z",
+    "timeStr": "9:04:11 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.6-flash"
+  },
+  {
+    "timestamp": "2026-09-18T15:04:11.696Z",
+    "timeStr": "9:04:11 PM",
+    "event": "MODEL_FAILOVER",
+    "failedModel": "gemini-3.5-flash",
+    "error": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+    "timestamp": "2026-09-18T15:04:08.628Z",
+    "timeStr": "9:04:08 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.5-flash"
+  },
+  {
+    "timestamp": "2026-09-18T15:04:07.014Z",
+    "timeStr": "9:04:07 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T15:04:07.012Z",
+    "timeStr": "9:04:07 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AIzaSyC1...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T15:04:07.005Z",
+    "timeStr": "9:04:07 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T15:04:07.002Z",
+    "timeStr": "9:04:07 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T15:04:06.934Z",
+    "timeStr": "9:04:06 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T15:04:06.930Z",
+    "timeStr": "9:04:06 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:03:50.919Z",
+    "timeStr": "8:03:50 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3.5-flash",
+    "length": 3757
+  },
+  {
+    "timestamp": "2026-09-18T14:03:37.661Z",
+    "timeStr": "8:03:37 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AIzaSyCe...",
+    "model": "gemini-3.5-flash"
+  },
+  {
+    "timestamp": "2026-09-18T14:03:35.888Z",
+    "timeStr": "8:03:35 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:03:35.887Z",
+    "timeStr": "8:03:35 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AIzaSyC1...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:03:35.819Z",
+    "timeStr": "8:03:35 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:03:35.818Z",
+    "timeStr": "8:03:35 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:03:35.815Z",
+    "timeStr": "8:03:35 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:03:35.813Z",
+    "timeStr": "8:03:35 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:02:27.478Z",
+    "timeStr": "8:02:27 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.5-flash",
+    "length": 3321
+  },
+  {
+    "timestamp": "2026-09-18T14:02:07.029Z",
+    "timeStr": "8:02:07 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.5-flash"
+  },
+  {
+    "timestamp": "2026-09-18T14:02:05.361Z",
+    "timeStr": "8:02:05 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AIzaSyC1...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:02:05.360Z",
+    "timeStr": "8:02:05 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:02:05.352Z",
+    "timeStr": "8:02:05 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:02:05.351Z",
+    "timeStr": "8:02:05 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:02:05.294Z",
+    "timeStr": "8:02:05 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T14:02:05.283Z",
+    "timeStr": "8:02:05 PM",
+    "event": "KEY_COOLDOWN",
+    "keyMask": "AQ.Ab8RN...",
+    "cooldownSec": 30
+  },
+  {
+    "timestamp": "2026-09-18T12:53:28.578Z",
+    "timeStr": "6:53:28 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.5-flash",
+    "length": 9162
+  },
+  {
+    "timestamp": "2026-09-18T12:53:10.024Z",
+    "timeStr": "6:53:10 PM",
+    "event": "KEY_ATTEMPT",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.5-flash"
+  },
+  {
+    "timestamp": "2026-09-18T10:19:17.884Z",
+    "timeStr": "4:19:17 PM",
+    "event": "OCR_SUCCESS",
+    "keyMask": "AQ.Ab8RN...",
+    "model": "gemini-3.5-flash-lite",
+    "length": 9678
+  }
+]

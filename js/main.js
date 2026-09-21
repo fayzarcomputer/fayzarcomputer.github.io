@@ -2830,8 +2830,9 @@ function initUnifiedConverterEngine() {
     }
 
     try {
+      const targetFmt = selectedAiTargetFormat || 'doc';
       const res = await window.FayzarAiOcrEngine.startUnifiedOcr(
-        'none',
+        targetFmt,
         (statusText, pct) => {
           const pt = document.getElementById('wizardProgressTitle') || wizardProgressTitle;
           if (pt) pt.textContent = statusText;
@@ -2882,7 +2883,7 @@ function initUnifiedConverterEngine() {
       wizardProgressCard?.classList.add('hidden');
       wizardResultCard?.classList.remove('hidden');
 
-      const baseName = currentScanResult.file.name.replace(/\.[^/.]+$/, '');
+      const baseName = (currentScanResult?.file?.name || 'Output').replace(/\.[^/.]+$/, '');
 
       if (wizardResultFileName) wizardResultFileName.textContent = `${baseName}_Converted`;
       if (wizardResultStatsBadge) wizardResultStatsBadge.textContent = `ডকুমেন্ট রূপান্তর সফলভাবে সম্পন্ন হয়েছে (৩টি ফরম্যাটেই প্রস্তুত)`;

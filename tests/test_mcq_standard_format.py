@@ -246,6 +246,69 @@ class TestMcqStandardFormat(unittest.TestCase):
         # English options must remain standard untouched
         self.assertEqual(lines[3], '(a) Dhaka (b) Chittagong')
 
+    def test_decimal_clause_numbering_not_converted_to_dari(self):
+        """Clauses like ৪.১. or ৫.২. must NOT be transformed to ৪। ১. or ৫। ২."""
+        handler_path = self.web_docx_handler.replace('\\', '/')
+        code = (
+            "const fs = require('fs');\n"
+            f"eval(fs.readFileSync('{handler_path}', 'utf-8'));\n"
+            "const line1 = DocxHandler.formatQuestionNumber('৪.১. শিবনগর');\n"
+            "const line2 = DocxHandler.formatQuestionNumber('৫.২. শ্রেণিকক্ষ');\n"
+            "const qLine = DocxHandler.formatQuestionNumber('১. প্রথম প্রশ্ন');\n"
+            "console.log(JSON.stringify({ line1, line2, qLine }));\n"
+        )
+        out = json.loads(self.run_node_code(code))
+        self.assertEqual(out['line1'], '৪.১. শিবনগর')
+        self.assertEqual(out['line2'], '৫.২. শ্রেণিকক্ষ')
+        self.assertEqual(out['qLine'], '১। প্রথম প্রশ্ন')
+
+    def test_content_brackets_and_hyphens_preserved_in_ocr(self):
+        """Content brackets (Vision & Mission), (যেমন: ...), (বেঞ্চ/টেবিল) and compound hyphens must be preserved"""
+        handler_path = self.web_docx_handler.replace('\\', '/')
+        ai_ocr_path = self.web_ai_ocr.replace('\\', '/')
+        code = (
+            "global.window = global;\n"
+            "global.document = { readyState: 'complete', addEventListener: () => {}, getElementById: () => null };\n"
+            "global.localStorage = { getItem: () => null, setItem: () => {} };\n"
+            "const fs = require('fs');\n"
+            "eval(fs.readFileSync('./js/bangla-converter-engine.js', 'utf-8'));\n"
+            f"eval(fs.readFileSync('{handler_path}', 'utf-8'));\n"
+            f"eval(fs.readFileSync('{ai_ocr_path}', 'utf-8'));\n"
+            "const input = [\n"
+            "    'দ্বিতীয় অধ্যায়: লক্ষ্য, উদ্দেশ্য ও রূপকল্প (Vision & Mission)',\n"
+            "    '৪.৪. খেলাধুলা, শিল্প-সংস্কৃতি এবং সহশিক্ষামূলক কার্যক্রমের (যেমন: বিতর্ক, বিজ্ঞান মেলা, চিত্রাঙ্কন) ব্যবস্থা করা।',\n"
+            "    '৫.২. আলো-বাতাস এবং বসার ব্যবস্থা (বেঞ্চ/টেবিল) থাকবে।'\n"
+            "].join('\\n');\n"
+            "const cleaned = global.FayzarAiOcrEngine.cleanOcrResponse(input);\n"
+            "console.log(JSON.stringify(cleaned));\n"
+        )
+        out = json.loads(self.run_node_code(code))
+        self.assertIn('(Vision & Mission)', out)
+        self.assertIn('শিল্প-সংস্কৃতি', out)
+        self.assertIn('(যেমন: বিতর্ক, বিজ্ঞান মেলা, চিত্রাঙ্কন)', out)
+        self.assertIn('আলো-বাতাস', out)
+        self.assertIn('(বেঞ্চ/টেবিল)', out)
+
+    def test_mso_spacerun_preserved_between_adjacent_spans(self):
+        """Ensure Word 2003 HTML generates mso-spacerun between closing parentheses and following words"""
+        handler_path = self.web_docx_handler.replace('\\', '/')
+        code = (
+            "global.window = global;\n"
+            "global.Blob = class MockBlob { constructor(p) { this.content = p[0]; } };\n"
+            "const fs = require('fs');\n"
+            "eval(fs.readFileSync('./js/bangla-converter-engine.js', 'utf-8'));\n"
+            "eval(fs.readFileSync('./js/equation-converter.js', 'utf-8'));\n"
+            f"eval(fs.readFileSync('{handler_path}', 'utf-8'));\n"
+            "const input = 'বসার ব্যবস্থা (বেঞ্চ/টেবিল) থাকবে।';\n"
+            "const blob = DocxHandler.createDocFromText(input, 'SutonnyMJ', true, 12, { direction: 'all_bijoy' });\n"
+            "console.log(JSON.stringify({ html: blob.content }));\n"
+        )
+        out = json.loads(self.run_node_code(code))
+        html = out['html']
+        self.assertIn("mso-spacerun:yes", html)
+        self.assertIn("Times New Roman", html)
+        self.assertIn("SutonnyMJ", html)
+
 if __name__ == '__main__':
     unittest.main()
 

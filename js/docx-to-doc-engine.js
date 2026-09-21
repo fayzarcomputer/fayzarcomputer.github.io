@@ -751,8 +751,10 @@
       for (let t of textNodes) {
         const tName = t.localName || t.nodeName.split(':').pop();
         if (tName === 't') {
-          textContent += t.textContent || "";
-          htmlContent += this._escapeHtml(t.textContent || "");
+          const rawT = t.textContent || "";
+          textContent += rawT;
+          const escT = this._escapeHtml(rawT);
+          htmlContent += this._renderMsoSpaces(escT);
         } else if (tName === 'tab') {
           textContent += "\t";
           htmlContent += '<span style="mso-tab-count:1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>';
@@ -778,8 +780,8 @@
       const imagesHtml = this._extractImagesFromNode(rNode, mediaMap);
 
       // Check if SutonnyMJ run contains hyphens/dashes - if so, isolate them to Times New Roman
-      if (isSutonnyRun && /[-–—−‒―]/.test(htmlContent)) {
-        const dParts = htmlContent.split(/([-–—−‒―]+)/);
+      if (isSutonnyRun && /[-–—−‒―]/.test(textContent)) {
+        const dParts = textContent.split(/([-–—−‒―]+)/);
         let splitHtml = imagesHtml;
         for (let dp of dParts) {
           if (!dp) continue;
@@ -795,10 +797,12 @@
           if (isBold) partStyles.push(`font-weight:bold;mso-bidi-font-weight:bold`);
           if (isItalic) partStyles.push(`font-style:italic;mso-bidi-font-style:italic`);
           if (isUnderline) partStyles.push(`text-decoration:underline`);
+          const escDp = this._escapeHtml(dp);
+          const fmtDp = this._renderMsoSpaces(escDp);
           if (isDash) {
-            splitHtml += `<span lang="EN-US" style="${partStyles.join(';')}">${dp}</span>`;
+            splitHtml += `<span lang="EN-US" style="${partStyles.join(';')}">${fmtDp}</span>`;
           } else {
-            splitHtml += `<span style="${partStyles.join(';')}">${dp}</span>`;
+            splitHtml += `<span style="${partStyles.join(';')}">${fmtDp}</span>`;
           }
         }
         return {
@@ -1091,6 +1095,17 @@ ${parsedBody.bodyHtml}
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+    }
+
+    _renderMsoSpaces(str) {
+      if (!str) return '';
+      if (/^ +$/.test(str)) {
+        return `<span style='mso-spacerun:yes'>${'&nbsp;'.repeat(str.length)}</span>`;
+      }
+      str = str.replace(/^( +)/, (m) => `<span style='mso-spacerun:yes'>${'&nbsp;'.repeat(m.length)}</span>`);
+      str = str.replace(/( +)$/, (m) => `<span style='mso-spacerun:yes'>${'&nbsp;'.repeat(m.length)}</span>`);
+      str = str.replace(/ {2,}/g, (m) => ` <span style='mso-spacerun:yes'>${'&nbsp;'.repeat(m.length - 1)}</span>`);
+      return str;
     }
   }
 

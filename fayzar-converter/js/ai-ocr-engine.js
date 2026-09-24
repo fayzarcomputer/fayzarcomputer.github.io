@@ -35,22 +35,37 @@
 
   function updateProModelStatusUI(isOnline) {
     const modeBadge = (elements && elements.modeBadge) || document.getElementById('ai-ocr-mode-badge');
+    const toggleWrapper = (elements && elements.proModelToggleWrapper) || document.getElementById('proModelToggleWrapper');
+    if (toggleWrapper) {
+      toggleWrapper.style.display = 'none';
+      toggleWrapper.classList.add('hidden');
+    }
+
     if (modeBadge) {
       if (isOnline) {
-        modeBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-purple-700 via-indigo-600 to-emerald-600 text-white border border-purple-400/80 shadow-md inline-flex items-center gap-1.5 animate-pulse cursor-pointer transition-all duration-300";
-        modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-300 shadow-sm animate-ping"></span> ⚡ প্রো মডেল একটিভ আছে`;
-        modeBadge.title = "ডেস্কটপ Gemini 3.1 Pro ইঞ্জিন সক্রিয় ও প্রস্তুত";
+        if (state.proBridgeEnabled) {
+          modeBadge.className = "px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-purple-700 via-indigo-600 to-emerald-600 text-white border border-purple-400/80 shadow-md inline-flex items-center gap-1.5 animate-pulse cursor-pointer hover:shadow-lg transition-all duration-300";
+          modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-300 shadow-sm animate-ping"></span> ⚡ প্রো মডেল একটিভ আছে`;
+          modeBadge.title = "⚡ প্রো মডেল (Gemini 3.1 Pro) সক্রিয় আছে। ক্লিক করলে এপিআই কি মোড চলবে।";
+        } else {
+          modeBadge.className = "px-3 py-1.5 rounded-full text-[11px] font-bold bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-300/80 hover:bg-purple-100 dark:hover:bg-purple-900 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer hover:shadow-md transition-all duration-300";
+          modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> ⚡ প্রো মডেল একটিভ করুন`;
+          modeBadge.title = "ডেস্কটপ Gemini 3.1 Pro ইঞ্জিন সংযুক্ত আছে। প্রো মডেল সক্রিয় করতে ক্লিক করুন।";
+        }
       } else {
-        modeBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all duration-300";
-        modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> লাইভ API সচল`;
+        modeBadge.className = "px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer hover:shadow-md transition-all duration-300";
+        modeBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> এপিআই কি সক্রিয় আছে`;
         modeBadge.title = "Google Gemini Live Cloud API সক্রিয়";
       }
     }
     const pill = document.getElementById('ai-model-type-pill');
     if (pill) {
-      if (isOnline) {
+      if (isOnline && state.proBridgeEnabled) {
         pill.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 inline-flex items-center gap-1.5 shadow-2xs";
         pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> ⚡ প্রো মডেল (3.1 Pro) প্রস্তুত`;
+      } else if (isOnline && !state.proBridgeEnabled) {
+        pill.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 inline-flex items-center gap-1.5";
+        pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ক্লাউড API সচল (দ্রুত গতি)`;
       } else {
         pill.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300 inline-flex items-center gap-1.5";
         pill.innerHTML = `Gemini AI + ফয়জার ইঞ্জিন`;
@@ -58,7 +73,7 @@
     }
     const btnText = document.getElementById('executeAiConversionBtnText');
     if (btnText && (!state || !state.isProcessing)) {
-      if (isOnline) {
+      if (isOnline && state.proBridgeEnabled) {
         btnText.textContent = '⚡ প্রো মডেল দিয়ে সরাসরি কনভার্ট শুরু করুন';
       } else {
         btnText.textContent = 'AI দিয়ে সরাসরি কনভার্ট শুরু করুন';
@@ -98,12 +113,31 @@
 
   const GEMINI_PROMPT = `You are an elite Bengali Document Composer & LaTeX formatting specialist. Extract and compose a COMPLETE document from the provided images using STRICT MARKDOWN formatting.
 
-1. ZERO-HALLUCINATION & SOURCE FIDELITY:
+0. MANDATORY DOCUMENT ARCHETYPE FRONTMATTER (LINE 1 MUST START WITH '---'):
+   - Output an exact YAML frontmatter header at the very beginning between '---' delimiters:
+     ---
+     doc_type: <EXAM_CQ | EXAM_GENERAL | EXAM_MCQ | EXAM_COMBINED | OFFICE_PAD | PROTTOYON_CERT | GOVT_APP | OFFICIAL_NOTICE | LEGAL_DEED>
+     columns: <1 or 2>
+     ---
+   - SECTOR DETERMINATION RULES (DO NOT RELY ON COLUMNS IN HANDWRITTEN DRAFTS; CLASSIFY BY INTENDED PURPOSE):
+     * Creative Questions (CQ 70 marks, Class 6-12 with stimulus & ক,খ,গ,ঘ): doc_type: EXAM_CQ, columns: 2
+     * Standard/Primary Exam (Class 1-5, short questions, fill-in-blanks, matching, grammar, general questions): doc_type: EXAM_GENERAL, columns: 2
+       -> CRITICAL: NEVER classify general or primary exam papers as EXAM_CQ! If there is no stimulus or no 4-tier CQ sub-questions, it is EXAM_GENERAL.
+     * Pure Multiple Choice Questions (20-30 MCQs): doc_type: EXAM_MCQ, columns: 2
+     * Combined Exam (both Creative Questions & 20-30 MCQs): doc_type: EXAM_COMBINED, columns: 2
+     * Institutional Office Pad / Letterhead Memo: doc_type: OFFICE_PAD, columns: 1
+     * Testimonial / Character Certificate (প্রত্যয়নপত্র ও প্রশংসাপত্র): doc_type: PROTTOYON_CERT, columns: 1
+     * Government / Job Application (বরাবর, বিষয়, জনাব সংবলিত দরখাস্ত): doc_type: GOVT_APP, columns: 1
+     * Official Government / Institutional Notice / Memo: doc_type: OFFICIAL_NOTICE, columns: 1
+     * Legal Deed / 300 Tk Non-Judicial Stamp Contract: doc_type: LEGAL_DEED, columns: 1
+   - SECTION BREAK MANDATE:
+     * When transcribing a combined question paper (containing both Creative Questions and Multiple Choice Questions), when the Creative Question part ends and the Multiple Choice (MCQ) section begins (before its institutional header/title), YOU MUST INSERT THIS EXACT SEPARATOR ON ITS OWN LINE:
+       ---SECTION_BREAK:MCQ---
+
+1. ZERO-HALLUCINATION & STRICT 100% SOURCE FIDELITY (NO EDITS, NO PARAPHRASING):
    - Transcribe ONLY what is physically and visibly present in the source images. Never invent, extrapolate, or guess any question, sub-question, or header.
-   - If anything is completely blurry, deduce it logically but explicitly document it at the very end in a dedicated block:
-     [নোট ও পরিবর্তনসমূহ: ...]
-   - If no changes were made:
-     [নোট: মূল ফাইলের সাথে সম্পূর্ণ যাচাইকৃত, কোনো পরিবর্তন করা হয়নি।]
+   - DO NOT alter, rewrite, rephrase, summarize, or modify the original text, question contents, equations, or numbers on your own.
+   - Transcribe stroke-by-stroke with 100% fidelity. Everything must match the source image word-for-word!
 
 2. MARKDOWN STRUCTURE:
    - Use # for main document/institution titles.
@@ -132,39 +166,29 @@
    - If the document contains 11 creative questions, transcribe all 11 questions. If it contains only 1 question, transcribe that 1 question. If it contains 30 MCQs, transcribe all 30.
    - CRITICAL: NEVER STOP HALFWAY, NEVER SKIP ANY VISIBLE QUESTION OR MIDDLE PAGE, AND NEVER TRUNCATE!
 
-8. STRICT FIDELITY TO SOURCE & MANDATORY AUDIT NOTE (মূল ফাইলের সাথে হুবহু মিল ও অডিট নোট):
-   - DO NOT alter, rewrite, rephrase, summarize, or modify the original text, question contents, equations, or numbers on your own.
-   - STIMULUS (উদ্দীপক/অনুচ্ছেদ অপরিবর্তিত রাখা): NEVER change, paraphrase, shorten, or rewrite the stimulus. It MUST match the source image word-for-word!
-   - MANDATORY AUDIT NOTE: If you make any unavoidable correction (fixing an obvious printing typo, restoring blurred text, or resolving misspellings), you MUST explicitly document each and every change at the very end of the document in a dedicated note block:
-     [নোট ও পরিবর্তনসমূহ:
-     - প্রশ্ন ৩-এর উদ্দীপকে '...' মূল ছবির সাথে মিলানো হয়েছে।
-     - বানান সংশোধন: '...' এর স্থলে '...' ঠিক করা হয়েছে।]
-   - If absolutely NO changes or corrections were made and the output is 100% identical to the source:
-     [নোট: মূল ফাইলের সাথে সম্পূর্ণ যাচাইকৃত, কোনো পরিবর্তন করা হয়নি।]
-
-9. NO EXAM BOARD REFERENCES OR CITATIONS (কোন প্রকার পরীক্ষার বোর্ড রেফারেন্স বা উৎস ট্যাগ রাখা যাবে না, তবে ডকুমেন্টের বিষয়বস্তুর বন্ধনী, ইংরেজি ও হাইফেন ১০০% অক্ষত রাখতে হবে):
-   - CRITICAL: Omit only exam board question references/tags such as: [ঢাকা বোর্ড-২০২৩], [দিনাজপুর বোর্ড ২০২১], [কুমিল্লা ক্যাডেট কলেজ], [রাজশাহী জিলা স্কুল], (বোর্ড প্রশ্ন), মান: ১০ ইত্যাদি।
-   - STRICT PRESERVATION OF CONTENT PARENTHESES & ENGLISH GLOSSES (ডকুমেন্টের মূল বিষয়বস্তু, বন্ধনী, ইংরেজি শব্দ ও হাইফেন অক্ষত রাখার বাধ্যবাধকতা):
+8. STRICT PRESERVATION OF SOURCE TEXT & DETAILS:
+   - STIMULUS & QUESTION FULL FIDELITY (উদ্দীপক ও প্রশ্নের ভাষা সংক্ষেপণ সম্পূর্ণ নিষিদ্ধ): NEVER change, paraphrase, shorten, or rewrite the stimulus (উদ্দীপক) or question text. It MUST match the source image word-for-word!
+   - OMIT EXAM BOARD REFERENCES: Omit all exam board tags, cadet college tags, and chapter citations (যেমন: [ঢাকা বোর্ড-২০২৩], [ক্যাডেট কলেজ], [অধ্যায়-৩], (দিনাজপুর বোর্ড-২০২২) ইত্যাদি সম্পূর্ণ বাদ দিন).
+   - STRICT PRESERVATION OF CONTENT PARENTHESES & ENGLISH GLOSSES:
      * সাধারণ নথিপত্র, গঠনতন্ত্র, বিধিমালা, চুক্তিনামা বা প্রশ্নপত্রের মূল বিষয়বস্তুর ভেতরের কোনো বন্ধনী বা উদাহরণ যেমন: (Vision & Mission), (যেমন: ...), (বেঞ্চ/টেবিল), (ক), (খ) ইত্যাদি কখনোই বাদ দেওয়া যাবে না! এগুলো অবিকল রাখতে হবে।
      * বাংলা শব্দের পাশে ইংরেজি বন্ধনী (যেমন: রূপকল্প (Vision & Mission)) সম্পূর্ণ অক্ষত রাখতে হবে।
      * যুক্ত বা হাইফেনযুক্ত বাংলা শব্দসমূহ (যেমন: শিল্প-সংস্কৃতি, আলো-বাতাস, শিক্ষক-শিক্ষিকাদের, যুগোপযোগী, আর্থ-সামাজিক) এর ভেতরের হাইফেন (-) কোনোভাবেই বাদ বা মুছে ফেলা যাবে না!
 
-10. DIAGRAMS & IMAGES (ছবি বা ডায়াগ্রামের ক্ষেত্রে শুধুমাত্র পেজ নম্বর উল্লেখ, কোনো বর্ণনা নয়):
+9. DIAGRAMS & IMAGES (ছবি বা ডায়াগ্রামের ক্ষেত্রে শুধুমাত্র পেজ নম্বর উল্লেখ, কোনো বর্ণনা নয়):
    - Whenever there is a diagram, geometric figure, circuit, chart, or image, DO NOT write any description or details of the picture.
    - Simply write: [ছবি আছে-পৃ:০১] (বা পেজ নম্বর অনুযায়ী [ছবি আছে-পৃ:০২], [ছবি আছে-পৃ:০৩] ইত্যাদি)।
 
-11. CLEAN PROFESSIONAL OUTPUT (NO CHATTER / NO CODE BLOCKS / NO MARKDOWN ASTERISKS):
-   - Output ONLY the clean transcribed document text directly.
-   - CRITICAL MANDATE: NEVER use markdown bold asterisks (**). NEVER write **পঞ্চম শ্রেণি** or **১. সঠিক উত্তর:**. Output completely plain text without any ** asterisks.
-   - DO NOT add introductory greetings, explanations, chat preamble, or markdown code fences (\`\`\`).
+10. CLEAN PROFESSIONAL OUTPUT (NO CHATTER / NO CODE BLOCKS / NO MARKDOWN ASTERISKS):
+    - Output ONLY the clean transcribed document text directly.
+    - CRITICAL MANDATE: NEVER use markdown bold asterisks (**). NEVER write **পঞ্চম শ্রেণি** or **১. সঠিক উত্তর:**. Output completely plain text without any ** asterisks.
+    - DO NOT add introductory greetings, explanations, chat preamble, or markdown code fences (\`\`\`).
 
-12. NO EXTRA ENTERS OR BLANK LINES (অতিরিক্ত ফাঁকা লাইন বা ডাবল এন্টার নিষেধ, তবে প্রতিটি অনুচ্ছেদ ও উপ-ধারা অবশ্যই আলাদা লাইনে থাকবে):
-   - CRITICAL: DO NOT insert empty blank lines or double Enters between consecutive questions, sub-questions, or lines.
-   - PRESERVE EVERY ARTICLE / SUB-ARTICLE ON ITS OWN LINE (প্রতিটি ধারা, উপ-ধারা ও প্যারাগ্রাফের নিজস্ব লাইন বজায় রাখা):
-     * কোনো অনুচ্ছেদ, ধারা বা উপ-ধারা (যেমন: ধারা ৪: মূল উদ্দেশ্যসমূহ, ৪.১., ৪.২., ৪.৩., ৪.৪., ৪.৫., ধারা ৫: জমি ও ভবন, ৫.১., ৫.২. ইত্যাদি) কখনোই একসাথে এক লাইনে বা একটিমাত্র প্যারাগ্রাফে জোড়া লাগানো (collapse/merge) যাবে না! কখনোই পাইপ ' | ' দিয়ে এক লাইনে যুক্ত করবেন না!
-     * প্রতিটি উপ-ধারা, তালিকা আইটেম বা অনুচ্ছেদ অবশ্যই তার নিজস্ব আলাদা নতুন লাইনে (Enter / newline) থাকবে।
+11. NO EXTRA ENTERS OR BLANK LINES (অতিরিক্ত ফাঁকা লাইন বা ডাবল এন্টার নিষেধ, তবে প্রতিটি অনুচ্ছেদ ও উপ-ধারা অবশ্যই আলাদা লাইনে থাকবে):
+    - CRITICAL: DO NOT insert empty blank lines or double Enters between consecutive questions, sub-questions, or lines.
+    - PRESERVE EVERY ARTICLE / SUB-ARTICLE ON ITS OWN LINE (প্রতিটি ধারা, উপ-ধারা ও প্যারাগ্রাফের নিজস্ব লাইন বজায় রাখা):
+      * প্রতিটি উপ-ধারা, তালিকা আইটেম বা অনুচ্ছেদ অবশ্যই তার নিজস্ব আলাদা নতুন লাইনে (Enter / newline) থাকবে।
 
-13. ROMAN NUMERALS & MCQ FORMATTING (রোমান সংখ্যা ও বহুনির্বাচনী প্রশ্ন):
+12. ROMAN NUMERALS & MCQ FORMATTING (রোমান সংখ্যা ও বহুনির্বাচনী প্রশ্ন):
     - CRITICAL: MCQ প্রশ্নের ক্রমিক নম্বর ১।, ২।, ৩।, ... ৩০। সতন্ত্রভাবে ১ থেকে শুরু করতে হবে (সৃজনশীল প্রশ্নের ক্রমিকের সাথে মিলিয়ে নয়)।
     - CRITICAL: NEVER wrap roman numerals in asterisks (*i.*, *ii.*, *iii.*, *i* ও *ii* etc. are strictly forbidden ❌).
     - বহুনির্বাচনীর ক্ষেত্রে ক্রমিক নম্বরের নিচে রোমান সংখ্যা বা স্টেটমেন্টের (i., ii., iii., iv. অথবা ১., ২., ৩.) প্রতিটি লাইনের শুরুতে অবশ্যই ১টি করে ট্যাব (\t) যুক্ত করবেন:
@@ -178,13 +202,18 @@
       * প্রতিটি অপশন লাইনের শুরুতে (ক-এর পূর্বে) অবশ্যই ১টি ট্যাব (\t) এবং প্রতিটি বিকল্পের মাঝে ১টি করে ট্যাব (\t) ব্যবহার করবেন (যেমন: \tক. অপশন ১\tখ. অপশন ২\tগ. অপশন ৩\tঘ. অপশন ৪)।
       * দ্বি-সারি বিকল্পের ক্ষেত্রে দ্বিতীয় লাইনের শুরুতেও ১টি ট্যাব থাকবে (যেমন: \tগ. অপশন ৩\tঘ. অপশন ৪)।
       * OPTIONS DIGITS FIDELITY: বহুনির্বাচনীর বিকল্পে সংখ্যাগুলো যদি ইংরেজি ডিজিটে (যেমন: 1, 2, 9, 10 বা 0, 1, 2, 3 বা 0, 2, 4, 6) লেখা থাকে, তবে বিকল্পের সংখ্যাগুলো অবশ্যই ইংরেজিতেই (\tক. 1\tখ. 2\tগ. 9\tঘ. 10) উপস্থাপন করবেন। কোনো অবস্থাতেই সেগুলোকে বাংলায় (১, ২, ৯, ১০ ❌) অনুবাদ করা সম্পূর্ণ নিষিদ্ধ!
-      * (তবে ইংরেজি প্রশ্নপত্রের ক্ষেত্রে স্বাভাবিক ইংরেজি বিকল্প (a), (b) ইত্যাদি বহাল থাকবে)।
 
-14. CREATIVE QUESTIONS (সৃজনশীল প্রশ্নপত্র):
-    - CRITICAL: সৃজনশীল প্রশ্নের ক্রমিক নম্বর ১।, ২।, ৩।, ... সতন্ত্রভাবে ১ থেকে শুরু করতে হবে।
-    - CRITICAL MANDATE: সৃজনশীল প্রশ্নের ক্ষেত্রে উপ-প্রশ্ন (ক., খ., গ., ঘ.)-এর পূর্বে কখনোই কোনো ট্যাব (\t) যুক্ত করবেন না! এগুলো মার্জিন থেকে স্বাভাবিকভাবে (যেমন: ক. ...\nখ. ...) শুরু হবে, যাতে ব্যবহারকারী সুবিধাজনকভাবে ম্যানুয়ালি সাজাতে পারেন।
+13. CREATIVE QUESTIONS & PLAIN SCORE MARKS (সৃজনশীল প্রশ্নপত্র, ক্রমিক ও ব্র্যাকেটবিহীন নম্বর):
+    - SEQUENTIAL QUESTION NUMBERING (ক্রমিক নম্বর নতুনভাবে পুনর্বিন্যাস): মূল ছবিতে বা পিডিএফে প্রশ্নের ক্রমিক নম্বরে অমিল বা কমবেশি থাকলেও আপনি আউটপুটে প্রতিটি প্রশ্নের ক্রমিক নম্বর নতুনভাবে ১ থেকে শুরু করে ক্রমানুসারে (১।, ২।, ৩।, ৪।, ... ১০।) সাজিয়ে লিখবেন। কোনো ফাঁক বা ভুল ক্রমিক রাখা যাবে না।
     - Format sub-questions (উদ্দীপক, ১।, ক., খ., গ., ঘ.) cleanly and beautifully.
-    - CRITICAL: NEVER attach marks or scores at the end of questions (যেমন: [১], [২], [৩], [৪], [৮], [১০], (১), (২), মান: ১ ইত্যাদি সম্পূর্ণ বাদ দিন). Output ONLY the clean question text without score brackets.
+    - PLAIN SCORE MARKS (NO BRACKETS): Do NOT use square brackets [] or parentheses () for question marks/scores! Write ONLY plain numbers (যেমন: ১, ২, ৩, ৪ বা ১০) preceded by a tab (\t) or space e.g. ক. ...\t১, খ. ...\t২, গ. ...\t৩, ঘ. ...\t৪ or \t১০. NEVER use [১], [২], (১), (২) brackets!
+
+14. PRIMARY EXAMS (CLASS 1-5) & SHORT QUESTIONS (১ম থেকে ৫ম শ্রেণি ও সাধারণ সংক্ষিপ্ত প্রশ্নপত্র):
+    - DO NOT FORCE INTO CREATIVE FORMAT (কোনো কৃত্রিম ক, খ, গ, ঘ বা উদ্দীপক রূপান্তর সম্পূর্ণ নিষিদ্ধ):
+      * সাধারণত সৃজনশীল প্রশ্ন ও বহুনির্বাচনী প্রশ্ন ৬ষ্ঠ থেকে ১২শ শ্রেণি পর্যন্ত হয়। ১ম থেকে ৫ম শ্রেণির প্রশ্ন এবং অন্যান্য সাধারণ প্রশ্ন ছোট প্রশ্ন বা সাধারণ প্রশ্ন হয়ে থাকে।
+      * ১ম থেকে ৫ম শ্রেণির প্রশ্ন বা সাধারণ ছোট প্রশ্নগুলোকে কখনোই জোর করে সৃজনশীলের মতো 'ক, খ, গ, ঘ' বা উদ্দীপক (>) ফরম্যাটে ফেলবেন না!
+      * মূল প্রশ্নপত্রে যেভাবে ছাপা আছে (যেমন: ১। সঠিক উত্তরটি লিখ:, ২। এক কথায় উত্তর দাও:, ৩। কবিতাটি পড়ে নিচের প্রশ্নের উত্তর দাও:, ৪। শূন্যস্থান পূরণ কর:, অথবা i, ii, iii বা ক., খ. যদি মূল ফাইলে থাকে) ঠিক হুবহু সেই স্বাভাবিক ফরম্যাট ও ক্রমিক বজায় রাখুন।
+      * এগুলোর ক্ষেত্রে শুধুমাত্র পেজ ডিজাইন ও ২-কলাম ফরম্যাট প্রযোজ্য হবে, ভেতরের প্রশ্নগুলোকে কৃত্রিম সৃজনশীলে বদলানো যাবে না।
 
 15. SHORT QUESTIONS (সংক্ষিপ্ত ও অতি সংক্ষিপ্ত প্রশ্নপত্র):
     - সংক্ষিপ্ত প্রশ্ন, অতি সংক্ষিপ্ত প্রশ্ন বা এক কথায় উত্তরের ক্ষেত্রেও ক্রমিক নম্বর সতন্ত্রভাবে ১., ২., ৩., ... থেকে শুরু করতে হবে।
@@ -240,8 +269,11 @@
     - If there are dotted blank lines (e.g. সূত্র নং- ....., তারিখঃ ....., স্মারক নং, শূন্যস্থান বা স্বাক্ষরের স্থান), output at most 3 to 6 dots (......) or a short dash line, and immediately proceed to the next line or word!
     - DO NOT get trapped in repetitive dot loops. Continue transcribing the rest of the letter/form (বরাবর, বিষয়, জনাব, বিবরণ, আবেদনকারী, স্বাক্ষর ইত্যাদি) completely and faithfully!
 
-16. ACCURATE BENGALI TYPOGRAPHY:
+16. ACCURATE BENGALI TYPOGRAPHY & INTELLIGENT OCR TYPO CORRECTION (অস্পষ্ট লেখা ও বানান সংশোধন):
     - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output, KNO3, H2O) clean in English.
+    - If there are blurred, smudged, broken characters (ভাঙা যুক্তবর্ণ), or obvious printing typos in the source scan, YOU MUST RECOVER AND CORRECT THEM intelligently to proper, grammatically correct Bengali words.
+    - ZERO CHATTER & ZERO NOTES: NEVER output any notes, change logs, audit trails, or [নোট ও পরিবর্তনসমূহ: ...] anywhere in the document! Output ONLY the 100% clean, pure transcribed document text.
+    - OMIT ALL EXAM BOARD CITATIONS & REFERENCES: Completely omit board tags and citations (e.g., [ঢাকা বোর্ড-২০২৩], [কু. বো. ২১], [ক্যাডেট কলেজ], [অধ্যায়-৩], [সহপাঠ: বহিপীর], (দিনাজপুর বোর্ড ২০১৭) ইত্যাদি সম্পূর্ণ বাদ দিন).
 
 17. ENGLISH LANGUAGE QUESTION PAPERS (ইংরেজি বিষয়ের প্রশ্নপত্র - সম্পূর্ণ স্বাভাবিক কার্যক্রম):
     - CRITICAL EXCEPTION & MANDATE: The formatting rules for Bengali Dari ('।'), Bengali dot options ('ক.', 'খ.', 'গ.', 'ঘ.') with leading tabs, and CQ dot sub-questions apply ONLY to Bengali, Mathematics, Physics, Chemistry, Biology, and other Bengali-medium subjects!
@@ -282,10 +314,13 @@ SPECIFIC DEFECTS YOU MUST AUDIT AND FIX:
      * বাংলা, গণিত ও বিজ্ঞান বিষয়ের ক্ষেত্রে প্রশ্নের ক্রমিক নম্বর এর পর অবশ্যই '।' (দাড়ি) ব্যবহার করবেন (যেমন: ১।, ২।, ৩।, ... ১০।)। (তবে ইংরেজি বিষয়ের ক্ষেত্রে স্বাভাবিক ইংরেজি ফরম্যাট '1.', '2.' অপরিবর্তিত রাখবেন)।
      * সৃজনশীল প্রশ্ন: ১।, ২।, ৩।, ... প্রতিটি উপ-প্রশ্ন ডট ফরম্যাটে ক., খ., গ., ঘ. (বন্ধনী ছাড়া, শুরুতে কোনো ট্যাব থাকবে না)।
      * বহুনির্বাচনী প্রশ্ন: সতন্ত্রভাবে ১।, ২।, ৩।, ... (সৃজনশীলের সাথে মিলিয়ে নয়)। ক্রমিক নম্বরের নিচে রোমান সংখ্যা বা তালিকার শুরুতে \t সহ \ti. ..., \tii. ...। প্রতিটি অপশন লাইনে শুরুতে \t এবং মাঝে \t সহ ডট ফরম্যাট \tক. ...\tখ. ...\tগ. ...\tঘ. ...।
-     * সংক্ষিপ্ত প্রশ্ন: সতন্ত্রভাবে ১।, ২।, ৩।, ...
+     * সংক্ষিপ্ত ও প্রাথমিক প্রশ্ন (১ম থেকে ৫ম শ্রেণি): সতন্ত্রভাবে ১।, ২।, ৩।, ...। কোনোভাবেই জোর করে সৃজনশীলের মতো 'ক, খ, গ, ঘ' বা উদ্দীপক (>) বানাবেন না; মূল ফাইলের স্বাভাবিক প্রশ্ন ও উপ-প্রশ্ন বজায় রাখুন।
      * রাসায়নিক সংকেত ও সমীকরণ: বিজ্ঞানের সকল রাসায়নিক সংকেত ও যৌগ (যেমন: $KNO_3$, $KOH$, $2H_2O$, $H_2SO_4$, $CO_2$, $N_2 + 3H_2 = 2NH_3$ ইত্যাদি) এবং বৈজ্ঞানিক ঘাত ($6.023 \\times 10^{23}$) সাবস্ক্রিপ্ট ও সুপারস্ক্রিপ্ট সহ বাধ্যতামূলকভাবে LaTeX ($...$) ব্লকে রাখবেন; কোনো অবস্থাতেই এগুলোকে সাধারণ টেক্সটে বা ভাঙা লাইনে রাখবেন না। বিক্রিয়ার তীর চিহ্ন সরাসরি '→' বা '──[...]──>' লিখবেন।
      * সার্বজনীন স্ক্রিপ্ট ও ডিজিট অডিট (Universal Script & Digit Fidelity): সৃজনশীল উদ্দীপক, উপ-প্রশ্ন (ক., খ., গ., ঘ.), বহুনির্বাচনী, সংক্ষিপ্ত প্রশ্ন বা ফর্ম—যেকোনো কাজের ক্ষেত্রে মূল ছবিতে যেখানেই ইংরেজি অক্ষর, প্রতীক বা সংখ্যা (যেমন: A, B, C, Cu, Fe, FeCl3, 20, 4, 6 বা অপশনে 1, 2, 9, 10 বা 0, 1, 2, 3) রয়েছে, খসড়ায় তা ভুলবশত বাংলায় রূপান্তর হয়ে থাকলে অবশ্যই মূল ছবির মতো খাঁটি ইংরেজিতে (ASCII English) সংশোধন করুন। ইংরেজি '8' এবং বাংলা '৮' এর মিশ্রণ (যেমন: 8.8৮ L ❌) দূর করে খাঁটি ইংরেজিতে সংশোধন করুন। বিজ্ঞানের বহুনির্বাচনীতে এককযুক্ত সকল অপশনের সংখ্যা একরূপ খাঁটি ইংরেজিতে রাখবেন।
-   - No exam board tags/references (e.g., omit [ঢাকা বোর্ড-২০২৩]).
+   - No exam board tags/references (e.g., omit [ঢাকা বোর্ড-২০২৩], [ক্যাডেট কলেজ], [অধ্যায়-৩]).
+   - PLAIN SCORE MARKS (NO BRACKETS): Keep question scores as plain digits/marks e.g. \t১, \t২, \t৩, \t৪ without any square brackets [] or parentheses ().
+   - STIMULUS & QUESTION FULL FIDELITY: Never summarize or shorten stimulus (উদ্দীপক) or question text.
+   - SEQUENTIAL QUESTION NUMBERING: Re-sequence all question numbers starting from 1 (১।, ২।, ৩।, ... ১০। or ১ থেকে ৩০।) in clean ascending order.
    - Preserve all legitimate content parentheses e.g. (Vision & Mission), (যেমন: ...), (বেঞ্চ/টেবিল), and retain hyphens in compound words (শিল্প-সংস্কৃতি, আলো-বাতাস, শিক্ষক-শিক্ষিকাদের).
    - Never merge or collapse sub-articles or clause lines (৪.১, ৪.২, ৫.১, ৫.২); ensure each remains on its own separate line.
    - For diagrams/images, simply write: [ছবি আছে-পৃ:০১].
@@ -293,16 +328,13 @@ SPECIFIC DEFECTS YOU MUST AUDIT AND FIX:
    - No empty blank lines or double Enters between consecutive questions or lines.
    - Never output long chains of dots. Keep dotted lines to at most 3 to 6 dots (......) and preserve the rest of the letter/form.
 
-5. MANDATORY DETAILED AUDIT NOTE (বাধ্যতামূলক অডিট নোট):
-   - At the VERY END of the verified document, you MUST include a detailed audit note block listing every single correction made, so the user can easily review them:
-     [নোট ও পরিবর্তনসমূহ:
-     - প্রশ্ন ৩-এর উদ্দীপকে '...' মূল ছবির সাথে হুবহু মিলানো হয়েছে।
-     - বানান সংশোধন: '...' এর স্থলে '...' ঠিক করা হয়েছে।]
-   - If absolutely NO errors were found and the draft was already 100% faithful and complete:
-     [নোট: মূল ফাইলের সাথে সম্পূর্ণ যাচাইকৃত, কোনো পরিবর্তন করা হয়নি।]
+5. ZERO CHATTER, ZERO NOTES & CLEAN OUTPUT (কোনো নোট বা পরিবর্তন তালিকা আউটপুটে দেওয়া সম্পূর্ণ নিষিদ্ধ):
+   - NEVER output any [নোট ও পরিবর্তনসমূহ: ...], notes, change logs, explanations, or commentary anywhere in the output!
+   - Apply all corrections directly into the questions and text.
+   - Omit all exam board tags and citations ([ঢাকা বোর্ড-২০২৩], [ক্যাডেট কলেজ], [অধ্যায়-৩], [সহপাঠ]).
 
 OUTPUT REQUIREMENT:
-Output the COMPLETE, FULL, AUDITED document text from start to finish, ending with the mandatory [নোট... block. Do NOT summarize or truncate.`;
+Output ONLY the COMPLETE, FULL, 100% VERIFIED AND CLEAN document text from start to finish. Do NOT include any [নোট...] block or conversational filler.`;
 
   const DEFAULT_GEMINI_API_KEY = (typeof atob === 'function' ? atob('QVEuQWI4Uk42S1pDTXNmUTQtckhLV0U4NF83cXBxeGdHS1BMM2x4M1F6RXBBa3k4LUpuN2c=') : '');
 
@@ -315,7 +347,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   const isDemo = (rawDemoSetting === 'true');
 
   let savedModelSetting = localStorage.getItem(STORAGE_KEYS.SELECTED_MODEL) || 'auto';
-  if (savedModelSetting === 'gemini-3.8-flash' || savedModelSetting === 'gemini-2.5-flash' || savedModelSetting.includes('lite')) {
+  if (savedModelSetting === 'gemini-3.8-flash' || savedModelSetting === 'gemini-2.5-flash' || savedModelSetting.includes('2.5') || savedModelSetting.includes('lite')) {
     savedModelSetting = 'auto';
     localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, 'auto');
   }
@@ -327,6 +359,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     demoMode: isDemo,
     selectedModel: savedModelSetting,
     autoVerify: localStorage.getItem('ai_ocr_auto_verify') === 'true',
+    proBridgeEnabled: localStorage.getItem('fayzar_pro_bridge_enabled') === 'true',
 
     filesQueue: [],
     deletedPagesHistory: [],
@@ -380,6 +413,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     setupEvents();
     loadConverterDictionary();
     checkDesktopBridgeOnline(true);
+    // Silently pre-warm 2-3 healthy keys and models in background (zero token cost)
+    if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.prewarmStandbyPool === 'function') {
+      FayzarOcrConfig.prewarmStandbyPool();
+    }
     // Poll bridge every 2.5s for instant status sync
     setInterval(() => {
       if (!state.isProcessing) {
@@ -449,6 +486,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       downloadBijoyDocxBtn: document.getElementById('wizardDlDocxBtn') || document.getElementById('ai-ocr-download-bijoy-docx-btn'),
       downloadUnicodeDocxBtn: document.getElementById('wizardDlUnicodeDocxBtn'),
       downloadDocxBtn: document.getElementById('wizardDlUnicodeDocxBtn') || document.getElementById('wizardDlDocxBtn') || document.getElementById('ai-ocr-download-docx-btn'),
+      wizardStudioPreviewBtn: document.getElementById('wizardStudioPreviewBtn'),
+      wizardOpenStudioInlineBtn: document.getElementById('wizardOpenStudioInlineBtn'),
 
       pageSizeSelect: document.getElementById('ai-target-page-size') || document.getElementById('ai-ocr-page-size'),
       pageMarginSelect: document.getElementById('ai-target-page-margin') || document.getElementById('ai-ocr-page-margin'),
@@ -575,14 +614,39 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (elements.downloadDocBtn) elements.downloadDocBtn.onclick = () => downloadWordDocument('doc');
     if (elements.downloadBijoyDocxBtn) elements.downloadBijoyDocxBtn.onclick = () => downloadWordDocument('bijoy_docx');
     if (elements.downloadUnicodeDocxBtn) elements.downloadUnicodeDocxBtn.onclick = () => downloadWordDocument('unicode_docx');
+    if (elements.wizardStudioPreviewBtn) elements.wizardStudioPreviewBtn.onclick = () => openStudioPreviewEditor();
+    if (elements.wizardOpenStudioInlineBtn) elements.wizardOpenStudioInlineBtn.onclick = () => openStudioPreviewEditor();
 
     if (elements.verifyBtn) {
       elements.verifyBtn.addEventListener('click', () => runVerificationPipeline(false));
     }
 
+    function toggleProModel(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (!cachedBridgeOnline) {
+        showToast('ডেস্কটপ প্রো ব্রিজ সংযুক্ত নেই, সাধারণ ক্লাউড এপিআই সক্রিয় আছে।', 'info');
+        return;
+      }
+      state.proBridgeEnabled = !state.proBridgeEnabled;
+      localStorage.setItem('fayzar_pro_bridge_enabled', state.proBridgeEnabled ? 'true' : 'false');
+      updateProModelStatusUI(cachedBridgeOnline);
+      if (state.proBridgeEnabled) {
+        showToast('⚡ প্রো মডেল (Gemini 3.1 Pro) সক্রিয় করা হয়েছে!', 'success');
+      } else {
+        showToast('ক্লাউড এপিআই কি মোড সক্রিয় করা হয়েছে (“প্রো মডেল একটিভ করুন” প্রস্তুত)।', 'info');
+      }
+    }
+
     if (elements.modeBadge) {
       elements.modeBadge.style.cursor = 'pointer';
-      elements.modeBadge.addEventListener('click', () => toggleModal(elements.settingsModal, true));
+      elements.modeBadge.addEventListener('click', toggleProModel);
+    }
+    const proToggleBtn = document.getElementById('proModelToggleBtn');
+    if (proToggleBtn) {
+      proToggleBtn.addEventListener('click', toggleProModel);
     }
     if (elements.openSettingsBtn) elements.openSettingsBtn.addEventListener('click', () => toggleModal(elements.settingsModal, true));
     if (elements.closeSettingsBtn) elements.closeSettingsBtn.addEventListener('click', () => toggleModal(elements.settingsModal, false));
@@ -868,6 +932,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (elements.convertBtn) elements.convertBtn.disabled = false;
     elements.successCard?.classList.add('hidden');
     showToast(`মোট ${toBengaliNumber(state.filesQueue.length)}টি পেজ প্রস্তুত! সবগুলো একসাথে সম্পূর্ণ রূপান্তর হবে।`, 'info');
+    // Pre-warm standby keys immediately in background while user reviews files
+    if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.prewarmStandbyPool === 'function') {
+      FayzarOcrConfig.prewarmStandbyPool();
+    }
   }
 
   // Render rich interactive thumbnail cards with Zoom & Delete
@@ -1183,7 +1251,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     // ---------------------------------------------------------
     // HYBRID PRO-BRIDGE: PRE-FLIGHT CHECK
     // ---------------------------------------------------------
-    const isDesktopOnline = await checkDesktopBridgeOnline();
+    const isDesktopOnline = state.proBridgeEnabled && (await checkDesktopBridgeOnline());
     if (isDesktopOnline) {
       showToast('⚡ Pro Desktop Bridge অনলাইনে সংযুক্ত! রিকোয়েস্ট পাঠানো হচ্ছে...', 'info');
       await startUnifiedOcr('doc');
@@ -1263,7 +1331,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     // ---------------------------------------------------------
     // HYBRID PRO-BRIDGE: PRE-FLIGHT CHECK & DIRECT REST EXECUTION
     // ---------------------------------------------------------
-    const isDesktopOnline = await checkDesktopBridgeOnline(false);
+    const isDesktopOnline = state.proBridgeEnabled && (await checkDesktopBridgeOnline(false));
 
     if (isDesktopOnline) {
       if (onProgress) onProgress('⚡ ১. ফাইল ও ছবি আপলোড হচ্ছে...', 35, 1);
@@ -1338,48 +1406,68 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             const reqData = await reqCheck.json();
             
             if (!reqData) {
-              // Job was removed or completed elsewhere
+              // Worker may have just completed the job and removed the request after writing response.
+              // Double check response immediately before breaking:
+              try {
+                const finalResp = await fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json?t=${Date.now()}`, { cache: 'no-store' });
+                const finalVal = await finalResp.json();
+                if (finalVal) {
+                  fetch(`${FIREBASE_BRIDGE_URL}/responses/${jobId}.json`, { method: 'DELETE' }).catch(() => {});
+                  if (finalVal.status === 'success') {
+                    rawText = finalVal.text;
+                    bridgeSuccess = true;
+                  } else if (finalVal.status === 'error') {
+                    console.warn('Desktop Bridge reported error on exit:', finalVal.error);
+                  }
+                }
+              } catch (e) {}
               break;
             }
+
+            const elapsedSec = Math.round((Date.now() - bridgeStart) / 1000);
 
             if (reqData.status === 'processing') {
               workerPickedUp = true;
               if (reqData.lastActive) {
                 lastKnownActivity = reqData.lastActive;
               }
-              const elapsedSec = Math.round((Date.now() - bridgeStart) / 1000);
               
               if (reqData.stage === 'uploading') {
-                if (onProgress) onProgress(`⚡ ১. ফাইল আপলোড হচ্ছে (${toBengaliNumber(elapsedSec)} সে)...`, 25, 1);
+                if (onProgress) onProgress(`⚡ ১. ফাইল ও ছবি আপলোড হচ্ছে (${toBengaliNumber(elapsedSec)} সে)...`, 25, 1);
               } else if (reqData.stage === 'prompt_sent') {
                 if (onProgress) onProgress(`⚡ ২. প্রমট সেন্ট হয়েছে (${toBengaliNumber(elapsedSec)} সে)...`, 45, 2);
               } else if (reqData.stage === 'generating') {
-                if (onProgress) onProgress(`⚡ ৩. জেমিনি ৩.১ প্রো প্রসেসিং ও সমীকরণ সমাধান করছে (${toBengaliNumber(elapsedSec)} সে)...`, Math.min(88, 50 + Math.round(elapsedSec / 4)), 3);
+                if (onProgress) onProgress(`⚡ ৩. জেমিনি ৩.১ প্রো গভীর বিশ্লেষণ ও বাংলা রূপান্তর করছে (${toBengaliNumber(elapsedSec)} সে)...`, Math.min(92, 50 + Math.round(elapsedSec / 4)), 3);
               } else if (reqData.stage === 'extracting') {
-                if (onProgress) onProgress(`⚡ ৪. ওয়েটিং ফর ফাইনাল আউটপুট (${toBengaliNumber(elapsedSec)} সে)...`, 95, 4);
+                if (onProgress) onProgress(`⚡ ৪. ফাইনাল আউটপুট প্রস্তুত হচ্ছে (${toBengaliNumber(elapsedSec)} সে)...`, 96, 4);
               } else {
                 const stageMsg = reqData.isGenerating
-                  ? `⚡ ৩. জেমিনি ৩.১ প্রো প্রসেসিং চলছে (${toBengaliNumber(elapsedSec)} সে)...`
+                  ? `⚡ ৩. জেমিনি ৩.১ প্রো গভীর বিশ্লেষণ করছে (${toBengaliNumber(elapsedSec)} সে)...`
                   : `⚡ ৩. প্রো ডেস্কটপ জেমিনি সেশনে প্রসেস করছে (${toBengaliNumber(elapsedSec)} সে)...`;
-                if (onProgress) onProgress(stageMsg, Math.min(88, 40 + Math.round(elapsedSec / 3)), 3);
+                if (onProgress) onProgress(stageMsg, Math.min(92, 40 + Math.round(elapsedSec / 3)), 3);
               }
-            } else if (!workerPickedUp && (Date.now() - bridgeStart > 25000)) {
-              // Worker never picked up the job within 25 seconds -> immediate failover!
-              console.warn('Desktop bridge is idle/unresponsive (not picked up in 25s). Instant failover...');
-              break;
+            } else if (!workerPickedUp) {
+              if (onProgress) onProgress(`⚡ প্রো ৩.১ সেশনে কানেক্ট হচ্ছে (${toBengaliNumber(elapsedSec)} সে)...`, Math.min(30, 10 + Math.round(elapsedSec / 3)), 1);
+              // Wait generously up to 180 seconds (3 mins) for pickup rather than killing at 25s
+              if (Date.now() - bridgeStart > 180000) {
+                console.warn('Desktop bridge queue pickup timeout after 180s. Failover to cloud API...');
+                break;
+              }
             }
           } catch (e) {}
 
           // 3. Heartbeat Guard:
-          // If worker picked up but stopped heartbeating for > 25s (e.g. app killed / network dead) -> failover!
-          if (workerPickedUp && (Date.now() - lastKnownActivity > 25000)) {
-            console.warn('Desktop bridge heartbeat lost for 25s. Failover to cloud API...');
+          // As long as worker is actively 'processing', DO NOT abort on 25s!
+          // Gemini 3.1 Pro deep reasoning can take 60-180s for complex Bengali math & documents.
+          // Only failover if inactive for over 300 seconds (5 minutes) of complete silence.
+          if (workerPickedUp && (Date.now() - lastKnownActivity > 300000)) {
+            console.warn('Desktop bridge inactive for > 5 minutes. Failover to cloud API...');
             break;
           }
 
-          // Hard safety limit: max 5 minutes (300 seconds)
-          if (Date.now() - bridgeStart > 300000) {
-            console.warn('Desktop job exceeded 5-minute safety threshold. Failover to cloud API...');
+          // Safety limit: up to 15 minutes (900 seconds) for large multi-page documents
+          if (Date.now() - bridgeStart > 900000) {
+            console.warn('Desktop job exceeded 15-minute safety threshold. Failover to cloud API...');
             break;
           }
 
@@ -1450,7 +1538,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.autoVerify && state.lastMediaItems && state.lastMediaItems.length > 0 && !state.demoMode && apiKey) {
       if (onProgress) onProgress('স্বয়ংক্রিয় অডিট ও যাচাই চলছে (বানান, উদ্দীপক ও মিসিং প্রশ্ন)...', 97, 4);
       try {
-        const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${rawText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো পরিবর্তন করলে নিচে [নোট ও পরিবর্তনসমূহ: ...] আকারে লিখে দিন।]`;
+        const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${rawText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো প্রকার নোট বা ব্যাখ্যা ছাড়া সরাসরি ১০০% সংশোধিত ও নির্ভুল প্রশ্নপত্র প্রদান করুন।]`;
         const verifiedRaw = await executeGeminiRequest(
           apiKey,
           state.lastMediaItems,
@@ -1498,21 +1586,35 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     return item.base64;
   }
 
-  function fetchWithTimeout(url, options, timeoutMs) {
+  function fetchWithTimeout(url, options, timeoutMs = 60000) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => {
+      try {
+        controller.abort(new Error('কানেকশন টাইমআউট: সার্ভার নির্ধারিত সময়ে সাড়া দেয়নি।'));
+      } catch (e) {
+        controller.abort();
+      }
+    }, timeoutMs);
 
     let cleanupAbort = null;
     if (activeAbortController) {
       const onMainAbort = () => {
-        try { controller.abort(); } catch (e) {}
-      };
-      activeAbortController.signal.addEventListener('abort', onMainAbort, { once: true });
-      cleanupAbort = () => {
-        if (activeAbortController) {
-          try { activeAbortController.signal.removeEventListener('abort', onMainAbort); } catch (e) {}
+        try {
+          controller.abort(activeAbortController.signal.reason || new Error('রূপান্তর বাতিল করা হয়েছে'));
+        } catch (e) {
+          controller.abort();
         }
       };
+      if (activeAbortController.signal.aborted) {
+        onMainAbort();
+      } else {
+        activeAbortController.signal.addEventListener('abort', onMainAbort, { once: true });
+        cleanupAbort = () => {
+          if (activeAbortController) {
+            try { activeAbortController.signal.removeEventListener('abort', onMainAbort); } catch (e) {}
+          }
+        };
+      }
     }
 
     return fetch(url, { ...options, signal: controller.signal })
@@ -1700,9 +1802,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     }
 
     const allActiveModels = [
-      'gemini-2.5-flash',         // #1: Ultra-fast, zero reasoning delay, 100% active
-      'gemini-3-flash-preview',   // #2: Deep reasoning Flash flagship
-      'gemini-2.5-pro'            // #3: Pro quality OCR
+      'gemini-3-flash-preview',   // #1: ডিপ রিজনিং ফ্ল্যাগশিপ — শতভাগ কাঠামোগত নির্ভুল বাংলা ও টেবিল
+      'gemini-3.8-flash',         // #2: গণিত ও বিজ্ঞান স্পেশালিস্ট — জটিল সমীকরণ ও LaTeX
+      'gemini-3.6-flash'          // #3: উচ্চগতির ব্যালেন্সড ব্যাকআপ
     ];
 
     // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
@@ -1711,11 +1813,6 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         temperature: 0.2,
         maxOutputTokens: isFallbackFormat ? 8192 : 65536
       };
-
-      // Only 2.5-flash confirmed to support thinkingBudget; 3.6-flash uses standard config
-      if (!isFallbackFormat && model === 'gemini-2.5-flash') {
-        genConfig.thinkingConfig = { thinkingBudget: 0 };
-      }
 
       const safetySettings = [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
@@ -1742,119 +1839,51 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       };
     }
 
-    // Build Key Pool (Pre-validated keys with dynamic round-robin load balancing across all 19 vault keys)
-    let keyPool = [];
     const isValidKeyFn = (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isValidApiKey === 'function')
       ? FayzarOcrConfig.isValidApiKey
       : (k => typeof k === 'string' && (k.trim().startsWith('AIzaSy') || k.trim().startsWith('AQ.')) && k.trim().length >= 35);
 
-    if (typeof window !== 'undefined' && window.forceKeyIndex !== undefined && window.forceKeyIndex !== null && typeof FayzarOcrConfig !== 'undefined' && FayzarOcrConfig.keys) {
-      const forcedKey = FayzarOcrConfig.keys[window.forceKeyIndex];
-      if (forcedKey) keyPool.push(forcedKey);
-    } else {
-      // 1. Primary: Rotated system keys from vault (guarantees a fresh new key on every run)
-      if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getRotatedSystemKeys === 'function') {
-        const rotatedKeys = FayzarOcrConfig.getRotatedSystemKeys(false);
-        for (const sk of rotatedKeys) {
-          if (!keyPool.includes(sk)) keyPool.push(sk);
-        }
-      } else if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getAllSystemKeys === 'function') {
-        const systemKeys = FayzarOcrConfig.getAllSystemKeys(false);
-        for (const sk of systemKeys) {
-          if (!keyPool.includes(sk)) keyPool.push(sk);
-        }
-      }
-    }
-
-    // 2. Fallback to cooldown keys if all active keys exhausted
-    if (keyPool.length === 0 && typeof FayzarOcrConfig !== 'undefined') {
-      const fallbackKeys = (typeof FayzarOcrConfig.getRotatedSystemKeys === 'function')
-        ? FayzarOcrConfig.getRotatedSystemKeys(true)
-        : FayzarOcrConfig.getAllSystemKeys(true);
-      for (const fk of fallbackKeys) {
-        if (!keyPool.includes(fk)) keyPool.push(fk);
-      }
-    }
-
-    // 3. User custom key (if explicitly supplied and not already in pool)
-    if (apiKey && isValidKeyFn(apiKey) && !keyPool.includes(apiKey.trim())) {
-      keyPool.push(apiKey.trim());
-    }
-
     let candidateModels;
-    if (state.selectedModel && state.selectedModel !== 'auto') {
+    if (state.selectedModel && state.selectedModel !== 'auto' && state.selectedModel !== 'pro-bridge' && !state.selectedModel.includes('2.5-flash')) {
       candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
     } else {
-      candidateModels = ['gemini-2.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-pro'];
+      // ১০০% প্রমাণিত ও দ্রুততম সক্রিয় মডেল সিকোয়েন্স:
+      // #1 gemini-3-flash-preview (ডিপ রিজনিং) | #2 gemini-3.6-flash (উচ্চগতির ব্যাকআপ)
+      candidateModels = [
+        'gemini-3-flash-preview',
+        'gemini-3.6-flash'
+      ];
     }
 
-    // ⚡ FAST PRE-FLIGHT MICRO-PROBE (সর্বোচ্চ ২ সেকেন্ডে সক্রিয় কি নির্বাচন)
-    if (keyPool.length > 0) {
-      try {
-        setLoading(true, '⚡ সক্রিয় ক্লাউড চ্যানেল নির্বাচন হচ্ছে...', 48);
-
-        const preferredModel = candidateModels[0];
-        const singleProbe = async (k, mod, timeoutMs = 2500) => {
-          const controller = new AbortController();
-          const tId = setTimeout(() => controller.abort(), timeoutMs);
-          try {
-            const probeUrl = `https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${encodeURIComponent(k)}`;
-            const pRes = await fetch(probeUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: '1' }] }],
-                generationConfig: { maxOutputTokens: 1 }
-              }),
-              signal: controller.signal
-            });
-            clearTimeout(tId);
-            if (pRes.ok) return { key: k, model: mod, ok: true };
-            if (pRes.status === 400 && typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyInvalid === 'function') {
-              FayzarOcrConfig.markKeyInvalid(k);
-            } else if (pRes.status === 429 && typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.markKeyCooldown === 'function') {
-              FayzarOcrConfig.markKeyCooldown(k, 30);
-            }
-            return { key: k, model: mod, ok: false, status: pRes.status };
-          } catch (e) {
-            clearTimeout(tId);
-            return { key: k, model: mod, ok: false, error: e.name };
-          }
-        };
-
-        // Test top 3 rotated keys in parallel for ultra-fast response (<= 2s)
-        const topBatch = keyPool.slice(0, 3);
-        const winner = await Promise.any(topBatch.map(k => singleProbe(k, preferredModel).then(res => {
-          if (res.ok) return res;
-          throw res;
-        }))).catch(() => null);
-
-        if (winner && winner.key && winner.model) {
-          keyPool = [winner.key, ...keyPool.filter(k => k !== winner.key)];
-          candidateModels = [winner.model, ...candidateModels.filter(m => m !== winner.model)];
-          setLoading(true, `⚡ সক্রিয় চ্যানেল [${winner.model}] চূড়ান্ত নির্বাচিত! রূপান্তর চলছে...`, 52);
-        }
-      } catch (probeErr) {
-        // Fallback directly to candidate pool without delay
-      }
-    }
+    setLoading(true, `⚡ সরাসরি নির্বাচিত মডেলে [${candidateModels[0]}] রূপান্তর শুরু হচ্ছে...`, 50);
 
     let lastError = null;
     let isRateLimited = false;
 
-    // KEY-FIRST STRATEGY: For each model, try ALL keys before moving to next model.
-    // This guarantees all 19 vault keys are rotated through before any model fallback.
+    // MODEL & KEY STRATEGY: For each model, try all healthy keys specifically for that model.
     for (let i = 0; i < candidateModels.length; i++) {
       const model = candidateModels[i];
+
+      // Build key pool prioritized for THIS specific model (healthy keys at front, cooling keys at back)
+      let keyPool = [];
+      if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getKeysForModel === 'function') {
+        keyPool = FayzarOcrConfig.getKeysForModel(model, true);
+      } else if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.getRotatedSystemKeys === 'function') {
+        keyPool = FayzarOcrConfig.getRotatedSystemKeys(true);
+      }
+
+      if (apiKey && isValidKeyFn(apiKey) && !keyPool.includes(apiKey.trim())) {
+        keyPool.unshift(apiKey.trim());
+      }
 
       for (let k = 0; k < keyPool.length; k++) {
         const currentKey = keyPool[k];
 
-        // Skip keys currently on cooldown or invalid (unless all keys are cooling down, in which case we still try them)
-        if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isKeyAvailable === 'function') {
-          const isAvail = FayzarOcrConfig.isKeyAvailable(currentKey);
+        // Skip keys currently cooling down specifically on THIS model (unless all are cooling)
+        if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.isKeyModelAvailable === 'function') {
+          const isAvail = FayzarOcrConfig.isKeyModelAvailable(currentKey, model);
           if (!isAvail) {
-            const hasHealthy = keyPool.some(k => FayzarOcrConfig.isKeyAvailable(k));
+            const hasHealthy = keyPool.some(k => FayzarOcrConfig.isKeyModelAvailable(k, model));
             if (hasHealthy) continue;
           }
         }
@@ -1878,7 +1907,9 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           }, CONNECT_TIMEOUT_MS);
 
           if (res.status === 404) {
-            // Model not found on this key -> immediately try next key (same model)
+            if (typeof FayzarOcrConfig !== 'undefined') {
+              if (typeof FayzarOcrConfig.markKeyModelCooldown === 'function') FayzarOcrConfig.markKeyModelCooldown(currentKey, model, 300);
+            }
             continue;
           }
 
@@ -1910,26 +1941,30 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
               }
             } else if (res.status === 429 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('Quota')) {
               isRateLimited = true;
-              if (model.includes('pro')) {
-                // Pro model quota is exhausted: do NOT cooldown key for Flash models!
-                // Instantly switch to the top Flash model
-                setLoading(true, `⚡ অতি দ্রুততম সক্রিয় ফ্ল্যাশ মডেলে তাৎক্ষণিক সুইচ হচ্ছে...`, 50);
-                break;
-              }
               if (typeof FayzarOcrConfig !== 'undefined') {
-                if (typeof FayzarOcrConfig.markKeyCooldown === 'function') FayzarOcrConfig.markKeyCooldown(currentKey, 15);
+                if (typeof FayzarOcrConfig.markKeyModelCooldown === 'function') {
+                  FayzarOcrConfig.markKeyModelCooldown(currentKey, model, 14400);
+                } else if (typeof FayzarOcrConfig.markKeyCooldown === 'function') {
+                  FayzarOcrConfig.markKeyCooldown(currentKey, 14400);
+                }
                 if (typeof FayzarOcrConfig.advanceRoundRobin === 'function') FayzarOcrConfig.advanceRoundRobin();
               }
-              // ZERO DELAY FAILOVER: Instant shift to next key with 0ms pause
-              setLoading(true, `⚡ কোটা অপ্টিমাইজেশন সম্পন্ন, সক্রিয় চ্যানেলে রূপান্তর চলছে...`, 50 + Math.min(40, (k + 1) * 2));
+              // ZERO DELAY FAILOVER: 100-250ms instant handover to next key without model drop
+              setLoading(true, `⚡ কোটা অপ্টিমাইজেশন: সক্রিয় কি-তে তাৎক্ষণিক সুইচ হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
               continue;
             } else if (res.status === 503 || errMsg.includes('No capacity') || errMsg.includes('high demand') || errMsg.includes('UNAVAILABLE') || res.status === 404 || errMsg.includes('not found') || errMsg.includes('no longer available')) {
-              // Model unavailable / deprecated / server capacity exhausted -> immediately break key loop and switch model (0ms delay)
-              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.logAudit === 'function') {
-                FayzarOcrConfig.logAudit('MODEL_FAILOVER', { failedModel: model, error: errMsg });
+              if (typeof FayzarOcrConfig !== 'undefined') {
+                if (typeof FayzarOcrConfig.markKeyModelCooldown === 'function') {
+                  FayzarOcrConfig.markKeyModelCooldown(currentKey, model, 300);
+                }
+                if (typeof FayzarOcrConfig.advanceRoundRobin === 'function') FayzarOcrConfig.advanceRoundRobin();
+                if (typeof FayzarOcrConfig.logAudit === 'function') {
+                  FayzarOcrConfig.logAudit('KEY_MODEL_ERROR', { keyMask: currentKey.slice(0, 8) + '...', model, error: errMsg });
+                }
               }
-              setLoading(true, `⚡ বিকল্প সক্রিয় মডেলে স্বয়ংক্রিয়ভাবে রূপান্তর সম্পন্ন হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
-              break; // Instantly move to next candidate model!
+              // Try next key instead of dropping the model
+              setLoading(true, `⚡ বিকল্প কি-তে চ্যানেল সুইচ হচ্ছে...`, 50 + Math.min(40, (k + 1) * 2));
+              continue;
             } else {
               if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.advanceRoundRobin === 'function') {
                 FayzarOcrConfig.advanceRoundRobin();
@@ -1948,15 +1983,31 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
             let buffer = '';
             let fullStreamedText = '';
             let lastChunkTime = 0;
-            const STREAM_IDLE_TIMEOUT_MS = 35000; // 35s realistic stream idle timeout for complex OCR & math generation
+            const STREAM_IDLE_TIMEOUT_MS = 60000; // 60s idle keep-alive: accommodates math analysis & complex LaTeX thinking pauses
+            let shouldStopStream = false;
 
             while (true) {
+              if (shouldStopStream) break;
               let chunkTimeoutId;
               const chunkTimeoutPromise = new Promise((_, reject) => {
                 chunkTimeoutId = setTimeout(() => reject(new Error('স্ট্রিমিং চলাকালীন সংযোগ বিচ্ছিন্ন হয়েছে (Idle Timeout)')), STREAM_IDLE_TIMEOUT_MS);
               });
 
-              const { done, value } = await Promise.race([reader.read(), chunkTimeoutPromise]).finally(() => clearTimeout(chunkTimeoutId));
+              let readResult;
+              try {
+                readResult = await Promise.race([reader.read(), chunkTimeoutPromise]);
+              } catch (raceErr) {
+                // If we already received substantial text (>100 chars), treat timeout as stream completion rather than crashing!
+                if (fullStreamedText.length > 100) {
+                  console.warn('⚠️ স্ট্রিমিং টাইমআউটে সংগৃহীত টেক্সট সুরক্ষিত রাখা হলো:', fullStreamedText.length);
+                  break;
+                }
+                throw raceErr;
+              } finally {
+                clearTimeout(chunkTimeoutId);
+              }
+
+              const { done, value } = readResult || { done: true };
               if (done) break;
               buffer += decoder.decode(value, { stream: true });
               const lines = buffer.split('\n');
@@ -1981,6 +2032,27 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                       if (fullStreamedText.includes('.......')) {
                         fullStreamedText = fullStreamedText.replace(/\.{8,}/g, '......');
                       }
+
+                      // 🛡️ রিপিটেশন লুপ ও অতিরিক্ত অক্ষরের ইনফিনিট স্ট্রিমিং প্রতিরোধ গার্ড
+                      // শুধুমাত্র অর্থহীন বড় টেক্সট লুপ (ডট, ড্যাশ, স্পেস ও টেবিল মার্কার ব্যতীত) শনাক্ত করবে
+                      if (fullStreamedText.length > 2000) {
+                        const tail = fullStreamedText.slice(-300);
+                        const cleanTail = tail.replace(/[\s\.\-_|~=\t]/g, '');
+                        const repeatMatch = cleanTail.match(/(.{20,50}?)\1{4,}/);
+                        if (repeatMatch) {
+                          console.warn('⚠️ রিপিটেশন লুপ শনাক্ত! স্ট্রিমিং সম্পন্ন করা হলো।');
+                          shouldStopStream = true;
+                          try { reader.cancel(); } catch(e){}
+                          break;
+                        }
+                      }
+                      if (fullStreamedText.length > 35000) {
+                        console.warn('⚠️ নিরাপদ অক্ষর সীমা (৩৫,০০০) অতিক্রম! স্ট্রিমিং সম্পন্ন করা হলো।');
+                        shouldStopStream = true;
+                        try { reader.cancel(); } catch(e){}
+                        break;
+                      }
+
                       const cTime = Date.now();
                       if (cTime - lastChunkTime > 60 || fullStreamedText.length < 80) {
                         lastChunkTime = cTime;
@@ -2014,6 +2086,10 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
                 } catch (e) { /* ignore */ }
               }
               if (onStreamChunk) onStreamChunk(fullStreamedText);
+              // Replenish pre-warmed standby pool silently in background for next task
+              if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.prewarmStandbyPool === 'function') {
+                setTimeout(() => FayzarOcrConfig.prewarmStandbyPool(), 1000);
+              }
               return cleanOcrResponse(fullStreamedText);
             }
             // Empty stream: model returned no text - try fallback format
@@ -2165,7 +2241,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
   function extractAuditNote(text) {
     if (!text) return null;
-    const match = text.match(/\[\s*নোট[\s\S]*?\]/);
+    const match = text.match(/(?:[০-৯0-9]+[।\.\)]\s*)?\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট)[\s\S]*?(?:\]|(?=\n\s*(?:\([ক-ঘa-divx০-৯]+\)|[ক-ঘa-divx][\.\)]|[০-৯0-9]+[।\.\)]|#{1,6}\s|$)))/);
     return match ? match[0].trim() : null;
   }
 
@@ -2227,7 +2303,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         await sleep(800);
         verifiedRawText = currentText + '\n\n[নোট: অফলাইন ডেমো মোডে মূল ফাইলের সাথে যাচাই সম্পন্ন হয়েছে।]';
       } else {
-        const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${currentText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো পরিবর্তন করলে নিচে [নোট ও পরিবর্তনসমূহ: ...] আকারে লিখে দিন।]`;
+        const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${currentText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো প্রকার নোট বা ব্যাখ্যা ছাড়া সরাসরি ১০০% সংশোধিত ও নির্ভুল প্রশ্নপত্র প্রদান করুন।]`;
 
         verifiedRawText = await executeGeminiRequest(
           apiKey,
@@ -2273,13 +2349,12 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   }
 
   function handleExtractionSuccess(unicodeText, isVerification = false) {
+    const auditNote = extractAuditNote(unicodeText);
     const cleaned = cleanOcrResponse(unicodeText);
     state.unicodeText = cleaned;
     if (elements.outputUnicodeArea) elements.outputUnicodeArea.value = cleaned;
     recalculateBijoyFromUnicode();
 
-    // Extract audit notes if present
-    const auditNote = extractAuditNote(cleaned);
     if (elements.auditNotesBox) {
       if (auditNote) {
         elements.auditNotesBox.classList.remove('hidden');
@@ -2477,6 +2552,20 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (!rawText) return '';
     let text = sanitizeMathBengaliSeparation(rawText.trim());
 
+    // Extract audit note for UI badge before stripping
+    const detectedNote = extractAuditNote(text);
+    if (detectedNote) state.lastAuditNote = detectedNote;
+
+    // STRIP all AI Audit Note & Change Log blocks completely so they NEVER enter the document text!
+    // Case 1: When attached to a question number e.g. "১২। [নোট ও পরিবর্তনসমূহ: ... \n - bullet 1\n - bullet 2" before subquestion "(ক)"
+    text = text.replace(/([০-৯0-9]+[।\.\)])\s*\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)[\s\S]*?(?:\]|(?=\n\s*(?:\([ক-ঘa-divx০-৯]+\)|[ক-ঘa-divx][\.\)]|[০-৯0-9]+[।\.\)]|#{1,6}\s|$)))/gi, '$1\n');
+    // Case 2: Standalone note block e.g. "[নোট ও পরিবর্তনসমূহ: ..."
+    text = text.replace(/\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)[\s\S]*?(?:\]|(?=\n\s*(?:\([ক-ঘa-divx০-৯]+\)|[ক-ঘa-divx][\.\)]|[০-৯0-9]+[।\.\)]|#{1,6}\s|$)))/gi, '');
+
+    // Strip exam board tags, cadet college tags, and chapter citations anywhere in text
+    text = text.replace(/\s*\[\s*(?:[^\]\n]*(?:(?:ঢাকা|রাজশাহী|দিনাজপুর|কুমিল্লা|চট্টগ্রাম|সিলেট|বরিশাল|যশোর|ময়মনসিংহ|মাদ্রাসা|কারিগরি|সকল)?\s*(?:বোর্ড|বো\.)|ক্যাডেট\s*কলেজ|জিলা\s*স্কুল|অধ্যায়|অধ্যায়|অনুশীলনী|পরিপত্র|সহপাঠ|গদ্যাংশ|পদ্যাংশ|বোর্ড\s*প্রশ্ন|মডেল\s*টেস্ট|Board|Cadet|Chapter))[^\]\n]*\]\s*/gi, ' ');
+    text = text.replace(/\s*\(\s*(?:[^\)\n]*(?:(?:ঢাকা|রাজশাহী|দিনাজপুর|কুমিল্লা|চট্টগ্রাম|সিলেট|বরিশাল|যশোর|ময়মনসিংহ|মাদ্রাসা|কারিগরি|সকল)\s*(?:বোর্ড|বো\.)|বোর্ড\s*[-–—]?\s*[০-৯0-9]{4}|ক্যাডেট\s*কলেজ|জিলা\s*স্কুল))[^\]\n]*\)\s*/gi, ' ');
+
     if (text.startsWith('```')) {
       text = text.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '');
     }
@@ -2551,27 +2640,23 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         continue;
       }
 
-      // Preserve Audit Note blocks completely without modifying their contents
-      if (/^\s*\[\s*নোট/i.test(trimmed)) {
-        inNoteBlock = true;
-        cleanedLines.push(l);
-        if (trimmed.endsWith(']')) inNoteBlock = false;
+      // Skip any residual Audit Note blocks & bullet lists completely!
+      if (/^\s*\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)/i.test(trimmed)) {
+        inNoteBlock = !trimmed.endsWith(']');
         continue;
       }
       if (inNoteBlock) {
-        cleanedLines.push(l);
         if (trimmed.endsWith(']')) inNoteBlock = false;
         continue;
       }
-
-      // 4. Remove score marks [১], [২], [৩], [৪], [৮], [১০], (১), (২) at the end of creative questions
-      l = l.replace(/(\?|।|:|[a-zA-Z\u0980-\u09FF"'”’\$])\s*\[\s*[০-৯0-9\s]+\s*\]\s*$/g, '$1');
-      l = l.replace(/(\?|।|:|[a-zA-Z\u0980-\u09FF"'”’\$])\s*[\(（]\s*[০-৯0-9\s]+\s*[\)）]\s*$/g, '$1');
-      
-      // If line is a CQ subquestion (e.g. ক. ... ১) with trailing mark digit, remove trailing digit
-      if (/^[কখগঘabcd]\./i.test(trimmed)) {
-        l = l.replace(/(\?|।)\s+[০-৯0-9]\s*$/g, '$1');
+      // Skip any AI audit bullet points that escaped e.g. - খসড়া টেক্সটে..., - ৪ থেকে ১২ নং...
+      if (/^\s*[-•]\s*(?:খসড়া|মূল ছবি|সকল উদ্দীপক|প্রশ্নের ক্রমিক|নম্বর প্রদান|বিষয় কোড|বানান সংশোধন|প্রশ্ন\s*[০-৯0-9]+)/.test(trimmed)) {
+        continue;
       }
+
+      // 4. PLAIN SCORE MARKS: Convert any bracketed marks [১] or (১) to plain unbracketed tabbed numbers (e.g. ক. ...\t১)
+      l = l.replace(/(\?|।|:|[a-zA-Z\u0980-\u09FF"'”’\$])\s*\[\s*([০-৯0-9\s]+)\s*\]\s*$/g, '$1\t$2');
+      l = l.replace(/(\?|।|:|[a-zA-Z\u0980-\u09FF"'”’\$])\s*[\(（]\s*([০-৯0-9\s]+)\s*[\)）]\s*$/g, '$1\t$2');
 
       // 4a. Remove references & source brackets (e.g. [ঢাকা বোর্ড-২০২৩], [ক্যাডেট কলেজ], (দিনাজপুর বোর্ড), [অধ্যায়-৩], মান: ১ ইত্যাদি)
       // Strictly constrained to exam board tags so legitimate content parentheses like (Vision & Mission), (যেমন: ...), (বেঞ্চ/টেবিল) are never stripped
@@ -3062,7 +3147,7 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
     const fontSizeVal = (elements.fontSizeSelect && elements.fontSizeSelect.value) || document.getElementById('ai-target-font-size')?.value || '12';
     const fontSizePt = parseInt(fontSizeVal, 10) || 12;
 
-    const rawName = state.selectedFile?.name || state.filesQueue?.[0]?.name || 'Question_Paper';
+    const rawName = state.selectedFile?.name || state.filesQueue?.[0]?.name || 'Document';
     const baseName = rawName.replace(/\.[^/.]+$/, '');
 
     // FORMAT 0: Raw Markdown .MD (Direct pure text with full LaTeX equations intact)
@@ -3073,28 +3158,117 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       return;
     }
 
-    // FORMAT 1: Word 2003 .DOC (Direct Full-Fidelity Word 2003 SutonnyMJ Document)
+    // =========================================================================
+    // পর্যায় ১: লেআউট ডিজাইন ও মাস্টার ওয়ার্ড ফাইল (.docx) জেনারেশন
+    // (১০০% খাঁটি ইউনিকোড — কোনো প্রকার বিজয় কনভার্সন হবে না)
+    // =========================================================================
+    showToast(`মাস্টার ওয়ার্ড (.docx) ফাইল প্রস্তুত হচ্ছে...`, 'info');
+    let masterDocxBlob = null;
+    try {
+      masterDocxBlob = await generateMasterDocx(text, {
+        pageSize: pageSizeVal,
+        margin: marginVal,
+        fontSize: fontSizeVal
+      });
+    } catch (err) {
+      console.error('Master docx generation error:', err);
+      showToast(`মাস্টার ওয়ার্ড ফাইল তৈরিতে সমস্যা: ${err.message}`, 'error');
+      throw err;
+    }
+
+    if (!masterDocxBlob) {
+      showToast('মাস্টার ওয়ার্ড ফাইল তৈরি করা যায়নি', 'error');
+      return;
+    }
+
+    // FORMAT 1: Modern Word .DOCX (Pure Unicode Master)
+    if (format === 'unicode_docx') {
+      try {
+        triggerDownload(masterDocxBlob, `${baseName}_Master_Unicode.docx`);
+        showToast(`ইউনিকোড মাস্টার .DOCX ডাউনলোড সম্পন্ন!`, 'success');
+      } catch (err) {
+        showToast(`ইউনিকোড DOCX ডাউনলোডে সমস্যা: ${err.message}`, 'error');
+        throw err;
+      }
+      return;
+    }
+
+    // =========================================================================
+    // পর্যায় ২: পরীক্ষিত কনভার্সন পাইপলাইন (মাস্টার .docx থেকে নির্দিষ্ট ফরম্যাটে রূপান্তর)
+    // =========================================================================
+
+    // FORMAT 2: Modern Word .DOCX (Bijoy SutonnyMJ via DocxHandler)
+    if (format === 'bijoy_docx') {
+      showToast(`বিজয় .DOCX তৈরি হচ্ছে...`, 'info');
+      try {
+        let bijoyBlob = null;
+        if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.convertDocx === 'function') {
+          const res = await DocxHandler.convertDocx(masterDocxBlob, {
+            direction: 'u2b',
+            targetFont: 'SutonnyMJ'
+          });
+          bijoyBlob = res.convertedBlob || res.blob;
+        } else {
+          bijoyBlob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
+        }
+        triggerDownload(bijoyBlob, `${baseName}_Bijoy.docx`);
+        showToast(`বিজয় .DOCX ডাউনলোড সম্পন্ন!`, 'success');
+      } catch (err) {
+        console.error('Bijoy DOCX conversion error:', err);
+        showToast(`বিজয় DOCX তৈরিতে সমস্যা: ${err.message}`, 'error');
+        throw err;
+      }
+      return;
+    }
+
+    // FORMAT 3: Word 2003 .DOC (Direct Full-Fidelity Word 2003 SutonnyMJ Document)
     if (format === 'doc') {
       showToast(`ওয়ার্ড ২০০৩ (.doc) ফাইল প্রস্তুত হচ্ছে...`, 'info');
-
       try {
         let docBlob = null;
-        if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.createDocFromText === 'function') {
-          docBlob = DocxHandler.createDocFromText(text, 'SutonnyMJ', true, fontSizePt, {
-            pageSize: pageSizeVal,
-            margin: marginVal,
-            fontSize: fontSizeVal
+        if (typeof MdLayoutParser !== 'undefined' && typeof DocWord2003Builder !== 'undefined') {
+          const detectFn = (t) => {
+            if (typeof MdLayoutParser.detectDocumentProfile === 'function') {
+              const prof = MdLayoutParser.detectDocumentProfile(t);
+              if (prof?.archetypeId) return prof.archetypeId;
+            }
+            return 'question-2col';
+          };
+          const detectedLayout = detectFn(text);
+          const ast = MdLayoutParser.parse(text, { layout: detectedLayout, pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
+          docBlob = DocWord2003Builder.build(ast, { font: 'SutonnyMJ' });
+        } else if (typeof DocxHandler !== 'undefined' && typeof DocxToDocConverter !== 'undefined') {
+          // ধাপ ১: মাস্টার ইউনিকোড docx কে DocxHandler দিয়ে সুতন্নিএমজে docx এ কনভার্ট
+          const bijoyDocxRes = await DocxHandler.convertDocx(masterDocxBlob, {
+            direction: 'u2b',
+            targetFont: 'SutonnyMJ'
           });
-        } else if (typeof DocxToDocConverter !== 'undefined') {
-          const docxBlob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
+          const intermediateDocxBlob = bijoyDocxRes.convertedBlob || bijoyDocxRes.blob;
+
+          // ধাপ ২: পরীক্ষিত DocxToDocConverter দিয়ে হাই-ফিডেলিটি Word 2003 .doc তৈরি
           const docxConverter = new DocxToDocConverter();
-          const docResult = await docxConverter.convertDocxToDoc(docxBlob, {
+          const docResult = await docxConverter.convertDocxToDoc(intermediateDocxBlob, {
             pageSize: pageSizeVal,
             margin: marginVal,
             preserveSutonny: true,
             optimizeForQuestionPaper: true
           });
           docBlob = docResult.blob || docResult.convertedBlob;
+        } else if (typeof DocxToDocConverter !== 'undefined') {
+          const docxConverter = new DocxToDocConverter();
+          const docResult = await docxConverter.convertDocxToDoc(masterDocxBlob, {
+            pageSize: pageSizeVal,
+            margin: marginVal,
+            preserveSutonny: true,
+            optimizeForQuestionPaper: true
+          });
+          docBlob = docResult.blob || docResult.convertedBlob;
+        } else if (typeof DocxHandler !== 'undefined' && typeof DocxHandler.createDocFromText === 'function') {
+          docBlob = DocxHandler.createDocFromText(text, 'SutonnyMJ', true, fontSizePt, {
+            pageSize: pageSizeVal,
+            margin: marginVal,
+            fontSize: fontSizeVal
+          });
         }
 
         if (!docBlob) {
@@ -3110,34 +3284,78 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       }
       return;
     }
+  }
 
-    // FORMAT 2: Modern Word .DOCX (Bijoy SutonnyMJ)
-    if (format === 'bijoy_docx') {
-      showToast(`বিজয় .DOCX তৈরি হচ্ছে...`, 'info');
+  /**
+   * পর্যায় ১: লেআউট ডিজাইন ও মাস্টার ওয়ার্ড ফাইল (.docx) জেনারেশন
+   * সর্বদা ১০০% খাঁটি ইউনিকোড — কোনো প্রকার বিজয় রূপান্তর এখানে ঘটবে না।
+   */
+  async function generateMasterDocx(text, customOptions = {}) {
+    if (typeof MdLayoutParser !== 'undefined' && typeof DocxLayoutBuilder !== 'undefined') {
       try {
-        const blob = await createDocxBlob(text, true, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
-        triggerDownload(blob, `${baseName}_Bijoy.docx`);
-        showToast(`বিজয় .DOCX ডাউনলোড সম্পন্ন!`, 'success');
+        const detectFn = (t) => {
+          if (typeof MdLayoutParser.detectDocumentProfile === 'function') {
+            const prof = MdLayoutParser.detectDocumentProfile(t);
+            if (prof?.archetypeId) return prof.archetypeId;
+          }
+          return 'question-2col';
+        };
+        const detectedLayout = detectFn(text);
+        const ast = MdLayoutParser.parse(text, Object.assign({ layout: detectedLayout }, customOptions));
+        return await DocxLayoutBuilder.build(ast, { font: customOptions.font || 'Kalpurush' });
       } catch (err) {
-        showToast(`DOCX তৈরিতে সমস্যা: ${err.message}`, 'error');
-        throw err;
+        console.warn('DocxLayoutBuilder error, falling back to createDocxBlob:', err);
       }
+    }
+    return await createDocxBlob(text, false, customOptions);
+  }
+
+  /**
+   * স্টুডিও প্রিভিউ ও এডিটর অপশন
+   * মাস্টার ফাইল ও টেক্সটকে সরাসরি মাইক্রোসফট ওয়ার্ড স্টুডিও এডিটরে ট্রান্সফার করে
+   */
+  function openStudioPreviewEditor(customText, customName) {
+    const text = customText || (elements.outputUnicodeArea && elements.outputUnicodeArea.value) || state.unicodeText;
+    if (!text || !text.trim()) {
+      showToast('স্টুডিওতে ওপেন করার মতো কোনো টেক্সট নেই', 'warning');
       return;
     }
 
-    // FORMAT 3: Modern Word .DOCX (Unicode)
-    if (format === 'unicode_docx') {
-      showToast(`ইউনিকোড .DOCX তৈরি হচ্ছে...`, 'info');
-      try {
-        const blob = await createDocxBlob(text, false, { pageSize: pageSizeVal, margin: marginVal, fontSize: fontSizeVal });
-        triggerDownload(blob, `${baseName}_Unicode.docx`);
-        showToast(`ইউনিকোড .DOCX ডাউনলোড সম্পন্ন!`, 'success');
-      } catch (err) {
-        showToast(`DOCX তৈরিতে সমস্যা: ${err.message}`, 'error');
-        throw err;
-      }
-      return;
+    const rawName = customName || state.selectedFile?.name || state.filesQueue?.[0]?.name || 'Document';
+    const baseName = rawName.replace(/\.[^/.]+$/, '');
+
+    // Classify document if available
+    let docType = 'AUTO';
+    if (typeof DocClassifier !== 'undefined' && typeof DocClassifier.classify === 'function') {
+      const detected = DocClassifier.classify(text);
+      if (detected && detected.type) docType = detected.type;
+    } else if (/সৃজনশীল|ক\.\s+|খ\.\s+/i.test(text)) {
+      docType = 'EXAM_CQ';
+    } else if (/বহুনির্বাচনি|MCQ/i.test(text)) {
+      docType = 'EXAM_MCQ';
     }
+
+    const payload = {
+      text: text,
+      fileName: `${baseName}_Master`,
+      docType: docType,
+      font: 'kalpurush',
+      paperSize: (text.length > 400 && /সৃজনশীল|বহুনির্বাচনি|MCQ/i.test(text)) ? 'a4-landscape' : 'a4-portrait'
+    };
+
+    if (typeof ConverterStudioBridge !== 'undefined' && typeof ConverterStudioBridge.sendToStudio === 'function') {
+      ConverterStudioBridge.sendToStudio(payload);
+    } else {
+      try {
+        localStorage.setItem('fayzar_studio_transfer_v1', JSON.stringify(Object.assign({ source: 'fayzar-converter', timestamp: Date.now() }, payload)));
+        sessionStorage.setItem('fayzar_studio_transfer_v1', JSON.stringify(Object.assign({ source: 'fayzar-converter', timestamp: Date.now() }, payload)));
+      } catch (e) {
+        console.warn('Storage error', e);
+      }
+    }
+
+    showToast('ওয়ার্ড স্টুডিও লাইভ প্রিভিউ ও এডিটর চালু হচ্ছে...', 'info');
+    window.open('studio.html?source=converter', '_blank');
   }
 
   async function createDocxBlob(text, isBijoy = false, customOptions = {}) {
@@ -3171,8 +3389,22 @@ ${rpr('Times New Roman', fontSizeHalfPt)}
       'wide': { top: 1800, right: 1800, bottom: 1800, left: 1800 }
     };
 
+    let docType = customOptions.docType || 'GENERAL';
+    if (typeof DocClassifier !== 'undefined' && typeof DocClassifier.classify === 'function') {
+      const detected = DocClassifier.classify(text);
+      if (detected && detected.type) docType = detected.type;
+    }
+
+    const isStampDeed = docType === 'STAMP_DEED' || /৩০০|তিনশত|স্ট্যাম্প|অঙ্গীকার\s*নামা|বায়নানামা|চুক্তিপত্র|তফসিল|১ম\s*পক্ষ|২য়\s*পক্ষ/i.test(text);
+
     const pageDim = PAGE_SIZES[pageSizeVal] || PAGE_SIZES['a4'];
-    const pageMar = MARGINS[marginVal] || MARGINS['normal'];
+    const pageMar = Object.assign({}, MARGINS[marginVal] || MARGINS['normal']);
+
+    // Special layout archetype: Stamp deed Page 1 cartridge margin (3.5 inches = 5040 dxa)
+    if (isStampDeed && !customOptions.ignoreStampMargin) {
+      pageMar.top = 5040;
+    }
+
     const printableWidth = pageDim.w - pageMar.left - pageMar.right;
 
     let bodyContentXml = '';
@@ -3252,6 +3484,9 @@ ${rowsXml}
       }
     }
 
+    const numCols = customOptions.columns || (customOptions.twoColumns ? 2 : 1);
+    const colsXml = numCols > 1 ? `\n      <w:cols w:num="${numCols}" w:space="720"/>` : '';
+
     const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -3264,7 +3499,7 @@ ${rowsXml}
 ${bodyContentXml}
     <w:sectPr>
       <w:pgSz w:w="${pageDim.w}" w:h="${pageDim.h}"/>
-      <w:pgMar w:top="${pageMar.top}" w:right="${pageMar.right}" w:bottom="${pageMar.bottom}" w:left="${pageMar.left}" w:header="709" w:footer="709" w:gutter="0"/>
+      <w:pgMar w:top="${pageMar.top}" w:right="${pageMar.right}" w:bottom="${pageMar.bottom}" w:left="${pageMar.left}" w:header="709" w:footer="709" w:gutter="0"/>${colsXml}
     </w:sectPr>
   </w:body>
 </w:document>`;
@@ -3494,6 +3729,8 @@ ${bodyContentXml}
     runVerificationPipeline,
     extractAuditNote,
     downloadWordDocument,
+    generateMasterDocx,
+    openStudioPreviewEditor,
     handleFiles,
     fastOptimizeImageFile,
     executeGeminiRequest,

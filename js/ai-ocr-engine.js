@@ -272,12 +272,8 @@
 16. ACCURATE BENGALI TYPOGRAPHY & INTELLIGENT OCR TYPO CORRECTION (অস্পষ্ট লেখা ও বানান সংশোধন):
     - Use 100% correct Bengali spelling (যুক্তবর্ণ, ণ-ত্ব/ষ-ত্ব, দাড়ি, কমা, হাইফেন). Keep English terms, units, and symbols (kW, V, A, W, Input, Output, KNO3, H2O) clean in English.
     - If there are blurred, smudged, broken characters (ভাঙা যুক্তবর্ণ), or obvious printing typos in the source scan, YOU MUST RECOVER AND CORRECT THEM intelligently to proper, grammatically correct Bengali words.
-    - If you correct any unclear/broken text or obvious typo, list each correction at the very end in an audit note:
-      [নোট ও পরিবর্তনসমূহ:
-      - প্রশ্ন ৩-এর উদ্দীপকে অস্পষ্ট শব্দ '...' সংশোধন করা হয়েছে।
-      - বানান সংশোধন: '...' এর স্থলে '...' ঠিক করা হয়েছে।]
-    - If no corrections were needed:
-      [নোট: মূল ফাইলের সাথে সম্পূর্ণ যাচাইকৃত, কোনো পরিবর্তন করা হয়নি।]
+    - ZERO CHATTER & ZERO NOTES: NEVER output any notes, change logs, audit trails, or [নোট ও পরিবর্তনসমূহ: ...] anywhere in the document! Output ONLY the 100% clean, pure transcribed document text.
+    - OMIT ALL EXAM BOARD CITATIONS & REFERENCES: Completely omit board tags and citations (e.g., [ঢাকা বোর্ড-২০২৩], [কু. বো. ২১], [ক্যাডেট কলেজ], [অধ্যায়-৩], [সহপাঠ: বহিপীর], (দিনাজপুর বোর্ড ২০১৭) ইত্যাদি সম্পূর্ণ বাদ দিন).
 
 17. ENGLISH LANGUAGE QUESTION PAPERS (ইংরেজি বিষয়ের প্রশ্নপত্র - সম্পূর্ণ স্বাভাবিক কার্যক্রম):
     - CRITICAL EXCEPTION & MANDATE: The formatting rules for Bengali Dari ('।'), Bengali dot options ('ক.', 'খ.', 'গ.', 'ঘ.') with leading tabs, and CQ dot sub-questions apply ONLY to Bengali, Mathematics, Physics, Chemistry, Biology, and other Bengali-medium subjects!
@@ -332,16 +328,13 @@ SPECIFIC DEFECTS YOU MUST AUDIT AND FIX:
    - No empty blank lines or double Enters between consecutive questions or lines.
    - Never output long chains of dots. Keep dotted lines to at most 3 to 6 dots (......) and preserve the rest of the letter/form.
 
-5. MANDATORY DETAILED AUDIT NOTE (বাধ্যতামূলক অডিট নোট):
-   - At the VERY END of the verified document, you MUST include a detailed audit note block listing every single correction made, so the user can easily review them:
-     [নোট ও পরিবর্তনসমূহ:
-     - প্রশ্ন ৩-এর উদ্দীপকে '...' মূল ছবির সাথে হুবহু মিলানো হয়েছে।
-     - বানান সংশোধন: '...' এর স্থলে '...' ঠিক করা হয়েছে।]
-   - If absolutely NO errors were found and the draft was already 100% faithful and complete:
-     [নোট: মূল ফাইলের সাথে সম্পূর্ণ যাচাইকৃত, কোনো পরিবর্তন করা হয়নি।]
+5. ZERO CHATTER, ZERO NOTES & CLEAN OUTPUT (কোনো নোট বা পরিবর্তন তালিকা আউটপুটে দেওয়া সম্পূর্ণ নিষিদ্ধ):
+   - NEVER output any [নোট ও পরিবর্তনসমূহ: ...], notes, change logs, explanations, or commentary anywhere in the output!
+   - Apply all corrections directly into the questions and text.
+   - Omit all exam board tags and citations ([ঢাকা বোর্ড-২০২৩], [ক্যাডেট কলেজ], [অধ্যায়-৩], [সহপাঠ]).
 
 OUTPUT REQUIREMENT:
-Output the COMPLETE, FULL, AUDITED document text from start to finish, ending with the mandatory [নোট... block. Do NOT summarize or truncate.`;
+Output ONLY the COMPLETE, FULL, 100% VERIFIED AND CLEAN document text from start to finish. Do NOT include any [নোট...] block or conversational filler.`;
 
   const DEFAULT_GEMINI_API_KEY = (typeof atob === 'function' ? atob('QVEuQWI4Uk42S1pDTXNmUTQtckhLV0U4NF83cXBxeGdHS1BMM2x4M1F6RXBBa3k4LUpuN2c=') : '');
 
@@ -1545,7 +1538,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (state.autoVerify && state.lastMediaItems && state.lastMediaItems.length > 0 && !state.demoMode && apiKey) {
       if (onProgress) onProgress('স্বয়ংক্রিয় অডিট ও যাচাই চলছে (বানান, উদ্দীপক ও মিসিং প্রশ্ন)...', 97, 4);
       try {
-        const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${rawText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো পরিবর্তন করলে নিচে [নোট ও পরিবর্তনসমূহ: ...] আকারে লিখে দিন।]`;
+        const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${rawText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো প্রকার নোট বা ব্যাখ্যা ছাড়া সরাসরি ১০০% সংশোধিত ও নির্ভুল প্রশ্নপত্র প্রদান করুন।]`;
         const verifiedRaw = await executeGeminiRequest(
           apiKey,
           state.lastMediaItems,
@@ -2248,7 +2241,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
   function extractAuditNote(text) {
     if (!text) return null;
-    const match = text.match(/\[\s*নোট[\s\S]*?\]/);
+    const match = text.match(/(?:[০-৯0-9]+[।\.\)]\s*)?\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট)[\s\S]*?(?:\]|(?=\n\s*(?:\([ক-ঘa-divx০-৯]+\)|[ক-ঘa-divx][\.\)]|[০-৯0-9]+[।\.\)]|#{1,6}\s|$)))/);
     return match ? match[0].trim() : null;
   }
 
@@ -2310,7 +2303,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         await sleep(800);
         verifiedRawText = currentText + '\n\n[নোট: অফলাইন ডেমো মোডে মূল ফাইলের সাথে যাচাই সম্পন্ন হয়েছে।]';
       } else {
-        const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${currentText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো পরিবর্তন করলে নিচে [নোট ও পরিবর্তনসমূহ: ...] আকারে লিখে দিন।]`;
+        const extraTextContent = `[পূর্বে সংগৃহীত খসড়া টেক্সট (DRAFT TO BE AUDITED & VERIFIED AGAINST ATTACHED IMAGES)]:\n\n${currentText}\n\n[নির্দেশনা: উপরের খসড়া টেক্সটটিকে সংযুক্ত মূল ছবিগুলোর সাথে পুঙ্খানুপুঙ্খ মিলিয়ে বানান ভুল, উদ্দীপকের বিচ্যুতি এবং কোনো প্রশ্ন বা উপ-প্রশ্ন বাদ পড়ে থাকলে তা সংশোধন করে সম্পূর্ণ নির্ভুল প্রশ্নপত্র প্রস্তুত করুন। কোনো প্রকার নোট বা ব্যাখ্যা ছাড়া সরাসরি ১০০% সংশোধিত ও নির্ভুল প্রশ্নপত্র প্রদান করুন।]`;
 
         verifiedRawText = await executeGeminiRequest(
           apiKey,
@@ -2356,13 +2349,12 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
   }
 
   function handleExtractionSuccess(unicodeText, isVerification = false) {
+    const auditNote = extractAuditNote(unicodeText);
     const cleaned = cleanOcrResponse(unicodeText);
     state.unicodeText = cleaned;
     if (elements.outputUnicodeArea) elements.outputUnicodeArea.value = cleaned;
     recalculateBijoyFromUnicode();
 
-    // Extract audit notes if present
-    const auditNote = extractAuditNote(cleaned);
     if (elements.auditNotesBox) {
       if (auditNote) {
         elements.auditNotesBox.classList.remove('hidden');
@@ -2560,6 +2552,20 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
     if (!rawText) return '';
     let text = sanitizeMathBengaliSeparation(rawText.trim());
 
+    // Extract audit note for UI badge before stripping
+    const detectedNote = extractAuditNote(text);
+    if (detectedNote) state.lastAuditNote = detectedNote;
+
+    // STRIP all AI Audit Note & Change Log blocks completely so they NEVER enter the document text!
+    // Case 1: When attached to a question number e.g. "১২। [নোট ও পরিবর্তনসমূহ: ... \n - bullet 1\n - bullet 2" before subquestion "(ক)"
+    text = text.replace(/([০-৯0-9]+[।\.\)])\s*\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)[\s\S]*?(?:\]|(?=\n\s*(?:\([ক-ঘa-divx০-৯]+\)|[ক-ঘa-divx][\.\)]|[০-৯0-9]+[।\.\)]|#{1,6}\s|$)))/gi, '$1\n');
+    // Case 2: Standalone note block e.g. "[নোট ও পরিবর্তনসমূহ: ..."
+    text = text.replace(/\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)[\s\S]*?(?:\]|(?=\n\s*(?:\([ক-ঘa-divx০-৯]+\)|[ক-ঘa-divx][\.\)]|[০-৯0-9]+[।\.\)]|#{1,6}\s|$)))/gi, '');
+
+    // Strip exam board tags, cadet college tags, and chapter citations anywhere in text
+    text = text.replace(/\s*\[\s*(?:[^\]\n]*(?:(?:ঢাকা|রাজশাহী|দিনাজপুর|কুমিল্লা|চট্টগ্রাম|সিলেট|বরিশাল|যশোর|ময়মনসিংহ|মাদ্রাসা|কারিগরি|সকল)?\s*(?:বোর্ড|বো\.)|ক্যাডেট\s*কলেজ|জিলা\s*স্কুল|অধ্যায়|অধ্যায়|অনুশীলনী|পরিপত্র|সহপাঠ|গদ্যাংশ|পদ্যাংশ|বোর্ড\s*প্রশ্ন|মডেল\s*টেস্ট|Board|Cadet|Chapter))[^\]\n]*\]\s*/gi, ' ');
+    text = text.replace(/\s*\(\s*(?:[^\)\n]*(?:(?:ঢাকা|রাজশাহী|দিনাজপুর|কুমিল্লা|চট্টগ্রাম|সিলেট|বরিশাল|যশোর|ময়মনসিংহ|মাদ্রাসা|কারিগরি|সকল)\s*(?:বোর্ড|বো\.)|বোর্ড\s*[-–—]?\s*[০-৯0-9]{4}|ক্যাডেট\s*কলেজ|জিলা\s*স্কুল))[^\]\n]*\)\s*/gi, ' ');
+
     if (text.startsWith('```')) {
       text = text.replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```$/, '');
     }
@@ -2634,16 +2640,17 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
         continue;
       }
 
-      // Preserve Audit Note blocks completely without modifying their contents
-      if (/^\s*\[\s*নোট/i.test(trimmed)) {
-        inNoteBlock = true;
-        cleanedLines.push(l);
-        if (trimmed.endsWith(']')) inNoteBlock = false;
+      // Skip any residual Audit Note blocks & bullet lists completely!
+      if (/^\s*\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)/i.test(trimmed)) {
+        inNoteBlock = !trimmed.endsWith(']');
         continue;
       }
       if (inNoteBlock) {
-        cleanedLines.push(l);
         if (trimmed.endsWith(']')) inNoteBlock = false;
+        continue;
+      }
+      // Skip any AI audit bullet points that escaped e.g. - খসড়া টেক্সটে..., - ৪ থেকে ১২ নং...
+      if (/^\s*[-•]\s*(?:খসড়া|মূল ছবি|সকল উদ্দীপক|প্রশ্নের ক্রমিক|নম্বর প্রদান|বিষয় কোড|বানান সংশোধন|প্রশ্ন\s*[০-৯0-9]+)/.test(trimmed)) {
         continue;
       }
 

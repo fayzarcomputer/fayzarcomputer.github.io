@@ -734,6 +734,13 @@
           continue;
         }
 
+        // Skip residual audit note headers & bullet lists entirely
+        if (/^\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)/i.test(line) ||
+            /^\s*[-•]\s*(?:খসড়া|মূল ছবি|সকল উদ্দীপক|প্রশ্নের ক্রমিক|নম্বর প্রদান|বিষয় কোড|বানান সংশোধন|প্রশ্ন\s*[০-৯0-9]+)/.test(line)) {
+          i++;
+          continue;
+        }
+
         // Figure / Diagram Placeholder tag
         if (/^\[\s*(?:চিত্র|ছবি)\s*আছে[^\]]*\]$/i.test(line)) {
           blocks.push({
@@ -926,6 +933,12 @@
           let qText = questionMatch[3];
           let qMarks = '';
 
+          // Strip residual audit note headers attached to question serial e.g. "১২। [নোট ও পরিবর্তনসমূহ:"
+          qText = qText.replace(/\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)[^\]]*\]?/gi, '').trim();
+          // Strip board / chapter citations e.g. [ঢাকা বোর্ড-২০২৩], (দিনাজপুর বোর্ড ২০১৭), [অধ্যায়-৩]
+          qText = qText.replace(/\[\s*(?:(?:ঢাকা|কুমিল্লা|চট্টগ্রাম|রাজশাহী|যশোর|বরিশাল|সিলেট|দিনাজপুর|ময়মনসিংহ|বাংলাদেশ|কারিগরি|মাদরাসা)\s*বোর্ড|বোর্ড|ক্যাডেট\s*কলেজ|অধ্যায়|সহপাঠ|পৃষ্ঠা)[^\]]*\]/gi, '').trim();
+          qText = qText.replace(/\((?:(?:ঢাকা|কুমিল্লা|চট্টগ্রাম|রাজশাহী|যশোর|বরিশাল|সিলেট|দিনাজপুর|ময়মনসিংহ|বাংলাদেশ|কারিগরি|মাদরাসা)\s*বোর্ড|বোর্ড|ক্যাডেট\s*কলেজ)[^\)]*\)/gi, '').trim();
+
           // Extract right-aligned marks [0.5x10=5], [1x5=5], [১০], [১] at end of line (allowing spaces)
           const marksMatch = qText.match(/\s*\[\s*([০-৯0-9a-zA-Z\s\*\+\-\=\/×÷\.\,\:\;]+?)\s*\]\s*$/);
           if (marksMatch) {
@@ -977,8 +990,20 @@
               continue;
             }
 
+            // Skip residual audit notes and bullet points inside question processing!
+            if (/^\[\s*(?:নোট|পরিবর্তনসমূহ|সংশোধনী|অডিট|খসড়া|Note|Audit)/i.test(subLine) ||
+                /^\s*[-•]\s*(?:খসড়া|মূল ছবি|সকল উদ্দীপক|প্রশ্নের ক্রমিক|নম্বর প্রদান|বিষয় কোড|বানান সংশোধন|প্রশ্ন\s*[০-৯0-9]+)/.test(subLine)) {
+              i++;
+              continue;
+            }
+
+            // Boundary defense: If this question already has subquestions and another 'ক' or 'a' appears, break to avoid absorbing next question
+            if (questionBlock.subQuestions && questionBlock.subQuestions.length > 0 && /^(\([কa]\)|[কa][\.\)])/i.test(subLine)) {
+              break;
+            }
+
             // If a new main question, section heading, or section break begins, stop processing this question immediately!
-            if (/^[০-৯0-9]+[।\.\)]\s/.test(subLine) || /^#{1,6}\s/.test(subLine) || /^---(?:SECTION_BREAK|MCQ)/i.test(subLine) || /^(?:ক|খ|গ|ঘ|ঙ|চ)\-বিভাগ/i.test(subLine) || /^Part\s*[-–—:]/i.test(subLine) || /(?:বহুনির্বাচন[ীি]|নৈর্ব্যক্তিক|MCQ)/i.test(subLine) || /(?:স্কুল|বিদ্যালয়|মডেল|কলেজ|মাদরাসা|ইনস্টিটিউট|School|College)/i.test(subLine)) {
+            if (/^[০-৯0-9]+[।\.\)](?:\s|$)/.test(subLine) || /^#{1,6}\s/.test(subLine) || /^---(?:SECTION_BREAK|MCQ)/i.test(subLine) || /^(?:ক|খ|গ|ঘ|ঙ|চ)\-বিভাগ/i.test(subLine) || /^Part\s*[-–—:]/i.test(subLine) || /(?:বহুনির্বাচন[ীি]|নৈর্ব্যক্তিক|MCQ)/i.test(subLine) || /(?:স্কুল|বিদ্যালয়|মডেল|কলেজ|মাদরাসা|ইনস্টিটিউট|School|College)/i.test(subLine)) {
               break;
             }
 
@@ -988,6 +1013,10 @@
               const subId = subMatch[1];
               let subText = subMatch[2];
               let subMarks = '';
+
+              // Strip board citations from sub-questions
+              subText = subText.replace(/\[\s*(?:(?:ঢাকা|কুমিল্লা|চট্টগ্রাম|রাজশাহী|যশোর|বরিশাল|সিলেট|দিনাজপুর|ময়মনসিংহ|বাংলাদেশ|কারিগরি|মাদরাসা)\s*বোর্ড|বোর্ড|ক্যাডেট\s*কলেজ|অধ্যায়|সহপাঠ|পৃষ্ঠা)[^\]]*\]/gi, '').trim();
+              subText = subText.replace(/\((?:(?:ঢাকা|কুমিল্লা|চট্টগ্রাম|রাজশাহী|যশোর|বরিশাল|সিলেট|দিনাজপুর|ময়মনসিংহ|বাংলাদেশ|কারিগরি|মাদরাসা)\s*বোর্ড|বোর্ড|ক্যাডেট\s*কলেজ)[^\)]*\)/gi, '').trim();
 
               const subMarksMatch = subText.match(/\s*\[\s*([০-৯0-9a-zA-Z\s\*\+\-\=\/×÷\.\,\:\;]+?)\s*\]\s*$/)
                 || subText.match(/(?:(?:\?|।|:)\s*|\t|\s{2,})([০-৯0-9]{1,2})\s*$/);
@@ -1037,7 +1066,7 @@
 
             // Multi-line stimulus / poem absorption:
             // If the line doesn't match any sub-question pattern but is part of the question block
-            if (/^[০-৯0-9]+[।\.\)]\s/.test(subLine) || /^#{1,6}\s/.test(subLine) || /^(\-{3,}|\={3,}|\*{3,})$/.test(subLine) || /^---(?:SECTION_BREAK|MCQ)/i.test(subLine) || subLine.startsWith('|') || /^(?:ক|খ|গ|ঘ|ঙ|চ)\-বিভাগ/i.test(subLine) || /^Part\s*[-–—:]/i.test(subLine) || /(?:বহুনির্বাচন[ীি]|নৈর্ব্যক্তিক|MCQ)/i.test(subLine) || /(?:স্কুল|বিদ্যালয়|মডেল|কলেজ|মাদরাসা|ইনস্টিটিউট|School|College)/i.test(subLine)) {
+            if (/^[০-৯0-9]+[।\.\)](?:\s|$)/.test(subLine) || /^#{1,6}\s/.test(subLine) || /^(\-{3,}|\={3,}|\*{3,})$/.test(subLine) || /^---(?:SECTION_BREAK|MCQ)/i.test(subLine) || subLine.startsWith('|') || /^(?:ক|খ|গ|ঘ|ঙ|চ)\-বিভাগ/i.test(subLine) || /^Part\s*[-–—:]/i.test(subLine) || /(?:বহুনির্বাচন[ীি]|নৈর্ব্যক্তিক|MCQ)/i.test(subLine) || /(?:স্কুল|বিদ্যালয়|মডেল|কলেজ|মাদরাসা|ইনস্টিটিউট|School|College)/i.test(subLine)) {
               break;
             }
             const cleanStimLine = subLine.replace(/^>\s?/, '');

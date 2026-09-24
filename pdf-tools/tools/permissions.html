@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>পিডিএফ পারমিশন — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">🛡️ পিডিএফ পারমিশন</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#64748b,#475569);">🛡️</div>
+    <div><h1>পিডিএফ পারমিশন</h1><p>পিডিএফের প্রিন্ট, কপি ও এডিট অনুমতি নিয়ন্ত্রণ করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">🛡️</div><h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <h3>🛡️ পারমিশন সেটিং</h3>
+    <div class="form-group"><label>মালিক পাসওয়ার্ড (প্রয়োজনীয়)</label><input type="password" class="form-control" id="ownerPass" placeholder="শক্তিশালী পাসওয়ার্ড দিন"></div>
+    <div style="display:flex;flex-direction:column;gap:0.6rem;margin:1rem 0;">
+      <label style="display:flex;align-items:center;gap:0.6rem;font-family:'NotoSansBengali',sans-serif;font-size:0.9rem;cursor:pointer;"><input type="checkbox" id="pPrint" checked> 🖨️ প্রিন্ট করার অনুমতি</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;font-family:'NotoSansBengali',sans-serif;font-size:0.9rem;cursor:pointer;"><input type="checkbox" id="pCopy"> 📋 কপি করার অনুমতি</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;font-family:'NotoSansBengali',sans-serif;font-size:0.9rem;cursor:pointer;"><input type="checkbox" id="pModify"> ✏️ সম্পাদনার অনুমতি</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;font-family:'NotoSansBengali',sans-serif;font-size:0.9rem;cursor:pointer;"><input type="checkbox" id="pAnnotate" checked> 💬 মন্তব্য যোগের অনুমতি</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;font-family:'NotoSansBengali',sans-serif;font-size:0.9rem;cursor:pointer;"><input type="checkbox" id="pFillForms" checked> 📝 ফর্ম পূরণের অনুমতি</label>
+    </div>
+    <button class="btn btn-primary" onclick="applyPermissions()" style="width:100%;justify-content:center;">🛡️ পারমিশন প্রয়োগ করুন</button>
+  </div>
+  <script>
+    var pdfFile=null;
+    document.addEventListener('DOMContentLoaded',function(){initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});});
+    function loadFile(f){pdfFile=f;document.getElementById('settingsPanel').style.display='block';toast('✅ '+f.name,'success');}
+    async function applyPermissions(){if(!pdfFile)return;var pass=document.getElementById('ownerPass').value;if(!pass){toast('⚠️ মালিক পাসওয়ার্ড দিন','error');return;}
+      showProgress('পারমিশন প্রয়োগ হচ্ছে...',40);
+      try{var doc=await PDFLib.PDFDocument.load(await readFileAsArrayBuffer(pdfFile),{ignoreEncryption:true});
+        var bytes=await doc.save({ownerPassword:pass,userPassword:'',permissions:{printing:document.getElementById('pPrint').checked?'highResolution':null,modifying:document.getElementById('pModify').checked,copying:document.getElementById('pCopy').checked,annotating:document.getElementById('pAnnotate').checked,fillingForms:document.getElementById('pFillForms').checked,contentAccessibility:true,documentAssembly:false}});
+        downloadBlob(new Blob([bytes],{type:'application/pdf'}),'permissions_'+pdfFile.name);hideProgress();toast('✅ পারমিশন প্রয়োগ হয়েছে','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

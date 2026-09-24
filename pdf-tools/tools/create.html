@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>পিডিএফ তৈরি করুন — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">📝 পিডিএফ তৈরি করুন</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">📝</div>
+    <div><h1>পিডিএফ তৈরি করুন</h1><p>ছবি বা টেক্সট থেকে নতুন পিডিএফ ফাইল তৈরি করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <h3>📝 কন্টেন্ট যোগ করুন</h3>
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <button class="btn btn-outline btn-sm" onclick="addTextBlock()">+ টেক্সট যোগ</button>
+      <label class="btn btn-outline btn-sm" for="imgInput" style="cursor:pointer;">+ ছবি যোগ
+        <input type="file" id="imgInput" accept="image/*" multiple style="display:none;" onchange="addImages(this.files)">
+      </label>
+    </div>
+    <div id="contentBlocks" style="display:flex;flex-direction:column;gap:0.75rem;min-height:100px;"></div>
+    <div style="font-family:'NotoSansBengali',sans-serif;font-size:0.85rem;color:#94a3b8;margin-top:0.5rem;" id="blockCount">কোনো কন্টেন্ট নেই — উপরের বোতাম দিয়ে যোগ করুন</div>
+  </div>
+  <div class="panel">
+    <h3>⚙️ পেজ সেটিং</h3>
+    <div class="form-group"><label>পেজ সাইজ</label>
+      <select class="form-control" id="pageSize"><option value="A4">A4</option><option value="Letter">Letter</option><option value="A3">A3</option></select>
+    </div>
+    <button class="btn btn-success" onclick="createPDF()" style="width:100%;justify-content:center;margin-top:0.5rem;">📄 পিডিএফ তৈরি করুন</button>
+  </div>
+  <script>
+    var blocks=[];var SIZES={A4:[595.28,841.89],Letter:[612,792],A3:[841.89,1190.55]};
+    document.addEventListener('DOMContentLoaded',function(){initTheme();});
+    function addTextBlock(){blocks.push({type:'text',id:Date.now(),content:'এখানে টেক্সট লিখুন'});renderBlocks();}
+    function addImages(files){Array.from(files).forEach(function(f){var id=Date.now()+Math.random();var reader=new FileReader();reader.onload=function(e){blocks.push({type:'image',id:id,src:e.target.result,name:f.name});renderBlocks();};reader.readAsDataURL(f);});}
+    function removeBlock(i){blocks.splice(i,1);renderBlocks();}
+    function renderBlocks(){var c=document.getElementById('contentBlocks');c.innerHTML='';blocks.forEach(function(b,i){var div=document.createElement('div');div.className='panel';div.style.padding='0.75rem';
+      if(b.type==='text'){div.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;"><span style="font-size:0.8rem;color:#94a3b8;">📝 টেক্সট '+(i+1)+'</span><button class="btn btn-outline btn-sm" onclick="removeBlock('+i+')">✕</button></div><textarea class="form-control" rows="3" style="resize:vertical;" onchange="blocks['+i+'].content=this.value">'+b.content+'</textarea>';}
+      else{div.innerHTML='<div style="display:flex;align-items:center;gap:0.75rem;"><img src="'+b.src+'" style="height:60px;border-radius:4px;object-fit:contain;"><span style="font-family:NotoSansBengali,sans-serif;font-size:0.85rem;flex:1;">'+b.name+'</span><button class="btn btn-outline btn-sm" onclick="removeBlock('+i+')">✕</button></div>';}
+      c.appendChild(div);});document.getElementById('blockCount').textContent=blocks.length?blocks.length+'টি কন্টেন্ট ব্লক':'কোনো কন্টেন্ট নেই';}
+    async function createPDF(){if(!blocks.length){toast('⚠️ কন্টেন্ট যোগ করুন','error');return;}showProgress('পিডিএফ তৈরি হচ্ছে...',20);
+      try{var doc=await PDFLib.PDFDocument.create();var sz=SIZES[document.getElementById('pageSize').value];var font=await doc.embedFont(PDFLib.StandardFonts.Helvetica);var pw=sz[0];var ph=sz[1];
+        for(var bi=0;bi<blocks.length;bi++){var b=blocks[bi];var page=doc.addPage([pw,ph]);
+          if(b.type==='text'){var lines=b.content.split('
+');var y=ph-60;lines.forEach(function(line){if(y<40)return;page.drawText(line||' ',{x:50,y:y,size:12,font:font,color:PDFLib.rgb(0,0,0),maxWidth:pw-100});y-=18;});}
+          else if(b.type==='image'){try{var resp=await fetch(b.src);var imgBuf=await resp.arrayBuffer();var isJpeg=b.src.includes('jpeg')||b.src.includes('jpg');var img=isJpeg?await doc.embedJpg(imgBuf):await doc.embedPng(imgBuf);var iw=img.width;var ih=img.height;var sc=Math.min((pw-100)/iw,(ph-100)/ih);page.drawImage(img,{x:50,y:(ph-ih*sc)/2,width:iw*sc,height:ih*sc});}catch(e2){console.warn('img embed',e2);}}}
+        var bytes=await doc.save();downloadBlob(new Blob([bytes],{type:'application/pdf'}),'created_fayzar.pdf');hideProgress();toast('✅ পিডিএফ তৈরি হয়েছে','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

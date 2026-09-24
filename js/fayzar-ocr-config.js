@@ -42,19 +42,32 @@
   };
 
   /**
-   * Key health and cooldown tracker with sessionStorage persistence
+   * Key+Model health and cooldown tracker with sessionStorage persistence
+   * Maps `${cleanKey}::${model}` -> { state: 'cooldown', until: timestamp }
+   * And `${cleanKey}` -> { state: 'invalid', until: Infinity } for broken keys
    */
-  const keyStatusMap = new Map(); // key -> { state: 'active' | 'cooldown' | 'invalid', until: timestamp }
+  const keyModelStatusMap = new Map();
 
   // Restore active cooldowns from sessionStorage on startup
   try {
     if (typeof sessionStorage !== 'undefined') {
-      const savedCooldowns = JSON.parse(sessionStorage.getItem('fayzar_key_cooldowns') || '{}');
+      const savedCooldowns = JSON.parse(sessionStorage.getItem('fayzar_key_model_cooldowns') || '{}');
       const now = Date.now();
-      for (const [k, until] of Object.entries(savedCooldowns)) {
+      for (const [km, until] of Object.entries(savedCooldowns)) {
         if (typeof until === 'number' && until > now) {
-          keyStatusMap.set(k, { state: 'cooldown', until });
+          keyModelStatusMap.set(km, { state: 'cooldown', until });
         }
+      }
+    }
+  } catch (e) {}
+
+  // Pre-mark Key 0 for gemini-3-flash-preview if known daily quota exceeded
+  try {
+    const k0 = _unpack(VAULT.KEYS[0]);
+    if (k0) {
+      const k0m = `${k0}::gemini-3-flash-preview`;
+      if (!keyModelStatusMap.has(k0m)) {
+        keyModelStatusMap.set(k0m, { state: 'cooldown', until: Date.now() + (14400 * 1000) });
       }
     }
   } catch (e) {}
@@ -64,12 +77,12 @@
       if (typeof sessionStorage === 'undefined') return;
       const obj = {};
       const now = Date.now();
-      for (const [k, status] of keyStatusMap.entries()) {
+      for (const [km, status] of keyModelStatusMap.entries()) {
         if (status.state === 'cooldown' && status.until > now) {
-          obj[k] = status.until;
+          obj[km] = status.until;
         }
       }
-      sessionStorage.setItem('fayzar_key_cooldowns', JSON.stringify(obj));
+      sessionStorage.setItem('fayzar_key_model_cooldowns', JSON.stringify(obj));
     } catch (e) {}
   }
 
@@ -111,29 +124,27 @@
     },
 
     /**
-     * Mark a key as temporarily on cooldown (e.g. 429 quota exhaustion)
+     * Mark a key as on cooldown specifically for a model (e.g. 429 quota exhaustion)
+     * Default: 14400s (4 hours) so quota-exhausted keys don't retry in the same session
      */
-    markKeyCooldown: function (key, seconds = 15) {
+    markKeyModelCooldown: function (key, model, seconds = 14400) {
       if (!key) return;
       const cleanKey = key.trim();
-      keyStatusMap.set(cleanKey, {
+      const cleanModel = (model || 'default').trim();
+      const kmKey = `${cleanKey}::${cleanModel}`;
+      keyModelStatusMap.set(kmKey, {
         state: 'cooldown',
         until: Date.now() + (seconds * 1000)
       });
       _syncCooldownsToStorage();
-      this.logAudit('KEY_COOLDOWN', { keyMask: cleanKey.slice(0, 8) + '...', cooldownSec: seconds });
+      this.logAudit('KEY_MODEL_COOLDOWN', { keyMask: cleanKey.slice(0, 8) + '...', model: cleanModel, cooldownSec: seconds });
     },
 
     /**
-     * Clear all cooldowns so fresh conversion is never locked out
+     * Legacy markKeyCooldown (backwards compatibility)
      */
-    clearCooldowns: function () {
-      keyStatusMap.clear();
-      try {
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.removeItem('fayzar_key_cooldowns');
-        }
-      } catch (e) {}
+    markKeyCooldown: function (key, seconds = 14400) {
+      this.markKeyModelCooldown(key, 'gemini-3-flash-preview', seconds);
     },
 
     /**
@@ -142,7 +153,7 @@
     markKeyInvalid: function (key) {
       if (!key) return;
       const cleanKey = key.trim();
-      keyStatusMap.set(cleanKey, {
+      keyModelStatusMap.set(cleanKey, {
         state: 'invalid',
         until: Infinity
       });
@@ -150,41 +161,78 @@
     },
 
     /**
-     * Check if key is currently healthy and available for requests
+     * Check if key is available specifically for a model
+     */
+    isKeyModelAvailable: function (key, model) {
+      if (!this.isValidApiKey(key)) return false;
+      const cleanKey = key.trim();
+      // Check global invalidity
+      const globalStatus = keyModelStatusMap.get(cleanKey);
+      if (globalStatus && globalStatus.state === 'invalid') return false;
+
+      // Check model-specific cooldown
+      const cleanModel = (model || '').trim();
+      if (cleanModel) {
+        const kmStatus = keyModelStatusMap.get(`${cleanKey}::${cleanModel}`);
+        if (kmStatus && kmStatus.state === 'cooldown' && Date.now() < kmStatus.until) {
+          return false;
+        }
+      }
+      return true;
+    },
+
+    /**
+     * Check if key is currently healthy and available for requests (legacy)
      */
     isKeyAvailable: function (key) {
-      if (!this.isValidApiKey(key)) return false;
-      const status = keyStatusMap.get(key.trim());
-      if (!status) return true;
-      if (status.state === 'invalid') return false;
-      if (status.state === 'cooldown' && Date.now() < status.until) return false;
-      return true;
+      return this.isKeyModelAvailable(key, '');
     },
 
     /**
      * Get Primary Default API Key
      */
     getPrimaryApiKey: function () {
-      const all = this.getAllSystemKeys();
-      return all.length > 0 ? all[0] : _unpack(VAULT.KEYS[0]);
+      const all = this.getKeysForModel('gemini-3-flash-preview', false);
+      return all.length > 0 ? all[0] : _unpack(VAULT.KEYS[1] || VAULT.KEYS[0]);
+    },
+
+    /**
+     * Get keys specifically prioritized for a model (active keys at the FRONT, cooling keys at the BACK)
+     */
+    getKeysForModel: function (model = 'gemini-3-flash-preview', includeCooldown = false) {
+      const all = VAULT.KEYS.map(k => _unpack(k)).filter(k => this.isValidApiKey(k));
+      const activeForModel = [];
+      const coolingForModel = [];
+
+      for (const k of all) {
+        const globalStatus = keyModelStatusMap.get(k);
+        if (globalStatus && globalStatus.state === 'invalid') continue;
+
+        if (this.isKeyModelAvailable(k, model)) {
+          activeForModel.push(k);
+        } else {
+          coolingForModel.push(k);
+        }
+      }
+
+      // Rotate active keys by round-robin offset
+      let rotatedActive = activeForModel;
+      if (activeForModel.length > 1) {
+        const offset = roundRobinIndex % activeForModel.length;
+        rotatedActive = activeForModel.slice(offset).concat(activeForModel.slice(0, offset));
+      }
+
+      if (includeCooldown) {
+        return rotatedActive.concat(coolingForModel);
+      }
+      return rotatedActive.length > 0 ? rotatedActive : coolingForModel;
     },
 
     /**
      * Get all active system keys from the secure pool in priority order (filtering out invalid/cooling keys)
      */
     getAllSystemKeys: function (includeCooldown = false) {
-      const now = Date.now();
-      return VAULT.KEYS
-        .map(k => _unpack(k))
-        .filter(k => {
-          if (!this.isValidApiKey(k)) return false;
-          if (includeCooldown) return true;
-          const status = keyStatusMap.get(k);
-          if (!status) return true;
-          if (status.state === 'invalid') return false;
-          if (status.state === 'cooldown' && now < status.until) return false;
-          return true;
-        });
+      return this.getKeysForModel('', includeCooldown);
     },
 
     /**
@@ -212,6 +260,119 @@
     },
 
     /**
+     * Zero-Token Key Probe: Checks key validity & supported models without consuming any token quota
+     */
+    probeKeyZeroToken: async function (key) {
+      if (!this.isValidApiKey(key)) return { valid: false, key, error: 'MALFORMED_KEY' };
+      const cleanKey = key.trim();
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(cleanKey)}`;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+
+      try {
+        const res = await fetch(endpoint, { method: 'GET', signal: controller.signal });
+        clearTimeout(timer);
+        if (res.status === 400 || res.status === 403) {
+          this.markKeyInvalid(cleanKey);
+          return { valid: false, key: cleanKey, error: 'INVALID_KEY' };
+        }
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          const models = Array.isArray(data.models) ? data.models.map(m => m.name ? m.name.replace('models/', '') : '') : [];
+          return { valid: true, key: cleanKey, models };
+        }
+        return { valid: true, key: cleanKey, models: [] };
+      } catch (err) {
+        clearTimeout(timer);
+        return { valid: true, key: cleanKey, error: err.message };
+      }
+    },
+
+    /**
+     * Standby Pool: holds 2-3 verified healthy keys and verified primary/fallback models
+     */
+    _standbyPool: {
+      primaryModel: 'gemini-3-flash-preview',
+      fallbackModel: 'gemini-3.8-flash',
+      backupModel: 'gemini-3.6-flash',
+      readyKeys: [],
+      lastWarmed: 0,
+      isWarming: false
+    },
+
+    /**
+     * Prewarm Standby Pool in background (zero token cost)
+     * Verifies keys using lightweight GET /models and caches top 2-3 healthy keys
+     */
+    prewarmStandbyPool: async function () {
+      const now = Date.now();
+      if (this._standbyPool.isWarming) return this._standbyPool;
+      if (this._standbyPool.readyKeys.length >= 2 && (now - this._standbyPool.lastWarmed < 300000)) {
+        return this._standbyPool;
+      }
+
+      this._standbyPool.isWarming = true;
+      try {
+        const candidateKeys = this.getRotatedSystemKeys(false).slice(0, 5);
+        if (candidateKeys.length === 0) return this._standbyPool;
+
+        const results = await Promise.allSettled(candidateKeys.map(k => this.probeKeyZeroToken(k)));
+        const healthy = [];
+        for (const r of results) {
+          if (r.status === 'fulfilled' && r.value && r.value.valid) {
+            healthy.push(r.value.key);
+            if (healthy.length >= 3) break;
+          }
+        }
+
+        if (healthy.length > 0) {
+          this._standbyPool.readyKeys = healthy;
+          this._standbyPool.lastWarmed = Date.now();
+          this.logAudit('STANDBY_POOL_READY', {
+            healthyCount: healthy.length,
+            primaryModel: this._standbyPool.primaryModel,
+            fallbackModel: this._standbyPool.fallbackModel
+          });
+        }
+      } catch (e) {
+        console.warn('Standby pool prewarm caught:', e);
+      } finally {
+        this._standbyPool.isWarming = false;
+      }
+      return this._standbyPool;
+    },
+
+    /**
+     * Retrieve the standby pool (returns top 2-3 active keys for primary model)
+     */
+    getStandbyPool: function (primaryModel = 'gemini-3-flash-preview') {
+      const readyKeys = this.getKeysForModel(primaryModel, false).slice(0, 3);
+      return {
+        primaryModel: 'gemini-3-flash-preview',
+        fallbackModel: 'gemini-3.6-flash',
+        backupModel: 'gemini-3.6-flash',
+        readyKeys: readyKeys.length > 0 ? readyKeys : this.getKeysForModel('gemini-3.6-flash', true).slice(0, 3)
+      };
+    },
+
+    /**
+     * Silent Background Pre-Warming: probes all available vault keys concurrently without blocking UI
+     */
+    prewarmAllKeysBackground: async function () {
+      const activeKeys = this.getRotatedSystemKeys(false);
+      if (activeKeys.length === 0) return [];
+      const results = await Promise.allSettled(activeKeys.map(k => this.probeKeyZeroToken(k)));
+      const verifiedKeys = [];
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value && r.value.valid) {
+          verifiedKeys.push(r.value);
+        }
+      }
+      this.logAudit('PREWARM_COMPLETE', { activeCount: verifiedKeys.length });
+      return verifiedKeys;
+    },
+
+    /**
      * Get next key via round-robin distribution to balance quota load
      */
     getNextRoundRobinKey: function () {
@@ -226,18 +387,13 @@
     },
 
     /**
-     * Resolve the current active API key without premature index advancement
+     * Resolve the most appropriate active API key taking user custom keys into account
      */
     getActiveApiKey: function (userCustomKey = '') {
       if (userCustomKey && this.isValidApiKey(userCustomKey)) {
         return userCustomKey.trim();
       }
-      let keys = this.getAllSystemKeys(false);
-      if (keys.length === 0) {
-        keys = this.getAllSystemKeys(true);
-      }
-      if (keys.length === 0) return '';
-      return keys[roundRobinIndex % keys.length];
+      return this.getNextRoundRobinKey();
     },
 
     /**
@@ -279,5 +435,8 @@
 
   // Expose globally
   global.FayzarOcrConfig = FayzarOcrConfig;
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FayzarOcrConfig;
+  }
 
-})(typeof window !== 'undefined' ? window : this);
+})(typeof window !== 'undefined' ? window : globalThis);

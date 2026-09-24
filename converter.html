@@ -321,12 +321,11 @@
           </span>
         </div>
 
-        <!-- Controls: AI Badge & Settings -->
+        <!-- Controls: Unified Mode Badge / Toggle & Settings -->
         <div class="flex items-center gap-2">
-          <!-- Live Unified Status Badge: Automatically updates between 'লাইভ API সচল' and 'প্রো মডেল একটিভ আছে' -->
-          <span id="ai-ocr-mode-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 inline-flex items-center gap-1.5 shadow-2xs transition-all duration-300 cursor-pointer" title="Google Gemini Live Cloud API সক্রিয়">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> লাইভ API সচল
-          </span>
+          <button type="button" id="ai-ocr-mode-badge" class="px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer hover:shadow-md transition-all duration-300" title="AI মডেল স্ট্যাটাস">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> এপিআই একটিভ আছে
+          </button>
           
           <button type="button" id="ai-ocr-open-settings-btn" aria-label="Gemini AI সেটিংস ও API Key" class="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-[#1a263d] hover:bg-slate-200 dark:hover:bg-[#23324f] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition shadow-2xs cursor-pointer" title="Gemini API Key ও AI সেটিংস">
             <i class="fa-solid fa-gear text-sm" aria-hidden="true"></i>
@@ -462,6 +461,20 @@
                 <p class="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5">নিচের বাটনে ক্লিক করে সরাসরি কনভার্ট শুরু করুন (কনভার্ট শেষে ৩টি ওয়ার্ড ফরম্যাটেই ডাউনলোড করতে পারবেন)</p>
               </div>
               <span id="ai-model-type-pill" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300">Gemini AI + ফয়জার ইঞ্জিন</span>
+            </div>
+
+            <!-- AI Custom Directive Input Box (Optional User Instructions for Scope/Questions) -->
+            <div class="p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-[#131d31] border border-indigo-200 dark:border-indigo-800/80 shadow-2xs space-y-1.5 transition-all">
+              <div class="flex items-center justify-between gap-2">
+                <label for="ai-custom-directive-input" class="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <i class="fa-solid fa-pen-nib text-indigo-600 dark:text-indigo-400"></i>
+                  <span>কোনো বিশেষ নির্দেশনা থাকলে লিখুন (ঐচ্ছিক):</span>
+                </label>
+                <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-400">যেমন: ১ থেকে ৫ নং প্রশ্ন</span>
+              </div>
+              <div class="relative">
+                <input type="text" id="ai-custom-directive-input" placeholder="যেমন: শুধুমাত্র ১ থেকে ৫ নং সৃজনশীল প্রশ্ন কনভার্ট করুন..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-[#1a2744] border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-xs sm:text-sm font-medium focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition shadow-inner">
+              </div>
             </div>
 
             <!-- AI Execute Button -->

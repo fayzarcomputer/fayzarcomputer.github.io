@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>পিডিএফ থেকে ইমেজ — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">🖼️ পিডিএফ থেকে ইমেজ</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#ec4899,#db2777);">🖼️</div>
+    <div><h1>পিডিএফ থেকে ইমেজ</h1><p>পিডিএফের প্রতিটি পেজকে PNG/JPG ছবিতে রূপান্তর করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">🖼️</div><h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <h3>🖼️ ইমেজ সেটিং</h3>
+    <div class="form-group"><label>ফরম্যাট</label>
+      <select class="form-control" id="imgFormat">
+        <option value="png">PNG (সর্বোচ্চ মান)</option>
+        <option value="jpeg">JPEG (ছোট সাইজ)</option>
+      </select>
+    </div>
+    <div class="range-group">
+      <label style="display:flex;justify-content:space-between;">রেজ্যুলেশন স্কেল <span id="dpiVal">2x</span></label>
+      <input type="range" id="dpiRange" min="1" max="4" value="2" step="0.5" oninput="document.getElementById('dpiVal').textContent=this.value+'x'">
+    </div>
+    <div style="font-family:'NotoSansBengali',sans-serif;font-size:0.85rem;margin:0.75rem 0;" id="fileInfo"></div>
+    <button class="btn btn-primary" onclick="convert()" style="width:100%;justify-content:center;margin-top:0.75rem;">🖼️ রূপান্তর করুন</button>
+  </div>
+  <script>
+    var pdfFile=null;
+    document.addEventListener('DOMContentLoaded',function(){
+      initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});
+      if(!window.pdfjsLib){var s=document.createElement('script');s.src='../libs/pdf.min.js';document.head.appendChild(s);s.onload=function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc='../libs/pdf.worker.min.js';};}
+    });
+    function loadFile(f){pdfFile=f;document.getElementById('fileInfo').innerHTML='📄 <strong>'+f.name+'</strong>';document.getElementById('settingsPanel').style.display='block';toast('✅ ফাইল নির্বাচিত','success');}
+    async function convert(){if(!pdfFile){toast('⚠️ ফাইল নির্বাচন করুন','error');return;}
+      if(!window.pdfjsLib){toast('⚠️ PDF.js লোড হয়নি, একটু অপেক্ষা করুন','error');return;}
+      showProgress('রূপান্তর হচ্ছে...',10);
+      try{var scale=parseFloat(document.getElementById('dpiRange').value);var fmt=document.getElementById('imgFormat').value;var buf=await readFileAsArrayBuffer(pdfFile);
+        var doc=await pdfjsLib.getDocument({data:buf}).promise;var total=doc.numPages;
+        for(var i=1;i<=total;i++){showProgress('পেজ '+i+'/'+total,Math.round(i/total*90));var page=await doc.getPage(i);var vp=page.getViewport({scale:scale});
+          var canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;
+          await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+          var name='page_'+i+'.'+fmt;
+          await new Promise(function(resolve){canvas.toBlob(function(blob){downloadBlob(blob,name);resolve();},'image/'+fmt,fmt==='jpeg'?0.92:undefined);});}
+        hideProgress();toast('✅ '+total+'টি ছবি ডাউনলোড হয়েছে','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

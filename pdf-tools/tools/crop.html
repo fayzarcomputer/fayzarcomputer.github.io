@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>পিডিএফ ক্রপ — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">✂️ পিডিএফ ক্রপ</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#d946ef,#c026d3);">✂️</div>
+    <div><h1>পিডিএফ ক্রপ</h1><p>পিডিএফ পেজের অপ্রয়োজনীয় মার্জিন কেটে ফেলুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">✂️</div><h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <h3>✂️ ক্রপ মার্জিন (PDF points)</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-group"><label>উপর (Top)</label><input type="number" class="form-control" id="cropTop" value="20" min="0"></div>
+      <div class="form-group"><label>নিচ (Bottom)</label><input type="number" class="form-control" id="cropBot" value="20" min="0"></div>
+      <div class="form-group"><label>বাম (Left)</label><input type="number" class="form-control" id="cropLeft" value="20" min="0"></div>
+      <div class="form-group"><label>ডান (Right)</label><input type="number" class="form-control" id="cropRight" value="20" min="0"></div>
+    </div>
+    <div style="font-family:'NotoSansBengali',sans-serif;font-size:0.85rem;margin:0.75rem 0;color:#94a3b8;" id="pageInfoEl"></div>
+    <button class="btn btn-primary" onclick="cropPDF()" style="width:100%;justify-content:center;">✂️ ক্রপ করুন</button>
+  </div>
+  <script>
+    var pdfFile=null;
+    document.addEventListener('DOMContentLoaded',function(){initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});});
+    async function loadFile(f){pdfFile=f;var doc=await PDFLib.PDFDocument.load(await readFileAsArrayBuffer(f),{ignoreEncryption:true});var page=doc.getPage(0);var s=page.getSize();document.getElementById('pageInfoEl').textContent='📐 পেজ সাইজ: '+Math.round(s.width)+' x '+Math.round(s.height)+' pt ('+doc.getPageCount()+' পেজ)';document.getElementById('settingsPanel').style.display='block';toast('✅ '+f.name,'success');}
+    async function cropPDF(){if(!pdfFile)return;showProgress('ক্রপ হচ্ছে...',30);
+      try{var doc=await PDFLib.PDFDocument.load(await readFileAsArrayBuffer(pdfFile),{ignoreEncryption:true});var t=parseInt(document.getElementById('cropTop').value)||0;var b=parseInt(document.getElementById('cropBot').value)||0;var l=parseInt(document.getElementById('cropLeft').value)||0;var r=parseInt(document.getElementById('cropRight').value)||0;
+        doc.getPages().forEach(function(page){var sz=page.getSize();page.setCropBox(l,b,sz.width-l-r,sz.height-t-b);});
+        var bytes=await doc.save();downloadBlob(new Blob([bytes],{type:'application/pdf'}),'cropped_'+pdfFile.name);hideProgress();toast('✅ ক্রপ সম্পন্ন','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

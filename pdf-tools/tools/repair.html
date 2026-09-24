@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>পিডিএফ রিপেয়ার — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">🔧 পিডিএফ রিপেয়ার</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#f43f5e,#e11d48);">🔧</div>
+    <div><h1>পিডিএফ রিপেয়ার</h1><p>নষ্ট বা করাপ্ট পিডিএফ ফাইল মেরামত করার চেষ্টা করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">🔧</div><h3>নষ্ট পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf,*">
+    </label>
+  </div>
+  <div class="panel" style="background:rgba(244,63,94,0.08);border-color:rgba(244,63,94,0.3);font-family:'NotoSansBengali',sans-serif;font-size:0.85rem;line-height:1.8;">
+    ⚠️ <strong>সীমাবদ্ধতা:</strong> এই টুলটি হালকা করাপশন ঠিক করতে পারে। গুরুতর ক্ষতিগ্রস্ত ফাইলে ফলাফল নিশ্চিত নয়।
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <div style="font-family:'NotoSansBengali',sans-serif;" id="fileInfo"></div>
+    <button class="btn btn-primary" onclick="repairPDF()" style="width:100%;justify-content:center;margin-top:0.75rem;">🔧 রিপেয়ার করুন</button>
+  </div>
+  <div id="resultPanel" class="panel" style="display:none;">
+    <div id="repairResult" style="font-family:'NotoSansBengali',sans-serif;line-height:1.8;"></div>
+    <button class="btn btn-success" id="dlBtn" onclick="downloadResult()" style="margin-top:1rem;display:none;">⬇️ ডাউনলোড করুন</button>
+  </div>
+  <script>
+    var pdfFile=null,resultBytes=null;
+    document.addEventListener('DOMContentLoaded',function(){initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});});
+    function loadFile(f){pdfFile=f;document.getElementById('fileInfo').textContent='📄 '+f.name+' — '+formatSize(f.size);document.getElementById('settingsPanel').style.display='block';}
+    async function repairPDF(){if(!pdfFile)return;showProgress('রিপেয়ার চেষ্টা করা হচ্ছে...',20);
+      try{var buf=await readFileAsArrayBuffer(pdfFile);var doc=await PDFLib.PDFDocument.load(buf,{ignoreEncryption:true,throwOnInvalidObject:false,updateMetadata:false});showProgress('পুনর্গঠন হচ্ছে...',60);
+        var bytes=await doc.save({useObjectStreams:true});resultBytes=bytes;var rp=document.getElementById('repairResult');
+        rp.innerHTML='✅ রিপেয়ার সম্পন্ন!<br>📄 পেজ: <strong>'+doc.getPageCount()+'</strong><br>📦 নতুন সাইজ: <strong>'+formatSize(bytes.byteLength)+'</strong>';
+        document.getElementById('resultPanel').style.display='block';document.getElementById('dlBtn').style.display='inline-flex';hideProgress();toast('✅ রিপেয়ার সম্পন্ন','success');}
+      catch(e){hideProgress();var rp=document.getElementById('repairResult');rp.innerHTML='❌ রিপেয়ার ব্যর্থ<br><small style="color:#94a3b8;">'+e.message+'</small>';document.getElementById('resultPanel').style.display='block';toast('❌ রিপেয়ার ব্যর্থ','error');}}
+    function downloadResult(){if(!resultBytes)return;downloadBlob(new Blob([resultBytes],{type:'application/pdf'}),'repaired_'+pdfFile.name);}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

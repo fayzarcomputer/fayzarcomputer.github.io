@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>কম্প্রেস পিডিএফ — ফয়জার কম্পিউটার</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="color:var(--pdf-glass-border)">|</span>
+  <span style="font-family:var(--pdf-font-bn);font-weight:700;">🗜️ কম্প্রেস পিডিএফ</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#10b981,#059669);">🗜️</div>
+    <div>
+      <h1>কম্প্রেস পিডিএফ</h1>
+      <p>মান ঠিক রেখে পিডিএফ ফাইলের সাইজ ছোট করুন</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">🗜️</div>
+      <h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <h3>⚙️ কম্প্রেশন সেটিং</h3>
+    <div class="range-group">
+      <label>মান স্তর (Quality) <span id="qualVal">75</span>%</label>
+      <input type="range" id="quality" min="10" max="100" value="75" oninput="document.getElementById('qualVal').textContent=this.value">
+    </div>
+    <div style="margin-top:1rem;padding:0.75rem;background:var(--pdf-glass);border-radius:8px;font-family:var(--pdf-font-bn);font-size:0.85rem;">
+      <div>📄 ফাইল: <strong id="fileName">—</strong></div>
+      <div>📦 আসল সাইজ: <strong id="origSize">—</strong></div>
+    </div>
+    <button class="btn btn-primary" onclick="compress()" style="width:100%;margin-top:1rem;justify-content:center;">🗜️ কম্প্রেস করুন</button>
+  </div>
+
+  <div id="resultPanel" class="panel" style="display:none;">
+    <h3>✅ ফলাফল</h3>
+    <div style="font-family:var(--pdf-font-bn);line-height:2;">
+      <div>📦 আসল: <strong id="r_orig">—</strong></div>
+      <div>🗜️ কম্প্রেসড: <strong id="r_new">—</strong></div>
+      <div>📉 সাশ্রয়: <strong id="r_save" style="color:var(--pdf-success);">—</strong></div>
+    </div>
+    <button class="btn btn-success" onclick="downloadResult()" style="margin-top:1rem;">⬇️ ডাউনলোড করুন</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;">
+    <div id="progressMsg" style="font-family:var(--pdf-font-bn);margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label"><span id="progressPct">0%</span></div>
+  </div>
+</div>
+
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+<script>
+let pdfFile = null;
+let resultBytes = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  setupDropZone('dropZone','fileIn', files => loadFile(files[0]));
+});
+
+async function loadFile(file) {
+  pdfFile = file;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('origSize').textContent = formatSize(file.size);
+  document.getElementById('settingsPanel').style.display = 'block';
+  document.getElementById('resultPanel').style.display = 'none';
+  toast('✅ ফাইল নির্বাচিত: ' + file.name, 'success');
+}
+
+async function compress() {
+  if (!pdfFile) return;
+  showProgress('পিডিএফ লোড হচ্ছে...', 20);
+  try {
+    const { PDFDocument } = PDFLib;
+    const buf = await readFileAsArrayBuffer(pdfFile);
+    showProgress('কম্প্রেস হচ্ছে...', 50);
+
+    // Load & re-save (removes unreferenced objects, compresses xref table)
+    const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
+
+    // Compress by saving with object streams
+    showProgress('অপ্টিমাইজ হচ্ছে...', 75);
+    const compressed = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
+
+    resultBytes = compressed;
+    const saved = Math.round((1 - compressed.byteLength / buf.byteLength) * 100);
+
+    document.getElementById('r_orig').textContent = formatSize(buf.byteLength);
+    document.getElementById('r_new').textContent = formatSize(compressed.byteLength);
+    document.getElementById('r_save').textContent = saved > 0 ? `${saved}% ছোট হয়েছে` : 'সর্বনিম্ন সাইজে আছে';
+    document.getElementById('resultPanel').style.display = 'block';
+    hideProgress();
+    toast('✅ কম্প্রেশন সম্পন্ন', 'success');
+  } catch(e) {
+    hideProgress();
+    toast('❌ ত্রুটি: ' + e.message, 'error');
+  }
+}
+
+function downloadResult() {
+  if (!resultBytes) return;
+  const blob = new Blob([resultBytes], { type: 'application/pdf' });
+  downloadBlob(blob, 'compressed_' + pdfFile.name);
+}
+</script>
+</body>
+</html>

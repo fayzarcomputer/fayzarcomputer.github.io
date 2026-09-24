@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>স্প্লিট পিডিএফ — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">✂️ স্প্লিট পিডিএফ</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);">✂️</div>
+    <div><h1>স্প্লিট পিডিএফ</h1><p>বড় পিডিএফ ভেঙে আলাদা ফাইল তৈরি করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">✂️</div>
+      <h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <h3>✂️ স্প্লিট অপশন</h3>
+    <div class="form-group"><label>স্প্লিট পদ্ধতি</label>
+      <select class="form-control" id="splitMode" onchange="updateMode()">
+        <option value="all">প্রতিটি পেজ আলাদা ফাইল</option>
+        <option value="range">পেজ রেঞ্জ অনুযায়ী</option>
+        <option value="every">প্রতি N পেজে ভাগ</option>
+      </select>
+    </div>
+    <div id="rangeInput" style="display:none;" class="form-group">
+      <label>পেজ রেঞ্জ (যেমন: 1-3, 5, 7-9)</label>
+      <input type="text" class="form-control" id="pageRange" placeholder="1-3, 5, 8-10">
+    </div>
+    <div id="everyInput" style="display:none;" class="form-group">
+      <label>প্রতি কত পেজে ভাগ করবেন</label>
+      <input type="number" class="form-control" id="everyN" value="1" min="1">
+    </div>
+    <div style="margin:0.75rem 0;padding:0.75rem;background:rgba(255,255,255,0.05);border-radius:8px;font-family:'NotoSansBengali',sans-serif;font-size:0.85rem;" id="fileInfo"></div>
+    <button class="btn btn-primary" onclick="splitPDF()" style="width:100%;justify-content:center;">✂️ স্প্লিট করুন</button>
+  </div>
+  <script>
+    var pdfFile=null,resultParts=[];
+    document.addEventListener('DOMContentLoaded',function(){initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});});
+    function updateMode(){var m=document.getElementById('splitMode').value;document.getElementById('rangeInput').style.display=m==='range'?'block':'none';document.getElementById('everyInput').style.display=m==='every'?'block':'none';}
+    async function loadFile(f){pdfFile=f;var pdfDoc=await PDFLib.PDFDocument.load(await readFileAsArrayBuffer(f),{ignoreEncryption:true});document.getElementById('fileInfo').innerHTML='📄 <strong>'+f.name+'</strong> — '+pdfDoc.getPageCount()+' পেজ';document.getElementById('settingsPanel').style.display='block';}
+    async function splitPDF(){if(!pdfFile)return;showProgress('স্প্লিট হচ্ছে...',10);try{var src=await PDFLib.PDFDocument.load(await readFileAsArrayBuffer(pdfFile),{ignoreEncryption:true});var total=src.getPageCount();var mode=document.getElementById('splitMode').value;resultParts=[];
+      if(mode==='all'){for(var i=0;i<total;i++){showProgress('পেজ '+(i+1)+'/'+total,Math.round(i/total*90));var d=await PDFLib.PDFDocument.create();var pages=await d.copyPages(src,[i]);d.addPage(pages[0]);resultParts.push({name:'page_'+(i+1)+'.pdf',bytes:await d.save()});}}
+      else if(mode==='range'){var ranges=document.getElementById('pageRange').value.split(',');for(var ri=0;ri<ranges.length;ri++){var r=ranges[ri].trim();var parts=r.split('-');var s=parseInt(parts[0])-1;var e=parts[1]?parseInt(parts[1])-1:s;var d=await PDFLib.PDFDocument.create();var idxs=[];for(var j=s;j<=Math.min(e,total-1);j++)idxs.push(j);var ps=await d.copyPages(src,idxs);ps.forEach(function(p){d.addPage(p);});resultParts.push({name:'pages_'+r.replace('-','_')+'.pdf',bytes:await d.save()});}}
+      else{var n=parseInt(document.getElementById('everyN').value)||1;for(var s=0;s<total;s+=n){var d=await PDFLib.PDFDocument.create();var idxs=[];for(var j=s;j<Math.min(s+n,total);j++)idxs.push(j);var ps=await d.copyPages(src,idxs);ps.forEach(function(p){d.addPage(p);});resultParts.push({name:'part_'+(Math.floor(s/n)+1)+'.pdf',bytes:await d.save()});}}
+      hideProgress();toast('✅ '+resultParts.length+'টি ফাইল তৈরি','success');resultParts.forEach(function(p,i){setTimeout(function(){downloadBlob(new Blob([p.bytes],{type:'application/pdf'}),p.name);},i*300);});}catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

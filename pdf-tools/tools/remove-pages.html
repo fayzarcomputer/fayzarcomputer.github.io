@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>পেজ রিমুভ — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">🗑️ পেজ রিমুভ</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#f97316,#ea580c);">🗑️</div>
+    <div><h1>পেজ রিমুভ</h1><p>পিডিএফ থেকে অপ্রয়োজনীয় পেজ মুছুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">🗑️</div><h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <h3>🗑️ পেজ নির্বাচন করুন <span style="font-weight:400;font-size:0.8rem;">(যেগুলো মুছবেন সেগুলোতে ক্লিক করুন)</span></h3>
+    <div id="thumbGrid" class="page-thumb-grid" style="margin-bottom:1rem;"></div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <span id="selCount" style="font-family:'NotoSansBengali',sans-serif;font-size:0.85rem;color:#94a3b8;">০টি পেজ নির্বাচিত</span>
+      <div class="spacer"></div>
+      <button class="btn btn-danger" onclick="removeSelected()">🗑️ নির্বাচিত মুছুন</button>
+    </div>
+  </div>
+  <script>
+    var pdfFile=null,srcBuf=null,selectedPages=new Set();
+    document.addEventListener('DOMContentLoaded',function(){
+      initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});
+      if(!window.pdfjsLib){var s=document.createElement('script');s.src='../libs/pdf.min.js';document.head.appendChild(s);s.onload=function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc='../libs/pdf.worker.min.js';};}
+    });
+    async function loadFile(f){pdfFile=f;showProgress('লোড হচ্ছে...',20);
+      try{srcBuf=await readFileAsArrayBuffer(f);var pdfjsDoc=await pdfjsLib.getDocument({data:srcBuf.slice(0)}).promise;document.getElementById('settingsPanel').style.display='block';
+        var grid=document.getElementById('thumbGrid');grid.innerHTML='';
+        for(var i=1;i<=pdfjsDoc.numPages;i++){showProgress('থাম্বনেইল '+i+'/'+pdfjsDoc.numPages,Math.round(i/pdfjsDoc.numPages*80));
+          var page=await pdfjsDoc.getPage(i);var vp=page.getViewport({scale:0.3});var canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;
+          await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+          var wrap=document.createElement('div');wrap.className='page-thumb';wrap.dataset.page=i;
+          var lbl=document.createElement('div');lbl.className='thumb-label';lbl.textContent='পেজ '+i;
+          wrap.appendChild(canvas);wrap.appendChild(lbl);
+          (function(pageNum,el){el.onclick=function(){if(selectedPages.has(pageNum)){selectedPages.delete(pageNum);el.classList.remove('selected');}else{selectedPages.add(pageNum);el.classList.add('selected');}document.getElementById('selCount').textContent=selectedPages.size+'টি পেজ নির্বাচিত';};})(i,wrap);
+          grid.appendChild(wrap);}
+        hideProgress();toast('✅ '+f.name+' লোড হয়েছে','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+    async function removeSelected(){if(!pdfFile||selectedPages.size===0){toast('⚠️ কোনো পেজ নির্বাচন করুন','error');return;}
+      showProgress('পেজ মুছা হচ্ছে...',40);
+      try{var doc=await PDFLib.PDFDocument.load(srcBuf,{ignoreEncryption:true});var toRemove=[...selectedPages].sort(function(a,b){return b-a;});toRemove.forEach(function(n){doc.removePage(n-1);});
+        var bytes=await doc.save();downloadBlob(new Blob([bytes],{type:'application/pdf'}),'pages_removed_'+pdfFile.name);hideProgress();toast('✅ '+selectedPages.size+'টি পেজ মুছা হয়েছে','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

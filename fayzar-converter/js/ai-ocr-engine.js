@@ -477,7 +477,8 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       byokModal: document.getElementById('ai-ocr-byok-modal'),
       byokInput: document.getElementById('ai-ocr-byok-input'),
       saveByokBtn: document.getElementById('ai-ocr-save-byok-btn'),
-      cancelByokBtn: document.getElementById('ai-ocr-cancel-byok-btn')
+      cancelByokBtn: document.getElementById('ai-ocr-cancel-byok-btn'),
+      customDirectiveInput: document.getElementById('ai-custom-directive-input')
     };
   }
 
@@ -1271,6 +1272,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       const jobId = 'job_' + Date.now();
       activeBridgeJobId = jobId;
 
+      const userDirective = (elements.customDirectiveInput ? elements.customDirectiveInput.value : (document.getElementById('ai-custom-directive-input')?.value || '')).trim();
+      const bridgePrompt = (userDirective)
+        ? `${GEMINI_PROMPT}\n\n### CRITICAL USER SCOPE DIRECTIVE (HIGHEST PRIORITY):\n"${userDirective}"\nFollow the above user directive strictly over any other extraction rule. Only extract what the user requested!`
+        : GEMINI_PROMPT;
+
       try {
         await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
           method: 'PUT',
@@ -1278,7 +1284,7 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
           body: JSON.stringify({
             status: 'pending',
             imageBase64: combinedBase64,
-            prompt: GEMINI_PROMPT,
+            prompt: bridgePrompt,
             timestamp: Date.now()
           })
         });
@@ -1542,13 +1548,18 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
 
       const jobId = 'job_' + Date.now();
 
+      const userDirective = (elements.customDirectiveInput ? elements.customDirectiveInput.value : (document.getElementById('ai-custom-directive-input')?.value || '')).trim();
+      const bridgePrompt = (userDirective)
+        ? `${GEMINI_PROMPT}\n\n### CRITICAL USER SCOPE DIRECTIVE (HIGHEST PRIORITY):\n"${userDirective}"\nFollow the above user directive strictly over any other extraction rule. Only extract what the user requested!`
+        : GEMINI_PROMPT;
+
       await fetch(`${FIREBASE_BRIDGE_URL}/requests/${jobId}.json`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: 'pending',
           imageBase64: combinedBase64,
-          prompt: GEMINI_PROMPT,
+          prompt: bridgePrompt,
           timestamp: Date.now()
         })
       });
@@ -1682,7 +1693,11 @@ Output the COMPLETE, FULL, AUDITED document text from start to finish, ending wi
       ? [...mediaParts, { text: extraTextContent }]
       : mediaParts;
 
-    const activePrompt = customPrompt || GEMINI_PROMPT;
+    const userDirective = (elements && elements.customDirectiveInput ? elements.customDirectiveInput.value : (document.getElementById('ai-custom-directive-input')?.value || '')).trim();
+    let activePrompt = customPrompt || GEMINI_PROMPT;
+    if (userDirective && !customPrompt) {
+      activePrompt += `\n\n### CRITICAL USER SCOPE DIRECTIVE (HIGHEST PRIORITY):\n"${userDirective}"\nFollow the above user directive strictly over any other extraction rule. Only extract what the user requested!`;
+    }
 
     const allActiveModels = [
       'gemini-2.5-flash',         // #1: Ultra-fast, zero reasoning delay, 100% active

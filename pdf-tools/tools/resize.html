@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>পিডিএফ রিসাইজ — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">📐 পিডিএফ রিসাইজ</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);">📐</div>
+    <div><h1>পিডিএফ রিসাইজ</h1><p>পিডিএফ পেজের আকার পরিবর্তন করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">📐</div><h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <h3>📐 পেজ সাইজ</h3>
+    <div class="form-group"><label>পেজ ফরম্যাট</label>
+      <select class="form-control" id="pageSize" onchange="updateCustom()">
+        <option value="A4">A4 (210×297mm)</option>
+        <option value="A3">A3 (297×420mm)</option>
+        <option value="A5">A5 (148×210mm)</option>
+        <option value="Letter">Letter (216×279mm)</option>
+        <option value="Legal">Legal (216×356mm)</option>
+        <option value="custom">কাস্টম মাপ</option>
+      </select>
+    </div>
+    <div id="customSize" style="display:none;margin-top:0.5rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+        <div class="form-group"><label>প্রস্থ (mm)</label><input type="number" class="form-control" id="custW" value="210" min="10"></div>
+        <div class="form-group"><label>উচ্চতা (mm)</label><input type="number" class="form-control" id="custH" value="297" min="10"></div>
+      </div>
+    </div>
+    <div class="form-group"><label>অভিমুখ</label>
+      <select class="form-control" id="orientation">
+        <option value="portrait">Portrait (লম্বা)</option>
+        <option value="landscape">Landscape (চওড়া)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="resizePDF()" style="width:100%;justify-content:center;margin-top:0.75rem;">📐 রিসাইজ করুন</button>
+  </div>
+  <script>
+    var pdfFile=null;
+    var SIZES={A4:[595.28,841.89],A3:[841.89,1190.55],A5:[419.53,595.28],Letter:[612,792],Legal:[612,1008]};
+    document.addEventListener('DOMContentLoaded',function(){initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});});
+    function loadFile(f){pdfFile=f;document.getElementById('settingsPanel').style.display='block';toast('✅ '+f.name,'success');}
+    function updateCustom(){document.getElementById('customSize').style.display=document.getElementById('pageSize').value==='custom'?'block':'none';}
+    async function resizePDF(){if(!pdfFile)return;showProgress('রিসাইজ হচ্ছে...',30);
+      try{var doc=await PDFLib.PDFDocument.load(await readFileAsArrayBuffer(pdfFile),{ignoreEncryption:true});var sel=document.getElementById('pageSize').value;var orient=document.getElementById('orientation').value;var w,h;
+        if(sel==='custom'){w=parseFloat(document.getElementById('custW').value)/25.4*72;h=parseFloat(document.getElementById('custH').value)/25.4*72;}else{w=SIZES[sel][0];h=SIZES[sel][1];}
+        if(orient==='landscape'){var tmp=w;w=h;h=tmp;}
+        doc.getPages().forEach(function(page){page.setSize(w,h);});
+        var bytes=await doc.save();downloadBlob(new Blob([bytes],{type:'application/pdf'}),'resized_'+pdfFile.name);hideProgress();toast('✅ রিসাইজ সম্পন্ন','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

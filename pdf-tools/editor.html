@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>পিডিএফ এডিটর — ফয়জার কম্পিউটার</title>
+  <link rel="stylesheet" href="css/pdf-tools.css">
+  <style>
+    @font-face { font-family: 'NotoSansBengali'; src: url('fonts/bangla/NotoSansBengali.ttf'); }
+    @font-face { font-family: 'NotoSerifBengali'; src: url('fonts/bangla/NotoSerifBengali.ttf'); }
+    @font-face { font-family: 'Kalpurush'; src: url('fonts/bangla/Kalpurush.ttf'); }
+    @font-face { font-family: 'Nikosh'; src: url('fonts/bangla/Nikosh.ttf'); }
+    @font-face { font-family: 'SiyamRupali'; src: url('fonts/bangla/SiyamRupali.ttf'); }
+    @font-face { font-family: 'SutonnyMJ'; src: url('fonts/bangla/SutonnyMJ-Regular.ttf'); }
+    @font-face { font-family: 'SutonnyOMJ'; src: url('fonts/bangla/SutonnyOMJ.ttf'); }
+    @font-face { font-family: 'Inter'; src: url('fonts/english/Inter-Regular.woff2') format('woff2'); }
+    body { overflow: hidden; }
+    #drop-screen {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: var(--pdf-bg);
+    }
+    .editor-wrap { display: none; }
+    .editor-wrap.visible { display: grid; }
+  </style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+
+<!-- ===== Drop / Open Screen ===== -->
+<div id="drop-screen">
+  <nav class="pdf-nav" style="position:fixed;top:0;left:0;right:0;">
+    <a href="index.html" class="nav-back">← টুলস হোম</a>
+    <span style="color:var(--pdf-glass-border)">|</span>
+    <span style="font-family:var(--pdf-font-bn);font-size:1rem;font-weight:700;">✏️ পিডিএফ এডিটর</span>
+    <div class="spacer"></div>
+    <button onclick="toggleTheme()" class="btn btn-outline btn-sm">🌙</button>
+  </nav>
+
+  <div style="margin-top:56px;width:100%;max-width:600px;padding:2rem;">
+    <div class="pdf-hero" style="padding:2rem 0 1.5rem;">
+      <div class="pill">✏️ বাংলা + ইংরেজি সাপোর্ট</div>
+      <h1 style="font-size:clamp(1.4rem,4vw,2.2rem);">পেশাদার পিডিএফ এডিটর</h1>
+      <p>OCR • ডিরেক্ট টেক্সট এডিট • কাস্টম ফন্ট • হাইলাইট • ওয়াটারমার্ক</p>
+    </div>
+
+    <label class="upload-zone" for="fileInput" id="dropZone">
+      <div class="upload-icon">📄</div>
+      <h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileInput" accept=".pdf">
+      <br><br>
+      <span class="btn btn-primary">📂 ফাইল খুলুন</span>
+    </label>
+  </div>
+</div>
+
+<!-- ===== Editor Layout ===== -->
+<div class="editor-wrap editor-layout" id="editorWrap">
+
+  <!-- ---- Toolbar ---- -->
+  <div class="editor-toolbar">
+    <a href="index.html" class="nav-back" style="margin-right:0.5rem;">← হোম</a>
+    <div class="tool-sep"></div>
+
+    <!-- Tool modes -->
+    <button class="tool-btn active" id="btnEdit" title="সরাসরি টেক্সট এডিট (ক্লিক করে এডিট করুন)" onclick="setTool('edit')">✍️</button>
+    <button class="tool-btn" id="btnText" title="নতুন টেক্সট যোগ করুন" onclick="setTool('text')">➕T</button>
+    <button class="tool-btn" id="btnSelect" title="সিলেক্ট ও মুভ" onclick="setTool('select')">✋</button>
+    <button class="tool-btn" id="btnDraw" title="আঁকুন" onclick="setTool('draw')">✏️</button>
+    <button class="tool-btn" id="btnHighlight" title="হাইলাইট" onclick="setTool('highlight')">🖊️</button>
+    <button class="tool-btn" id="btnErase" title="মুছুন" onclick="setTool('erase')">🧹</button>
+    <div class="tool-sep"></div>
+
+    <!-- OCR -->
+    <button class="btn btn-outline btn-sm" onclick="runOCR()" id="btnOCR" title="স্ক্যান করা লেখার জন্য OCR চালান">🔍 টেক্সট ডিটেক্ট (OCR)</button>
+    <div class="tool-sep"></div>
+
+    <!-- Zoom -->
+    <button class="tool-btn" onclick="changeZoom(-0.25)" title="জুম আউট">➖</button>
+    <span id="zoomLabel" style="font-size:0.8rem;min-width:40px;text-align:center;">150%</span>
+    <button class="tool-btn" onclick="changeZoom(0.25)" title="জুম ইন">➕</button>
+    <div class="tool-sep"></div>
+
+    <!-- Page nav -->
+    <button class="tool-btn" onclick="prevPage()">◀</button>
+    <span style="font-size:0.8rem;font-family:var(--pdf-font-bn);">
+      পেজ <input type="number" id="pageInput" value="1" min="1" style="width:45px;background:var(--pdf-glass);border:1px solid var(--pdf-glass-border);color:var(--pdf-text);border-radius:4px;padding:2px 4px;font-size:0.8rem;" onchange="goToPage(this.value)">
+      / <span id="totalPages">?</span>
+    </span>
+    <button class="tool-btn" onclick="nextPage()">▶</button>
+    <div class="tool-sep"></div>
+
+    <div class="spacer"></div>
+
+    <!-- Actions -->
+    <button class="btn btn-outline btn-sm" onclick="openNew()">📂 নতুন</button>
+    <button class="btn btn-success btn-sm" onclick="savePDF()" id="btnSave">💾 সেভ করুন</button>
+    <button onclick="toggleTheme()" class="btn btn-outline btn-sm">🌙</button>
+  </div>
+
+  <!-- ---- Sidebar: Thumbnails ---- -->
+  <div class="editor-sidebar" id="sidebar">
+    <div style="font-family:var(--pdf-font-bn);font-size:0.8rem;color:var(--pdf-text-muted);padding:0.5rem 0;margin-bottom:0.5rem;">পেজ তালিকা</div>
+    <div class="page-thumb-grid" id="thumbGrid" style="grid-template-columns:1fr;"></div>
+  </div>
+
+  <!-- ---- Main Canvas ---- -->
+  <div class="editor-canvas-wrap" id="canvasWrap">
+    <div style="position:relative;display:inline-block;" id="canvasContainer">
+      <canvas id="pdf-canvas"></canvas>
+      <canvas id="draw-canvas" style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
+      <div id="text-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>
+    </div>
+  </div>
+
+  <!-- ---- Properties Panel ---- -->
+  <div class="editor-props" id="propsPanel">
+    <div style="font-family:var(--pdf-font-bn);font-size:0.95rem;font-weight:700;margin-bottom:1rem;">⚙️ প্রপার্টি</div>
+
+    <!-- Font Settings -->
+    <div class="panel" style="padding:1rem;">
+      <h3>🔤 ফন্ট সেটিং</h3>
+      <div class="form-group">
+        <label>ফন্ট পরিবার</label>
+        <select class="form-control" id="fontFamily" onchange="updateTextProps()"></select>
+      </div>
+      <div class="form-group">
+        <label>সাইজ</label>
+        <input type="number" class="form-control" id="fontSize" value="14" min="6" max="120" onchange="updateTextProps()">
+      </div>
+      <div class="form-group">
+        <label>রঙ</label>
+        <input type="color" id="textColor" value="#000000" onchange="updateTextProps()" style="width:100%;height:36px;border-radius:6px;border:1px solid var(--pdf-glass-border);background:var(--pdf-glass);cursor:pointer;">
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+        <button class="tool-btn" id="btnBold" title="বোল্ড" onclick="toggleBold()"><b>B</b></button>
+        <button class="tool-btn" id="btnItalic" title="ইটালিক" onclick="toggleItalic()"><i>I</i></button>
+      </div>
+      <div class="form-group" style="margin-top:0.75rem;">
+        <label>কাস্টম ফন্ট আপলোড</label>
+        <input type="file" accept=".ttf,.otf,.woff,.woff2" onchange="loadCustomFont(this)" style="font-size:0.75rem;color:var(--pdf-text-muted);">
+      </div>
+    </div>
+
+    <!-- Draw Settings -->
+    <div class="panel" style="padding:1rem;" id="drawPanel">
+      <h3>✏️ ড্রয়িং</h3>
+      <div class="range-group">
+        <label>ব্রাশ সাইজ <span id="brushSizeVal">3</span>px</label>
+        <input type="range" id="brushSize" min="1" max="30" value="3" oninput="document.getElementById('brushSizeVal').textContent=this.value">
+      </div>
+      <div class="form-group" style="margin-top:0.75rem;">
+        <label>ড্রয়িং রঙ</label>
+        <input type="color" id="drawColor" value="#ff0000" style="width:100%;height:36px;border-radius:6px;border:1px solid var(--pdf-glass-border);background:var(--pdf-glass);">
+      </div>
+      <div style="margin-top:0.75rem;">
+        <label style="font-family:var(--pdf-font-bn);font-size:0.85rem;">দ্রুত রঙ</label>
+        <div class="color-swatches">
+          <div class="swatch" style="background:#ff0000;" onclick="setDrawColor('#ff0000')"></div>
+          <div class="swatch" style="background:#0000ff;" onclick="setDrawColor('#0000ff')"></div>
+          <div class="swatch" style="background:#00aa00;" onclick="setDrawColor('#00aa00')"></div>
+          <div class="swatch" style="background:#ff6600;" onclick="setDrawColor('#ff6600')"></div>
+          <div class="swatch" style="background:#000000;" onclick="setDrawColor('#000000')"></div>
+          <div class="swatch" style="background:#ffffff;border:1px solid #555;" onclick="setDrawColor('#ffffff')"></div>
+          <div class="swatch" style="background:#ffff00;" onclick="setDrawColor('#ffff00')"></div>
+          <div class="swatch" style="background:#ff00ff;" onclick="setDrawColor('#ff00ff')"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OCR Result -->
+    <div class="panel" style="padding:1rem;" id="ocrPanel">
+      <h3>🔍 OCR ফলাফল</h3>
+      <textarea id="ocrResult" class="form-control" rows="6" placeholder="OCR চালালে এখানে টেক্সট দেখাবে..." style="resize:vertical;font-family:var(--pdf-font-bn);font-size:0.82rem;"></textarea>
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;">
+        <button class="btn btn-outline btn-sm" onclick="copyOCR()">📋 কপি</button>
+        <button class="btn btn-outline btn-sm" onclick="insertOCRText()">📝 ইনসার্ট</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Progress Modal -->
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:340px;text-align:center;padding:1.5rem;">
+    <div style="font-family:var(--pdf-font-bn);margin-bottom:1rem;font-weight:600;" id="progressMsg">প্রসেস হচ্ছে...</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label"><span id="progressPct">0%</span></div>
+    <button class="btn btn-outline btn-sm" onclick="hideProgress()" style="margin-top:1.25rem;font-family:var(--pdf-font-bn);padding:4px 12px;cursor:pointer;">✕ বাতিল / বন্ধ করুন</button>
+  </div>
+</div>
+
+<script src="libs/pdf.min.js"></script>
+<script>
+  // Set workerSrc immediately after pdf.js loads
+  if (window.pdfjsLib) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'libs/pdf.worker.min.js';
+  }
+</script>
+<script src="libs/fontkit.umd.min.js"></script>
+<script src="libs/pdf-lib.min.js"></script>
+<script src="libs/tesseract.min.js"></script>
+<script src="js/pdf-core.js"></script>
+<script src="js/bangla-converter-engine.js"></script>
+<script src="js/pdf-ocr-engine.js"></script>
+<script src="js/pdf-font-manager.js"></script>
+
+<script>
+/* ===================== Editor State ===================== */
+let currentTool = 'edit';   // Default: direct text edit mode
+let pdfBytes = null;       // Original PDF ArrayBuffer
+let isDrawing = false;
+let drawCtx = null;
+let lastX = 0, lastY = 0;
+let activeTextBox = null;
+let isBold = false, isItalic = false;
+const state = { scale: 1.5, currentPage: 1, totalPages: 0 };
+const pageModifications = new Map(); // pageNum -> Array of text items
+
+/* ===================== Init ===================== */
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(localStorage.getItem('pdf-theme') || 'dark');
+
+  if (window.pdfjsLib) {
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'libs/pdf.worker.min.js';
+  }
+
+  // Setup drop zone
+  const dz = document.getElementById('dropZone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); loadFile(e.dataTransfer.files[0]); });
+  document.getElementById('fileInput').addEventListener('change', e => loadFile(e.target.files[0]));
+
+  // Setup draw canvas
+  const drawCanvas = document.getElementById('draw-canvas');
+  drawCanvas.addEventListener('mousedown', startDraw);
+  drawCanvas.addEventListener('mousemove', drawing);
+  drawCanvas.addEventListener('mouseup', stopDraw);
+  drawCanvas.addEventListener('mouseleave', stopDraw);
+
+  // Setup text overlay click for new text box
+  document.getElementById('text-overlay').addEventListener('click', onOverlayClick);
+
+  // Build font selector
+  setTimeout(() => {
+    if (window.FontManager) FontManager.buildFontOptions(document.getElementById('fontFamily'));
+  }, 500);
+});
+
+/* ===================== File Loading ===================== */
+async function loadFile(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.pdf')) {
+    toast('⚠️ পিডিএফ ফাইল নির্বাচন করুন (.pdf)', 'error');
+    return;
+  }
+  if (!window.PDFCore) {
+    toast('❌ PDF.js লাইব্রেরি লোড হয়নি — পেজ রিফ্রেশ করুন', 'error');
+    return;
+  }
+
+  showProgress('পিডিএফ লোড হচ্ছে...', 20);
+  try {
+    pdfBytes = await file.arrayBuffer();
+    pageModifications.clear();
+    const info = await PDFCore.loadDocument(pdfBytes.slice(0));
+    state.totalPages = info.numPages;
+    state.currentPage = 1;
+    document.getElementById('totalPages').textContent = state.totalPages;
+    document.getElementById('pageInput').max = state.totalPages;
+
+    // Small document auto-scale (e.g. NID card width < 550pt -> zoom to 2.4x for crisp, large display)
+    const docObj = PDFCore.getDocument();
+    if (docObj) {
+      try {
+        const fp = await docObj.getPage(1);
+        const unscaled = fp.getViewport({ scale: 1.0 });
+        if (unscaled.width < 550) {
+          state.scale = Math.max(2.0, Math.min(3.0, Math.round((window.innerWidth > 1200 ? 820 : 660) / unscaled.width * 10) / 10));
+        } else {
+          state.scale = 1.5;
+        }
+      } catch (e) {}
+    }
+
+    document.getElementById('drop-screen').style.display = 'none';
+    document.getElementById('editorWrap').classList.add('visible');
+
+    showProgress('পেজ ও টেক্সট প্রস্তুত হচ্ছে...', 60);
+    await renderCurrentPage();
+    showProgress('থাম্বনেইল তৈরি হচ্ছে...', 85);
+    PDFCore.renderThumbnails(document.getElementById('thumbGrid'), (n) => {
+      state.currentPage = n;
+      renderCurrentPage();
+    });
+    hideProgress();
+    toast(`✅ "${file.name}" লোড হয়েছে — সরাসরি লেখার উপর ক্লিক করে এডিট করুন`, 'success');
+  } catch(e) {
+    hideProgress();
+    toast('❌ ফাইল লোড ব্যর্থ: ' + e.message, 'error');
+    console.error('loadFile error:', e);
+  }
+}
+
+/* ===================== Page Render & Text Layer ===================== */
+async function renderCurrentPage() {
+  const canvas = document.getElementById('pdf-canvas');
+  const drawCanvas = document.getElementById('draw-canvas');
+  const dims = await PDFCore.renderPage(state.currentPage, canvas, state.scale);
+  
+  drawCanvas.width = dims.width;
+  drawCanvas.height = dims.height;
+  drawCanvas.style.width = canvas.width + 'px';
+  drawCanvas.style.height = canvas.height + 'px';
+  drawCtx = drawCanvas.getContext('2d');
+
+  const overlay = document.getElementById('text-overlay');
+  overlay.style.width = canvas.width + 'px';
+  overlay.style.height = canvas.height + 'px';
+
+  document.getElementById('pageInput').value = state.currentPage;
+  document.getElementById('zoomLabel').textContent = Math.round(state.scale * 100) + '%';
+
+  updateDrawCanvas();
+  await loadInteractiveTextLayer(state.currentPage);
+}
+
+const BIJOY_CONJUNCT_MAP = {
+  '\u00e5': 'গ্র', // å
+  '\u0155': 'শ্চ', // ŕ
+  '\u00ef': 'হো', // ï
+  '\u00e6': 'ঘ্ন', '\u00e7': 'ঙ্ক', '\u00e8': 'ঙ্গ', '\u00e9': 'চ্ছ', '\u00ec': 'জ্ঞ',
+  '\u00ed': 'ঞ্চ', '\u00ee': 'ঞ্ছ', '\u00f1': 'ট্ট', '\u00f2': 'ট্ব', '\u00f3': 'ড্ড',
+  '\u00f4': 'ণ্ট', '\u00f5': 'ণ্ঠ', '\u00f6': 'ণ্ড', '\u00f8': 'ত্থ', '\u00f9': 'ত্র',
+  '\u00fa': 'থ্ব', '\u00fb': 'দ্ব', '\u00fc': 'দ্ধ', '\u00fd': 'ধ্ব', '\u00fe': 'ন্ট',
+  '\u00ff': 'ন্ড', '\u00b2': 'ক্ষ', '\u00b3': 'ক্স', '\u00b5': 'গ্ন', '\u00bb': 'ঙ্গ',
+  '\u00bc': 'ঙ্ঘ', '\u00bd': 'চ্চ', '\u00be': 'চ্ছ', '\u00bf': 'জ্জ', '\u00c1': 'জ্ঞ',
+  '\u00c2': 'ঞ্চ', '\u00c3': 'ঞ্ছ', '\u00c4': 'ঞ্জ', '\u00c6': 'ট্ট', '\u00ca': 'ণ্ট',
+  '\u00cb': 'ণ্ঠ', '\u00cc': 'ণ্ড', '\u00ce': 'ত্ত', '\u00cf': 'ত্ত্ব', '\u00d0': 'ত্থ',
+  '\u00d1': 'ত্ন', '\u00d2': 'ত্ব', '\u00d3': 'ত্ম', '\u00d7': 'দ্দ', '\u00d8': 'দ্ধ',
+  '\u00d9': 'দ্ব', '\u00db': 'দ্ম', '\u00dd': 'ধ্ব', '\u00df': 'ন্ট', '\u00e0': 'ন্ঠ',
+  '\u00e1': 'ন্ড', '\u00e2': 'ন্ত', '\u00e3': 'ন্ত্ব', '\u00e4': 'ন্থ'
+};
+
+function repairBrokenBengaliText(text) {
+  if (!text) return '';
+  let s = text;
+
+  // 1. NID & JasperReports frequent corruptions
+  s = s.replace(/ïহিঠং/g, 'হোল্ডিং');
+  s = s.replace(/হোলিঠং/g, 'হোল্ডিং');
+  s = s.replace(/হিঠং/g, 'হোল্ডিং');
+  s = s.replace(/ï/g, 'হো');
+  s = s.replace(/পিŕম/g, 'পশ্চিম');
+  s = s.replace(/ŕ/g, 'শ্চ');
+  s = s.replace(/åাম/g, 'গ্রাম');
+  s = s.replace(/åা/g, 'গ্রা');
+  s = s.replace(/å/g, 'গ্র');
+  s = s.replace(/রাঁা/g, 'রাস্তা');
+  s = s.replace(/ডাকঘ(?=[\s:,]|$)/g, 'ডাকঘর');
+  s = s.replace(/ফুলবাড়(?=[\s:,]|$)/g, 'ফুলবাড়ী');
+
+  // 2. Replace ANSI/Bijoy individual conjunct codes
+  for (const [ch, conj] of Object.entries(BIJOY_CONJUNCT_MAP)) {
+    if (s.includes(ch)) {
+      s = s.split(ch).join(conj);
+    }
+  }
+
+  // 3. Normalize Chandrabindu + Aa-kar: কঁাটাবাড়ী -> কাঁটাবাড়ী
+  s = s.replace(/ঁা/g, 'াঁ');
+
+  // 4. Misplaced i-kar after conjunct fix: পিশ্চম -> পশ্চিম
+  s = s.replace(/পিশ্চম/g, 'পশ্চিম');
+
+  // 5. If string is completely Bijoy ANSI
+  if (window.BanglaConverter && /[\u0080-\u00ff]/.test(s) && !/[\u0980-\u09ff]/.test(s)) {
+    try {
+      const converted = BanglaConverter.bijoyToUnicode(s);
+      if (converted && /[\u0980-\u09ff]/.test(converted)) {
+        s = converted;
+      }
+    } catch (e) {}
+  }
+
+  return s;
+}
+
+function sampleTextColor(canvas, vx, vy, vW, vH) {
+  if (!canvas) return '#000000';
+  try {
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return '#000000';
+
+    const displayW = parseFloat(canvas.style.width) || canvas.width;
+    const displayH = parseFloat(canvas.style.height) || canvas.height;
+    const ratioX = canvas.width / displayW;
+    const ratioY = canvas.height / displayH;
+
+    const sx = Math.max(0, Math.min(canvas.width - 1, Math.round(vx * ratioX)));
+    const sy = Math.max(0, Math.min(canvas.height - 1, Math.round(vy * ratioY)));
+    const sw = Math.max(1, Math.min(canvas.width - sx, Math.round(vW * ratioX)));
+    const sh = Math.max(1, Math.min(canvas.height - sy, Math.round(vH * ratioY)));
+    if (sw <= 0 || sh <= 0) return '#000000';
+
+    const imgData = ctx.getImageData(sx, sy, sw, sh);
+    const data = imgData.data;
+
+    let bestR = 0, bestG = 0, bestB = 0;
+    let minLum = 240;
+    let found = false;
+
+    const step = data.length > 10000 ? 8 : 4;
+    for (let i = 0; i < data.length; i += step) {
+      const a = data[i + 3];
+      if (a < 120) continue;
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (lum < minLum) {
+        minLum = lum;
+        bestR = r;
+        bestG = g;
+        bestB = b;
+        found = true;
+      }
+    }
+
+    if (found) {
+      const toHex = (n) => n.toString(16).padStart(2, '0');
+      return `#${toHex(bestR)}${toHex(bestG)}${toHex(bestB)}`;
+    }
+  } catch (e) {
+    console.warn('sampleTextColor error:', e);
+  }
+  return '#000000';
+}
+
+function detectFontStyles(fontName, text) {
+  const fn = (fontName || '').toLowerCase();
+  const isBold = /bold|black|heavy|bd|semibold|bld/i.test(fn);
+  const isItalic = /italic|oblique|it/i.test(fn);
+  const hasBangla = /[\u0980-\u09FF]/.test(text || '');
+
+  let fontFamily = 'Nikosh';
+  if (hasBangla) {
+    if (/kalpurush/i.test(fn)) fontFamily = 'Kalpurush';
+    else if (/siyam/i.test(fn)) fontFamily = 'SiyamRupali';
+    else if (/sutonnyomj/i.test(fn)) fontFamily = 'SutonnyOMJ';
+    else if (/sutonny|sutonnymj/i.test(fn)) fontFamily = 'SutonnyMJ';
+    else if (/serif/i.test(fn)) fontFamily = 'NotoSerifBengali';
+    else if (/notosans/i.test(fn)) fontFamily = 'NotoSansBengali';
+    else fontFamily = 'Nikosh'; // Bangladesh NID & Government standard
+  } else {
+    if (/times|serif|georgia/i.test(fn)) fontFamily = 'Times-Roman';
+    else if (/courier|mono|consolas/i.test(fn)) fontFamily = 'Courier';
+    else if (/helvetica|arial|sans/i.test(fn)) fontFamily = 'Helvetica';
+    else fontFamily = 'Inter';
+  }
+  return { isBold, isItalic, fontFamily };
+}
+
+async function loadInteractiveTextLayer(pageNum) {
+  const overlay = document.getElementById('text-overlay');
+  overlay.innerHTML = '';
+  activeTextBox = null;
+
+  const doc = PDFCore.getDocument();
+  if (!doc) return;
+
+  const page = await doc.getPage(pageNum);
+  const viewport = page.getViewport({ scale: state.scale });
+  const canvas = document.getElementById('pdf-canvas');
+
+  let items = pageModifications.get(pageNum);
+  if (!items) {
+    const textContent = await page.getTextContent();
+    items = groupTextItems(textContent.items, viewport, canvas);
+    pageModifications.set(pageNum, items);
+  }
+
+  items.forEach((item, idx) => {
+    renderTextItem(item, idx, overlay, viewport);
+  });
+}
+
+function groupTextItems(items, viewport, canvas) {
+  if (!items || items.length === 0) return [];
+  const valid = items.filter(it => it.str && it.str.trim().length > 0);
+  if (valid.length === 0) return [];
+
+  // Sort: top to bottom (descending Y in PDF points), then left to right
+  valid.sort((a, b) => {
+    const yDiff = b.transform[5] - a.transform[5];
+    if (Math.abs(yDiff) > 2.5) return yDiff;
+    return a.transform[4] - b.transform[4];
+  });
+
+  const groups = [];
+  let current = null;
+
+  for (const item of valid) {
+    const rawStr = repairBrokenBengaliText(item.str);
+    const tSize = Math.abs(item.transform[3]) || 10;
+    const hSize = item.height || tSize;
+    // Accurate visual font size: text matrix transform[3] often includes line-height padding
+    let fontSize = tSize;
+    if (hSize >= 6 && hSize < tSize && (tSize - hSize) <= 3.5) {
+      fontSize = Math.round(hSize * 10) / 10;
+    }
+    const fs = detectFontStyles(item.fontName, rawStr);
+    if (!current) {
+      current = {
+        str: rawStr,
+        currentText: rawStr,
+        fontName: item.fontName,
+        origPdfX: item.transform[4],
+        origPdfY: item.transform[5],
+        origPdfWidth: item.width,
+        origPdfHeight: fontSize,
+        origPdfFontSize: fontSize,
+        pdfX: item.transform[4],
+        pdfY: item.transform[5],
+        pdfWidth: item.width,
+        pdfHeight: fontSize,
+        pdfFontSize: fontSize,
+        fontFamily: fs.fontFamily,
+        isBold: fs.isBold,
+        isItalic: fs.isItalic,
+        color: '#000000',
+        isModified: false,
+        isDeleted: false,
+        isNew: false
+      };
+      continue;
+    }
+
+    const sameLine = Math.abs(current.origPdfY - item.transform[5]) <= 3.0;
+    const gap = item.transform[4] - (current.origPdfX + current.origPdfWidth);
+    const maxGap = current.origPdfFontSize * 1.6;
+
+    if (sameLine && gap >= -3 && gap <= maxGap) {
+      const needsSpace = gap > 0.8 && !current.str.endsWith(' ') && !rawStr.startsWith(' ');
+      current.str += (needsSpace ? ' ' : '') + rawStr;
+      current.str = repairBrokenBengaliText(current.str);
+      current.currentText = current.str;
+      current.origPdfWidth = (item.transform[4] + item.width) - current.origPdfX;
+      current.origPdfHeight = Math.max(current.origPdfHeight, fontSize);
+      current.pdfWidth = current.origPdfWidth;
+      current.pdfHeight = current.origPdfHeight;
+    } else {
+      current.str = repairBrokenBengaliText(current.str);
+      current.currentText = current.str;
+      groups.push(current);
+      const newFs = detectFontStyles(item.fontName, rawStr);
+      current = {
+        str: rawStr,
+        currentText: rawStr,
+        fontName: item.fontName,
+        origPdfX: item.transform[4],
+        origPdfY: item.transform[5],
+        origPdfWidth: item.width,
+        origPdfHeight: fontSize,
+        origPdfFontSize: fontSize,
+        pdfX: item.transform[4],
+        pdfY: item.transform[5],
+        pdfWidth: item.width,
+        pdfHeight: fontSize,
+        pdfFontSize: fontSize,
+        fontFamily: newFs.fontFamily,
+        isBold: newFs.isBold,
+        isItalic: newFs.isItalic,
+        color: '#000000',
+        isModified: false,
+        isDeleted: false,
+        isNew: false
+      };
+    }
+  }
+  if (current) {
+    current.str = repairBrokenBengaliText(current.str);
+    current.currentText = current.str;
+    groups.push(current);
+  }
+
+  // Sample original ink colors from rendered canvas
+  if (canvas && viewport) {
+    for (const g of groups) {
+      const [vx, vy] = viewport.convertToViewportPoint(g.origPdfX, g.origPdfY);
+      const fSize = (g.origPdfFontSize || 12) * state.scale;
+      const vVy = vy - fSize;
+      const vW = (g.origPdfWidth || 40) * state.scale;
+      const vH = Math.max(fSize * 1.25, (g.origPdfHeight || 14) * state.scale);
+      g.color = sampleTextColor(canvas, vx, vVy, vW, vH);
+    }
+  }
+
+  return groups;
+}
+
+function renderTextItem(item, idx, overlay, viewport) {
+  if (item.isDeleted && !item.isModified) return;
+
+  if (item.pdfX !== undefined && item.pdfY !== undefined && item.vx === undefined) {
+    const [vx, vy] = viewport.convertToViewportPoint(item.pdfX, item.pdfY);
+    item.vx = vx;
+    item.fontSize = (item.pdfFontSize || 12) * state.scale;
+    item.vy = vy - item.fontSize;
+    item.vWidth = (item.pdfWidth || 40) * state.scale;
+    item.vHeight = Math.max(item.fontSize * 1.25, (item.pdfHeight || 14) * state.scale);
+  }
+
+  const el = document.createElement('div');
+  el.className = 'pdf-text-item' + 
+    (item.isModified ? ' is-modified' : '') + 
+    (item.isDeleted ? ' is-deleted' : '');
+
+  el.style.left = item.vx + 'px';
+  el.style.top = item.vy + 'px';
+  el.style.minWidth = Math.max(16, item.vWidth) + 'px';
+  el.style.minHeight = Math.max(14, item.vHeight) + 'px';
+  el.style.fontSize = Math.max(8, item.fontSize) + 'px';
+  el.style.fontFamily = (item.fontFamily || 'Nikosh') + ', sans-serif';
+  el.style.fontWeight = item.isBold ? 'bold' : 'normal';
+  el.style.fontStyle = item.isItalic ? 'italic' : 'normal';
+  el.style.color = item.color || '#000000';
+
+  // 1. Move Handle
+  const moveHandle = document.createElement('div');
+  moveHandle.className = 'move-handle';
+  moveHandle.innerHTML = '⠿ সরান';
+  moveHandle.title = 'ড্র্যাগ করে যেকোনো জায়গায় সরান';
+
+  // 2. Editable Content Div
+  const contentEl = document.createElement('div');
+  contentEl.className = 'item-content';
+  contentEl.contentEditable = true;
+  contentEl.spellcheck = false;
+  contentEl.style.fontFamily = (item.fontFamily || 'Nikosh') + ', sans-serif';
+  contentEl.textContent = item.currentText !== undefined ? item.currentText : item.str;
+
+  if (item.isModified) {
+    contentEl.style.color = item.color || '#000000';
+    contentEl.style.background = '#ffffff';
+  } else {
+    contentEl.style.color = 'transparent';
+    contentEl.style.background = 'transparent';
+  }
+
+  // 3. Resize Handles
+  const resizeSE = document.createElement('div');
+  resizeSE.className = 'resize-handle se';
+  resizeSE.title = 'কোণ টেনে বড়/ছোট করুন';
+
+  const resizeE = document.createElement('div');
+  resizeE.className = 'resize-handle e';
+  resizeE.title = 'প্রস্থ বাড়ান/কমান';
+
+  // 4. Quick Toolbar
+  const quickBar = document.createElement('div');
+  quickBar.className = 'item-quick-bar';
+  quickBar.innerHTML = `
+    <select class="qb-font-select" title="ফন্ট পরিবর্তন">
+      <option value="Nikosh">নিকশ (Nikosh Govt/NID)</option>
+      <option value="Kalpurush">কালপুরুষ (Kalpurush)</option>
+      <option value="SiyamRupali">সিয়াম রূপালী (Siyam)</option>
+      <option value="NotoSansBengali">নোতো স্যান্স (Noto)</option>
+      <option value="NotoSerifBengali">নোতো সেরিফ (Serif)</option>
+      <option value="SutonnyMJ">সুতন্বী এমজে (বিজয়)</option>
+      <option value="SutonnyOMJ">সুতন্বী ওএমজে (বিজয়)</option>
+      <option value="Inter">Inter (English)</option>
+    </select>
+    <button type="button" class="btn-qb-minus" title="ফন্ট ছোট করুন (-0.5pt)">−</button>
+    <span class="qb-size-badge" title="ফন্ট সাইজ">${Math.round((item.pdfFontSize || 10) * 10) / 10}pt</span>
+    <button type="button" class="btn-qb-plus" title="ফন্ট বড় করুন (+0.5pt)">+</button>
+    <button type="button" class="btn-qb-bold" title="বোল্ড"><b>B</b></button>
+    <button type="button" class="btn-qb-italic" title="ইটালিক"><i>I</i></button>
+    <input type="color" class="qb-color" title="রঙ পরিবর্তন" value="${item.color || '#000000'}" style="width:18px;height:18px;border:none;border-radius:3px;cursor:pointer;padding:0;background:transparent;">
+    <button type="button" class="btn-qb-fix" title="ভাঙ্গা বাংলা ঠিক করুন" style="color:#38bdf8;font-size:11px;font-family:var(--pdf-font-bn);padding:1px 5px;">🛠️ ঠিক করুন</button>
+    <button type="button" class="btn-qb-convert" title="বিজয় ⇄ ইউনিকোড রূপান্তর" style="color:#c084fc;font-size:10px;font-family:var(--pdf-font-bn);padding:1px 4px;">বিজয়⇄ইউনিকোড</button>
+    <button type="button" class="btn-qb-del" title="মুছে ফেলুন" style="color:#ef4444;">🗑️</button>
+  `;
+
+  el.appendChild(moveHandle);
+  el.appendChild(contentEl);
+  el.appendChild(resizeSE);
+  el.appendChild(resizeE);
+  el.appendChild(quickBar);
+
+  el.title = 'ক্লিক করে এই লেখা এডিট করুন';
+
+  contentEl.addEventListener('focus', () => {
+    activeTextBox = el;
+    el.classList.add('is-editing');
+    contentEl.style.background = '#ffffff';
+    contentEl.style.color = item.color || '#000000';
+
+    if (document.getElementById('fontSize')) {
+      document.getElementById('fontSize').value = Math.round(item.pdfFontSize || item.fontSize / state.scale);
+    }
+    if (document.getElementById('textColor') && item.color) {
+      document.getElementById('textColor').value = item.color;
+    }
+    if (document.getElementById('fontFamily') && item.fontFamily) {
+      document.getElementById('fontFamily').value = item.fontFamily;
+    }
+    if (fontSelect) fontSelect.value = item.fontFamily || 'Nikosh';
+    if (sizeBadge) sizeBadge.textContent = (Math.round(item.pdfFontSize * 10) / 10) + 'pt';
+    isBold = !!item.isBold;
+    isItalic = !!item.isItalic;
+    document.getElementById('btnBold')?.classList.toggle('active', isBold);
+    document.getElementById('btnItalic')?.classList.toggle('active', isItalic);
+  });
+
+  contentEl.addEventListener('input', () => {
+    item.currentText = contentEl.innerText;
+    item.isModified = (item.currentText !== item.str) || item.isNew || item.isMoved;
+    if (item.isModified) {
+      el.classList.add('is-modified');
+      contentEl.style.background = '#ffffff';
+      contentEl.style.color = item.color || '#000000';
+    }
+  });
+
+  contentEl.addEventListener('blur', () => {
+    setTimeout(() => {
+      if (!el.contains(document.activeElement)) {
+        el.classList.remove('is-editing');
+        if (item.isModified) {
+          contentEl.style.background = '#ffffff';
+          contentEl.style.color = item.color || '#000000';
+        } else {
+          contentEl.style.background = 'transparent';
+          contentEl.style.color = 'transparent';
+        }
+      }
+    }, 180);
+  });
+
+  contentEl.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Delete' && (ev.ctrlKey || ev.metaKey)) {
+      ev.preventDefault();
+      item.isDeleted = true;
+      item.isModified = true;
+      item.currentText = '';
+      el.classList.add('is-deleted');
+      contentEl.textContent = '';
+      contentEl.style.background = '#ffffff';
+      toast('🗑️ লেখাটি মুছে ফেলা হয়েছে (সেভ করলে মুছে যাবে)', 'info');
+    }
+  });
+
+  // Dragging support via move handle or select tool
+  let isDragging = false, dragStartX, dragStartY, dragOrigLeft, dragOrigTop;
+  const startDrag = (ev) => {
+    isDragging = true;
+    dragStartX = ev.clientX;
+    dragStartY = ev.clientY;
+    dragOrigLeft = parseFloat(el.style.left) || item.vx;
+    dragOrigTop = parseFloat(el.style.top) || item.vy;
+    activeTextBox = el;
+    el.classList.add('is-editing');
+    ev.stopPropagation();
+    ev.preventDefault();
+  };
+
+  moveHandle.addEventListener('mousedown', startDrag);
+  el.addEventListener('mousedown', (ev) => {
+    if (currentTool === 'select' || ev.target === el) {
+      startDrag(ev);
+    }
+  });
+
+  const onMouseMove = (ev) => {
+    if (!isDragging) return;
+    const nx = dragOrigLeft + (ev.clientX - dragStartX);
+    const ny = dragOrigTop + (ev.clientY - dragStartY);
+    el.style.left = nx + 'px';
+    el.style.top = ny + 'px';
+    item.vx = nx;
+    item.vy = ny;
+    item.isModified = true;
+    item.isMoved = true;
+    el.classList.add('is-modified');
+    contentEl.style.background = '#ffffff';
+    contentEl.style.color = item.color || '#000000';
+  };
+
+  const onMouseUp = () => { isDragging = false; };
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+
+  // Corner resize (scale font size & dimensions)
+  let isResizingSE = false, seStartX, seStartY, seStartW, seStartH, seStartFontSize;
+  resizeSE.addEventListener('mousedown', (ev) => {
+    isResizingSE = true;
+    seStartX = ev.clientX;
+    seStartY = ev.clientY;
+    seStartW = el.offsetWidth;
+    seStartH = el.offsetHeight;
+    seStartFontSize = item.fontSize || 14;
+    activeTextBox = el;
+    el.classList.add('is-editing');
+    ev.stopPropagation();
+    ev.preventDefault();
+  });
+
+  // Width resize
+  let isResizingE = false, eStartX, eStartW;
+  resizeE.addEventListener('mousedown', (ev) => {
+    isResizingE = true;
+    eStartX = ev.clientX;
+    eStartW = el.offsetWidth;
+    activeTextBox = el;
+    el.classList.add('is-editing');
+    ev.stopPropagation();
+    ev.preventDefault();
+  });
+
+  const onResizeMove = (ev) => {
+    if (isResizingSE) {
+      const dx = ev.clientX - seStartX;
+      const dy = ev.clientY - seStartY;
+      const ratio = Math.max(0.4, (seStartH + dy) / seStartH);
+      const newFontSize = Math.max(8, Math.round(seStartFontSize * ratio));
+      item.fontSize = newFontSize;
+      item.pdfFontSize = Math.max(6, Math.round(newFontSize / state.scale));
+      el.style.fontSize = newFontSize + 'px';
+      if (document.getElementById('fontSize')) {
+        document.getElementById('fontSize').value = item.pdfFontSize;
+      }
+      const nw = Math.max(30, seStartW + dx);
+      el.style.width = nw + 'px';
+      el.style.minWidth = nw + 'px';
+      item.vWidth = nw;
+      item.pdfWidth = nw / state.scale;
+      item.isModified = true;
+      el.classList.add('is-modified');
+    } else if (isResizingE) {
+      const nw = Math.max(30, eStartW + (ev.clientX - eStartX));
+      el.style.width = nw + 'px';
+      el.style.minWidth = nw + 'px';
+      item.vWidth = nw;
+      item.pdfWidth = nw / state.scale;
+      item.isModified = true;
+      el.classList.add('is-modified');
+    }
+  };
+
+  const onResizeUp = () => {
+    isResizingSE = false;
+    isResizingE = false;
+  };
+  document.addEventListener('mousemove', onResizeMove);
+  document.addEventListener('mouseup', onResizeUp);
+
+  // Quick toolbar button events
+  const btnBold = quickBar.querySelector('.btn-qb-bold');
+  btnBold.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    item.isBold = !item.isBold;
+    contentEl.style.fontWeight = item.isBold ? 'bold' : 'normal';
+    item.isModified = true;
+    el.classList.add('is-modified');
+    isBold = item.isBold;
+    document.getElementById('btnBold')?.classList.toggle('active', isBold);
+  });
+
+  const btnItalic = quickBar.querySelector('.btn-qb-italic');
+  btnItalic.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    item.isItalic = !item.isItalic;
+    contentEl.style.fontStyle = item.isItalic ? 'italic' : 'normal';
+    item.isModified = true;
+    el.classList.add('is-modified');
+    isItalic = item.isItalic;
+    document.getElementById('btnItalic')?.classList.toggle('active', isItalic);
+  });
+
+  const fontSelect = quickBar.querySelector('.qb-font-select');
+  if (item.fontFamily) fontSelect.value = item.fontFamily;
+  fontSelect.addEventListener('change', (ev) => {
+    ev.stopPropagation();
+    item.fontFamily = ev.target.value;
+    el.style.fontFamily = item.fontFamily + ', sans-serif';
+    contentEl.style.fontFamily = item.fontFamily + ', sans-serif';
+    item.isModified = true;
+    el.classList.add('is-modified');
+    if (document.getElementById('fontFamily')) {
+      document.getElementById('fontFamily').value = item.fontFamily;
+    }
+  });
+
+  const sizeBadge = quickBar.querySelector('.qb-size-badge');
+  const updateSizeUI = () => {
+    const curPt = Math.round(item.pdfFontSize * 10) / 10;
+    sizeBadge.textContent = curPt + 'pt';
+    el.style.fontSize = item.fontSize + 'px';
+    if (document.getElementById('fontSize')) {
+      document.getElementById('fontSize').value = Math.round(curPt);
+    }
+  };
+
+  const btnPlus = quickBar.querySelector('.btn-qb-plus');
+  btnPlus.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    item.pdfFontSize = Math.round(((item.pdfFontSize || 10) + 0.5) * 10) / 10;
+    item.fontSize = item.pdfFontSize * state.scale;
+    item.isModified = true;
+    el.classList.add('is-modified');
+    updateSizeUI();
+  });
+
+  const btnMinus = quickBar.querySelector('.btn-qb-minus');
+  btnMinus.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    item.pdfFontSize = Math.max(4, Math.round(((item.pdfFontSize || 10) - 0.5) * 10) / 10);
+    item.fontSize = item.pdfFontSize * state.scale;
+    item.isModified = true;
+    el.classList.add('is-modified');
+    updateSizeUI();
+  });
+
+  const btnFix = quickBar.querySelector('.btn-qb-fix');
+  btnFix.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const fixed = repairBrokenBengaliText(contentEl.innerText);
+    contentEl.innerText = fixed;
+    item.currentText = fixed;
+    item.isModified = true;
+    el.classList.add('is-modified');
+    toast('✅ ভাঙ্গা বাংলা মেরামত করা হয়েছে!', 'success');
+  });
+
+  const btnConvert = quickBar.querySelector('.btn-qb-convert');
+  btnConvert.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (window.BanglaConverter) {
+      const text = contentEl.innerText;
+      const hasBengaliUni = /[\u0980-\u09ff]/.test(text);
+      const converted = hasBengaliUni
+        ? BanglaConverter.unicodeToBijoy(text)
+        : BanglaConverter.bijoyToUnicode(text);
+      contentEl.innerText = converted;
+      item.currentText = converted;
+      item.isModified = true;
+      el.classList.add('is-modified');
+      toast(hasBengaliUni ? '🔄 ইউনিকোড → বিজয় রূপান্তরিত' : '🔄 বিজয় → ইউনিকোড রূপান্তরিত', 'info');
+    }
+  });
+
+  const qbColor = quickBar.querySelector('.qb-color');
+  qbColor.addEventListener('input', (ev) => {
+    ev.stopPropagation();
+    item.color = ev.target.value;
+    contentEl.style.color = item.color;
+    item.isModified = true;
+    el.classList.add('is-modified');
+    if (document.getElementById('textColor')) document.getElementById('textColor').value = item.color;
+  });
+
+  const btnDel = quickBar.querySelector('.btn-qb-del');
+  btnDel.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    item.isDeleted = true;
+    item.isModified = true;
+    item.currentText = '';
+    contentEl.textContent = '';
+    el.classList.add('is-deleted');
+    contentEl.style.background = '#ffffff';
+    toast('🗑️ লেখাটি মুছে ফেলা হয়েছে (সেভ করলে মুছে যাবে)', 'info');
+  });
+
+  el._itemRef = item;
+  overlay.appendChild(el);
+}
+
+/* ===================== Tool Switching ===================== */
+function setTool(t) {
+  currentTool = t;
+  ['edit', 'text', 'select', 'draw', 'highlight', 'erase'].forEach(name => {
+    const btn = document.getElementById('btn' + name.charAt(0).toUpperCase() + name.slice(1));
+    if (btn) btn.classList.toggle('active', name === t);
+  });
+  updateDrawCanvas();
+}
+
+function updateDrawCanvas() {
+  const drawCanvas = document.getElementById('draw-canvas');
+  const overlay = document.getElementById('text-overlay');
+  if (currentTool === 'draw' || currentTool === 'highlight' || currentTool === 'erase') {
+    drawCanvas.style.pointerEvents = 'all';
+    overlay.style.pointerEvents = 'none';
+    drawCanvas.style.cursor = currentTool === 'erase' ? 'cell' : 'crosshair';
+  } else if (currentTool === 'text') {
+    drawCanvas.style.pointerEvents = 'none';
+    overlay.style.pointerEvents = 'all';
+    overlay.style.cursor = 'crosshair';
+  } else if (currentTool === 'select') {
+    drawCanvas.style.pointerEvents = 'none';
+    overlay.style.pointerEvents = 'all';
+    overlay.style.cursor = 'move';
+  } else { // 'edit' mode (default direct text edit)
+    drawCanvas.style.pointerEvents = 'none';
+    overlay.style.pointerEvents = 'all';
+    overlay.style.cursor = 'default';
+  }
+}
+
+/* ===================== Drawing ===================== */
+function startDraw(e) {
+  if (currentTool !== 'draw' && currentTool !== 'highlight' && currentTool !== 'erase') return;
+  isDrawing = true;
+  [lastX, lastY] = [e.offsetX, e.offsetY];
+}
+
+function drawing(e) {
+  if (!isDrawing || !drawCtx) return;
+  drawCtx.beginPath();
+  drawCtx.moveTo(lastX, lastY);
+  drawCtx.lineTo(e.offsetX, e.offsetY);
+
+  if (currentTool === 'erase') {
+    drawCtx.globalCompositeOperation = 'destination-out';
+    drawCtx.lineWidth = parseInt(document.getElementById('brushSize').value) * 4;
+    drawCtx.strokeStyle = 'rgba(0,0,0,1)';
+  } else if (currentTool === 'highlight') {
+    drawCtx.globalCompositeOperation = 'source-over';
+    drawCtx.lineWidth = parseInt(document.getElementById('brushSize').value) * 6;
+    const col = document.getElementById('drawColor').value;
+    drawCtx.strokeStyle = col + '55';
+  } else {
+    drawCtx.globalCompositeOperation = 'source-over';
+    drawCtx.lineWidth = parseInt(document.getElementById('brushSize').value);
+    drawCtx.strokeStyle = document.getElementById('drawColor').value;
+  }
+  drawCtx.lineCap = 'round';
+  drawCtx.lineJoin = 'round';
+  drawCtx.stroke();
+  [lastX, lastY] = [e.offsetX, e.offsetY];
+}
+
+function stopDraw() { isDrawing = false; }
+
+function setDrawColor(c) {
+  document.getElementById('drawColor').value = c;
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+  event.target?.classList?.add('active');
+}
+
+/* ===================== Text Tool ===================== */
+function onOverlayClick(e) {
+  if (currentTool !== 'text') return;
+  if (e.target !== document.getElementById('text-overlay')) return;
+
+  const overlay = document.getElementById('text-overlay');
+  const rect = overlay.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const fSize = parseInt(document.getElementById('fontSize').value) || 14;
+  const col = document.getElementById('textColor').value || '#000000';
+  const fFam = document.getElementById('fontFamily').value || 'NotoSansBengali';
+
+  const newItem = {
+    str: '',
+    currentText: 'নতুন লেখা...',
+    isNew: true,
+    isModified: true,
+    isDeleted: false,
+    vx: x,
+    vy: y,
+    vWidth: 140,
+    vHeight: fSize * state.scale * 1.4,
+    fontSize: fSize * state.scale,
+    pdfFontSize: fSize,
+    fontFamily: fFam,
+    color: col,
+    isBold: isBold,
+    isItalic: isItalic
+  };
+
+  let pageItems = pageModifications.get(state.currentPage);
+  if (!pageItems) {
+    pageItems = [];
+    pageModifications.set(state.currentPage, pageItems);
+  }
+  pageItems.push(newItem);
+
+  const doc = PDFCore.getDocument();
+  if (doc) {
+    doc.getPage(state.currentPage).then(p => {
+      const viewport = p.getViewport({ scale: state.scale });
+      renderTextItem(newItem, pageItems.length - 1, overlay, viewport);
+      const createdEl = overlay.lastElementChild;
+      if (createdEl) {
+        const contentEl = createdEl.querySelector('.item-content') || createdEl;
+        contentEl.focus();
+        const range = document.createRange();
+        range.selectNodeContents(contentEl);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    });
+  }
+}
+
+function updateTextProps() {
+  if (activeTextBox && activeTextBox.isConnected && activeTextBox._itemRef) {
+    const item = activeTextBox._itemRef;
+    const contentEl = activeTextBox.querySelector('.item-content') || activeTextBox;
+    const fSize = parseInt(document.getElementById('fontSize').value) || 14;
+    const col = document.getElementById('textColor').value || '#000000';
+    const fFam = document.getElementById('fontFamily').value || 'NotoSansBengali';
+
+    item.pdfFontSize = fSize;
+    item.fontSize = fSize * state.scale;
+    item.color = col;
+    item.fontFamily = fFam;
+    item.isBold = isBold;
+    item.isItalic = isItalic;
+    item.isModified = true;
+
+    activeTextBox.style.fontSize = item.fontSize + 'px';
+    activeTextBox.style.fontFamily = item.fontFamily;
+    activeTextBox.style.fontWeight = isBold ? 'bold' : 'normal';
+    activeTextBox.style.fontStyle = isItalic ? 'italic' : 'normal';
+    activeTextBox.style.color = item.color;
+    contentEl.style.color = item.color;
+    contentEl.style.fontWeight = isBold ? 'bold' : 'normal';
+    contentEl.style.fontStyle = isItalic ? 'italic' : 'normal';
+    contentEl.style.background = '#ffffff';
+    activeTextBox.classList.add('is-modified');
+
+    const qbColor = activeTextBox.querySelector('.qb-color');
+    if (qbColor) qbColor.value = item.color;
+  }
+}
+
+function toggleBold() { isBold = !isBold; document.getElementById('btnBold').classList.toggle('active', isBold); updateTextProps(); }
+function toggleItalic() { isItalic = !isItalic; document.getElementById('btnItalic').classList.toggle('active', isItalic); updateTextProps(); }
+
+async function loadCustomFont(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const entry = await FontManager.loadCustomFont(file);
+  FontManager.buildFontOptions(document.getElementById('fontFamily'));
+  document.getElementById('fontFamily').value = entry.id;
+  toast(`✅ ফন্ট যোগ হয়েছে: ${entry.name}`, 'success');
+}
+
+/* ===================== OCR Direct Detect ===================== */
+async function runOCR() {
+  const existingItems = pageModifications.get(state.currentPage) || [];
+
+  // If the page already has extracted digital text, activate and highlight it immediately
+  if (existingItems.length > 3) {
+    setTool('edit');
+    const overlay = document.getElementById('text-overlay');
+    const elements = overlay.querySelectorAll('.pdf-text-item');
+    elements.forEach(el => {
+      el.style.borderColor = '#2563eb';
+      el.style.backgroundColor = 'rgba(37, 99, 235, 0.15)';
+    });
+    setTimeout(() => {
+      elements.forEach(el => {
+        if (!el.classList.contains('is-editing') && !el.classList.contains('is-modified')) {
+          el.style.borderColor = '';
+          el.style.backgroundColor = '';
+        }
+      });
+    }, 2000);
+
+    const allText = existingItems.map(it => it.currentText || it.str).join('\n');
+    document.getElementById('ocrResult').value = allText;
+    toast(`ℹ️ এই পেজে ইতিমধ্যে ${existingItems.length} টি টেক্সট রয়েছে — লেখার ওপর সরাসরি ক্লিক করে এডিট করুন!`, 'info');
+    return;
+  }
+
+  showProgress('OCR চলছে... (বাংলা ও ইংরেজি টেক্সট শনাক্তকরণ)', 15);
+  const handler = (e) => {
+    showProgress(`OCR বিশ্লেষণ: ${e.detail.pct}%`, e.detail.pct);
+  };
+  document.addEventListener('ocr-progress', handler);
+
+  try {
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('OCR টাইমআউট — অফলাইন ফাইল প্রসেস হতে বেশি সময় লাগছে।')), 25000)
+    );
+    const ocrPromise = OCREngine.recognizePage(state.currentPage, 'ben+eng');
+    const result = await Promise.race([ocrPromise, timeoutPromise]);
+
+    document.getElementById('ocrResult').value = result.text;
+
+    const overlay = document.getElementById('text-overlay');
+    const page = await PDFCore.getDocument().getPage(state.currentPage);
+    const viewport = page.getViewport({ scale: state.scale });
+
+    if (result.lines && result.lines.length > 0) {
+      let pageItems = pageModifications.get(state.currentPage) || [];
+      const ocrScale = 2.0;
+      const ratio = state.scale / ocrScale;
+      const { width: pgW, height: pgH } = page.getSize();
+
+      result.lines.forEach(line => {
+        if (!line.text || !line.text.trim()) return;
+        const bbox = line.bbox;
+        const vx = bbox.x0 * ratio;
+        const vy = bbox.y0 * ratio;
+        const vW = (bbox.x1 - bbox.x0) * ratio;
+        const vH = (bbox.y1 - bbox.y0) * ratio;
+        const fSize = Math.max(10, Math.round(vH * 0.8));
+
+        const pdfX = (bbox.x0 / ocrScale) * (pgW / (viewport.width / state.scale));
+        const pdfY = pgH - ((bbox.y1 / ocrScale) * (pgH / (viewport.height / state.scale)));
+        const pdfW = (bbox.x1 - bbox.x0) / ocrScale;
+        const pdfH = (bbox.y1 - bbox.y0) / ocrScale;
+
+        const ocrItem = {
+          str: line.text.trim(),
+          currentText: line.text.trim(),
+          isNew: false,
+          isModified: false,
+          isDeleted: false,
+          pdfX,
+          pdfY,
+          pdfWidth: pdfW,
+          pdfHeight: pdfH,
+          pdfFontSize: fSize / state.scale,
+          vx,
+          vy,
+          vWidth: vW,
+          vHeight: vH,
+          fontSize: fSize,
+          fontFamily: 'NotoSansBengali',
+          color: '#000000'
+        };
+
+        pageItems.push(ocrItem);
+        renderTextItem(ocrItem, pageItems.length - 1, overlay, viewport);
+      });
+
+      pageModifications.set(state.currentPage, pageItems);
+    }
+
+    hideProgress();
+    toast(`✅ OCR সম্পন্ন — ${result.lines?.length || 0} টি লাইন শনাক্ত হয়েছে! সরাসরি টেক্সটে ক্লিক করে এডিট করতে পারেন।`, 'success');
+  } catch(e) {
+    hideProgress();
+    toast('❌ OCR ব্যর্থ: ' + e.message, 'error');
+    console.error('OCR Error:', e);
+  } finally {
+    hideProgress();
+    document.removeEventListener('ocr-progress', handler);
+  }
+}
+
+function copyOCR() {
+  navigator.clipboard.writeText(document.getElementById('ocrResult').value).then(() => toast('✅ কপি হয়েছে', 'success'));
+}
+
+function insertOCRText() {
+  setTool('text');
+  const text = document.getElementById('ocrResult').value.trim();
+  if (!text) return;
+  const overlay = document.getElementById('text-overlay');
+  const fSize = parseInt(document.getElementById('fontSize').value) || 14;
+  const col = document.getElementById('textColor').value || '#000000';
+  const fFam = document.getElementById('fontFamily').value || 'NotoSansBengali';
+
+  const newItem = {
+    str: '',
+    currentText: text,
+    isNew: true,
+    isModified: true,
+    isDeleted: false,
+    vx: 30,
+    vy: 30,
+    vWidth: 260,
+    vHeight: fSize * state.scale * 1.5,
+    fontSize: fSize * state.scale,
+    pdfFontSize: fSize,
+    fontFamily: fFam,
+    color: col
+  };
+
+  let pageItems = pageModifications.get(state.currentPage) || [];
+  pageItems.push(newItem);
+  pageModifications.set(state.currentPage, pageItems);
+
+  const doc = PDFCore.getDocument();
+  if (doc) {
+    doc.getPage(state.currentPage).then(p => {
+      const viewport = p.getViewport({ scale: state.scale });
+      renderTextItem(newItem, pageItems.length - 1, overlay, viewport);
+    });
+  }
+  toast('✅ OCR টেক্সট পেজে যুক্ত হয়েছে', 'success');
+}
+
+/* ===================== Save PDF ===================== */
+async function savePDF() {
+  if (!pdfBytes) return;
+  showProgress('পিডিএফ সেভ হচ্ছে...', 15);
+
+  try {
+    const { PDFDocument, rgb } = PDFLib;
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+
+    if (window.fontkit) {
+      pdfDoc.registerFontkit(window.fontkit);
+    }
+
+    // Embed Bengali font for multilingual support (Bangla & English)
+    let primaryFont = null;
+    try {
+      primaryFont = await FontManager.embedFont(pdfDoc, 'NotoSansBengali');
+    } catch (err) {
+      console.warn('NotoSansBengali embed warning, using Helvetica fallback:', err);
+      primaryFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    }
+
+    const total = pdfDoc.getPageCount();
+    for (let pIndex = 0; pIndex < total; pIndex++) {
+      const pageNum = pIndex + 1;
+      const page = pdfDoc.getPage(pIndex);
+      const { width: pgW, height: pgH } = page.getSize();
+      const items = pageModifications.get(pageNum) || [];
+
+      // Save drawing layer for current active page
+      if (pageNum === state.currentPage) {
+        const drawCanvas = document.getElementById('draw-canvas');
+        const drawDataUrl = drawCanvas.toDataURL('image/png');
+        if (drawDataUrl !== 'data:,' && drawDataUrl.length > 100) {
+          const drawBlob = await (await fetch(drawDataUrl)).arrayBuffer();
+          const drawImg = await pdfDoc.embedPng(drawBlob);
+          page.drawImage(drawImg, { x: 0, y: 0, width: pgW, height: pgH, opacity: 1 });
+        }
+      }
+
+      // Process edited, deleted, and newly added text items
+      for (const item of items) {
+        if (!item.isModified && !item.isDeleted) continue;
+
+        // 1. Redact / White-out old text area at ORIGINAL location
+        if (!item.isNew) {
+          const origX = item.origPdfX !== undefined ? item.origPdfX : item.pdfX;
+          const origY = item.origPdfY !== undefined ? item.origPdfY : item.pdfY;
+          const origW = item.origPdfWidth !== undefined ? item.origPdfWidth : item.pdfWidth;
+          const origH = item.origPdfHeight !== undefined ? item.origPdfHeight : (item.pdfFontSize || 12);
+
+          if (origX !== undefined && origY !== undefined) {
+            const padX = 2;
+            const padY = 2;
+            const rectX = Math.max(0, origX - padX);
+            const rectY = Math.max(0, origY - padY);
+            const rectW = (origW || 50) + padX * 2;
+            const rectH = (origH || 12) + padY * 2;
+
+            page.drawRectangle({
+              x: rectX,
+              y: rectY,
+              width: rectW,
+              height: rectH,
+              color: rgb(1, 1, 1) // Clean white cover
+            });
+          }
+        }
+
+        // 2. Draw replacement text
+        if (!item.isDeleted && item.currentText && item.currentText.trim().length > 0) {
+          const fSize = Math.max(6, item.pdfFontSize || 12);
+          const hex = item.color || '#000000';
+          const r = (parseInt(hex.slice(1, 3), 16) || 0) / 255;
+          const g = (parseInt(hex.slice(3, 5), 16) || 0) / 255;
+          const b = (parseInt(hex.slice(5, 7), 16) || 0) / 255;
+
+          let drawX = item.pdfX;
+          let drawY = item.pdfY;
+
+          // If moved or new, compute PDF coords from vx, vy using CSS display size
+          if (item.isMoved || item.isNew || drawX === undefined) {
+            const canvasEl = document.getElementById('pdf-canvas');
+            const displayW = parseFloat(canvasEl.style.width) || canvasEl.width;
+            const displayH = parseFloat(canvasEl.style.height) || canvasEl.height;
+            const scaleX = pgW / displayW;
+            const scaleY = pgH / displayH;
+            drawX = item.vx * scaleX;
+            drawY = pgH - (item.vy * scaleY) - (item.fontSize * scaleY);
+          }
+
+          let fontToUse = primaryFont;
+          if (item.fontFamily && item.fontFamily !== 'NotoSansBengali') {
+            try {
+              fontToUse = await FontManager.embedFont(pdfDoc, item.fontFamily);
+            } catch {
+              fontToUse = primaryFont;
+            }
+          }
+
+          const lines = item.currentText.split('\n');
+          let currentLineY = drawY;
+          for (const line of lines) {
+            if (line.length > 0) {
+              try {
+                page.drawText(line, {
+                  x: drawX,
+                  y: currentLineY,
+                  size: fSize,
+                  font: fontToUse,
+                  color: rgb(r, g, b)
+                });
+              } catch (err) {
+                console.warn('drawText fallback:', err);
+                const fallbackFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+                page.drawText(line.replace(/[^\x00-\x7F]/g, '?'), {
+                  x: drawX,
+                  y: currentLineY,
+                  size: fSize,
+                  font: fallbackFont,
+                  color: rgb(r, g, b)
+                });
+              }
+            }
+            currentLineY -= fSize * 1.25;
+          }
+        }
+      }
+    }
+
+    showProgress('এক্সপোর্ট হচ্ছে...', 85);
+    const pdfBytesOut = await pdfDoc.save();
+    const blob = new Blob([pdfBytesOut], { type: 'application/pdf' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'edited_fayzar.pdf';
+    a.click();
+    hideProgress();
+    toast('✅ সংশোধিত পিডিএফ সফলভাবে সেভ হয়েছে!', 'success');
+  } catch(e) {
+    hideProgress();
+    toast('❌ সেভ ব্যর্থ: ' + e.message, 'error');
+    console.error('savePDF error:', e);
+  }
+}
+
+/* ===================== Page Navigation ===================== */
+function prevPage() { if (state.currentPage > 1) { state.currentPage--; renderCurrentPage(); } }
+function nextPage() { if (state.currentPage < state.totalPages) { state.currentPage++; renderCurrentPage(); } }
+function goToPage(n) { const p = Math.max(1, Math.min(parseInt(n)||1, state.totalPages)); state.currentPage = p; renderCurrentPage(); }
+function changeZoom(delta) { state.scale = Math.max(0.5, Math.min(3, state.scale + delta)); PDFCore.setScale(state.scale); renderCurrentPage(); }
+function openNew() { document.getElementById('fileInput').click(); }
+
+/* ===================== UI Helpers ===================== */
+function showProgress(msg, pct) {
+  const m = document.getElementById('progressModal');
+  m.style.display = 'flex';
+  document.getElementById('progressMsg').textContent = msg;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+function hideProgress() { document.getElementById('progressModal').style.display = 'none'; }
+
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('pdf-theme', t);
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.contentEditable === 'true') return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextPage();
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevPage();
+  if (e.key === 't' || e.key === 'T') setTool('text');
+  if (e.key === 's' || e.key === 'S') setTool('select');
+  if (e.key === 'd' || e.key === 'D') setTool('draw');
+  if (e.key === 'Escape') setTool('select');
+});
+</script>
+</body>
+</html>

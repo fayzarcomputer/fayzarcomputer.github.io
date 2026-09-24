@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>মার্জ পিডিএফ — ফয়জার কম্পিউটার</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}
+  .drag-handle{cursor:grab;color:var(--pdf-text-muted);font-size:1.2rem;padding:0 0.4rem;}
+  .file-item.dragging{opacity:0.4;border-color:var(--pdf-primary);}
+  </style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="color:var(--pdf-glass-border)">|</span>
+  <span style="font-family:var(--pdf-font-bn);font-weight:700;">🔗 মার্জ পিডিএফ</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#6c63ff,#4f46e5);">🔗</div>
+    <div><h1>মার্জ পিডিএফ</h1><p>একাধিক পিডিএফ ফাইল একত্র করুন — ড্র্যাগ করে ক্রম পরিবর্তন করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone" style="padding:1.5rem;">
+      <div class="upload-icon" style="font-size:2rem;">📎</div>
+      <h3>একাধিক পিডিএফ নির্বাচন করুন</h3>
+      <p>Ctrl চেপে একাধিক ফাইল সিলেক্ট করুন</p>
+      <input type="file" id="fileIn" accept=".pdf" multiple>
+    </label>
+  </div>
+
+  <div class="panel" id="fileListPanel" style="display:none;">
+    <h3>📋 ফাইলের ক্রম <span style="font-weight:400;font-size:0.8rem;">(ড্র্যাগ করে সাজান)</span></h3>
+    <div class="file-list" id="fileListEl"></div>
+    <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+      <button class="btn btn-outline btn-sm" onclick="addMore()">➕ আরও যোগ করুন</button>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" onclick="mergePDFs()" id="mergeBtn">🔗 মার্জ করুন</button>
+    </div>
+  </div>
+
+  <div id="resultPanel" class="panel" style="display:none;">
+    <div style="font-family:var(--pdf-font-bn);font-size:0.95rem;margin-bottom:1rem;">✅ মার্জ সম্পন্ন!</div>
+    <div style="font-family:var(--pdf-font-bn);font-size:0.85rem;color:var(--pdf-text-muted);" id="mergeInfo"></div>
+    <button class="btn btn-success" onclick="downloadResult()" style="margin-top:1rem;">⬇️ ডাউনলোড করুন</button>
+  </div>
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;">
+    <div id="progressMsg" style="font-family:var(--pdf-font-bn);margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label"><span id="progressPct">0%</span></div>
+  </div>
+</div>
+
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+<script>
+let files = [];
+let resultBytes = null;
+let dragSrc = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  setupDropZone('dropZone', 'fileIn', addFiles);
+  document.getElementById('fileIn').multiple = true;
+});
+
+function addFiles(newFiles) {
+  files = [...files, ...newFiles];
+  renderList();
+  document.getElementById('fileListPanel').style.display = 'block';
+}
+
+function addMore() { document.getElementById('fileIn').click(); }
+
+function removeFile(i) {
+  files.splice(i, 1);
+  if (files.length === 0) document.getElementById('fileListPanel').style.display = 'none';
+  renderList();
+}
+
+function renderList() {
+  const el = document.getElementById('fileListEl');
+  el.innerHTML = '';
+  files.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.draggable = true;
+    item.dataset.idx = i;
+    item.innerHTML = `
+      <span class="drag-handle">⠿</span>
+      <span class="fi-icon">📄</span>
+      <span class="fi-name" title="${f.name}">${i+1}. ${f.name}</span>
+      <span class="fi-size">${formatSize(f.size)}</span>
+      <button class="fi-remove">✕</button>
+    `;
+    item.querySelector('.fi-remove').onclick = () => removeFile(i);
+    item.addEventListener('dragstart', () => { dragSrc = i; item.classList.add('dragging'); });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => e.preventDefault());
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragSrc === null || dragSrc === i) return;
+      const moved = files.splice(dragSrc, 1)[0];
+      files.splice(i, 0, moved);
+      dragSrc = null;
+      renderList();
+    });
+    el.appendChild(item);
+  });
+}
+
+async function mergePDFs() {
+  if (files.length < 2) { toast('⚠️ কমপক্ষে ২টি ফাইল প্রয়োজন', 'error'); return; }
+  const btn = document.getElementById('mergeBtn');
+  btn.disabled = true;
+  showProgress('মার্জ শুরু হচ্ছে...', 10);
+  try {
+    const { PDFDocument } = PDFLib;
+    const merged = await PDFDocument.create();
+    let totalPages = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      showProgress(`ফাইল ${i+1}/${files.length} প্রসেস হচ্ছে...`, Math.round(10 + (i/files.length)*80));
+      const buf = await readFileAsArrayBuffer(files[i]);
+      const doc = await PDFDocument.load(buf, { ignoreEncryption: true });
+      const pages = await merged.copyPages(doc, doc.getPageIndices());
+      pages.forEach(p => merged.addPage(p));
+      totalPages += doc.getPageCount();
+    }
+
+    showProgress('সেভ হচ্ছে...', 95);
+    resultBytes = await merged.save();
+    document.getElementById('mergeInfo').textContent = `${files.length}টি ফাইল → ${totalPages} পেজ → ${formatSize(resultBytes.byteLength)}`;
+    document.getElementById('resultPanel').style.display = 'block';
+    hideProgress();
+    toast('✅ মার্জ সম্পন্ন!', 'success');
+  } catch(e) {
+    hideProgress();
+    toast('❌ ত্রুটি: ' + e.message, 'error');
+  }
+  btn.disabled = false;
+}
+
+function downloadResult() {
+  if (!resultBytes) return;
+  downloadBlob(new Blob([resultBytes], { type:'application/pdf' }), 'merged_fayzar.pdf');
+}
+</script>
+</body>
+</html>

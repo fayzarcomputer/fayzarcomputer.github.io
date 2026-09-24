@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>লক / আনলক পিডিএফ — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">🔐 লক / আনলক পিডিএফ</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626);">🔐</div>
+    <div><h1>লক / আনলক পিডিএফ</h1><p>পিডিএফে পাসওয়ার্ড যোগ করুন বা সরান</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">🔐</div><h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <button class="btn btn-primary" id="btnLock" onclick="setMode('lock')" style="flex:1;">🔒 লক করুন</button>
+      <button class="btn btn-outline" id="btnUnlock" onclick="setMode('unlock')" style="flex:1;">🔓 আনলক করুন</button>
+    </div>
+    <div id="lockFields">
+      <div class="form-group"><label>ব্যবহারকারী পাসওয়ার্ড (খুলতে)</label><input type="password" class="form-control" id="userPass" placeholder="পাসওয়ার্ড লিখুন"></div>
+      <div class="form-group"><label>মালিক পাসওয়ার্ড (সম্পাদনার জন্য — ঐচ্ছিক)</label><input type="password" class="form-control" id="ownerPass" placeholder="ঐচ্ছিক"></div>
+    </div>
+    <div id="unlockFields" style="display:none;">
+      <div class="form-group"><label>বিদ্যমান পাসওয়ার্ড</label><input type="password" class="form-control" id="existingPass" placeholder="পাসওয়ার্ড লিখুন"></div>
+    </div>
+    <button class="btn btn-primary" onclick="processLock()" style="width:100%;justify-content:center;margin-top:0.5rem;">প্রসেস করুন</button>
+  </div>
+  <script>
+    var pdfFile=null,currentMode='lock';
+    document.addEventListener('DOMContentLoaded',function(){initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});});
+    function loadFile(f){pdfFile=f;document.getElementById('settingsPanel').style.display='block';toast('✅ '+f.name,'success');}
+    function setMode(m){currentMode=m;document.getElementById('btnLock').className='btn btn-'+(m==='lock'?'primary':'outline');document.getElementById('btnUnlock').className='btn btn-'+(m==='unlock'?'primary':'outline');document.getElementById('lockFields').style.display=m==='lock'?'block':'none';document.getElementById('unlockFields').style.display=m==='unlock'?'block':'none';}
+    async function processLock(){if(!pdfFile)return;showProgress('প্রসেস হচ্ছে...',30);
+      try{var buf=await readFileAsArrayBuffer(pdfFile);
+        if(currentMode==='lock'){var pass=document.getElementById('userPass').value;if(!pass){toast('⚠️ পাসওয়ার্ড দিন','error');hideProgress();return;}
+          var doc=await PDFLib.PDFDocument.load(buf,{ignoreEncryption:true});
+          var bytes=await doc.save({userPassword:pass,ownerPassword:document.getElementById('ownerPass').value||pass,permissions:{printing:'highResolution',modifying:false,copying:false,annotating:false,fillingForms:false,contentAccessibility:false,documentAssembly:false}});
+          downloadBlob(new Blob([bytes],{type:'application/pdf'}),'locked_'+pdfFile.name);toast('✅ পিডিএফ লক হয়েছে','success');}
+        else{var pass=document.getElementById('existingPass').value;var doc=await PDFLib.PDFDocument.load(buf,{password:pass,ignoreEncryption:false});var bytes=await doc.save();downloadBlob(new Blob([bytes],{type:'application/pdf'}),'unlocked_'+pdfFile.name);toast('✅ পিডিএফ আনলক হয়েছে','success');}
+        hideProgress();}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>পিডিএফ থেকে এক্সেল/CSV — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">📊 পিডিএফ থেকে এক্সেল/CSV</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a);">📊</div>
+    <div><h1>পিডিএফ থেকে এক্সেল/CSV</h1><p>পিডিএফের টেক্সট কনটেন্ট এক্সেল-সামঞ্জস্যপূর্ণ CSV ফাইলে রূপান্তর করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">📊</div><h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div class="panel" style="background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.3);font-family:'NotoSansBengali',sans-serif;font-size:0.85rem;line-height:1.8;">
+    ℹ️ এই টুলটি পিডিএফের <strong>টেক্সট কনটেন্ট</strong> পর্যায়ক্রমে সারিতে সাজিয়ে CSV ফরম্যাটে সেভ করে। ফাইলটি Excel বা Google Sheets-এ খুলুন।
+  </div>
+  <div class="panel" id="settingsPanel" style="display:none;">
+    <div style="font-family:'NotoSansBengali',sans-serif;" id="fileInfo"></div>
+    <button class="btn btn-success" onclick="toCSV()" style="width:100%;justify-content:center;margin-top:0.75rem;">📊 CSV তৈরি করুন</button>
+  </div>
+  <div class="panel" id="previewPanel" style="display:none;">
+    <h3>👀 প্রিভিউ (প্রথম ৩০ সারি)</h3>
+    <div id="previewTable" style="overflow:auto;max-height:300px;font-size:0.8rem;"></div>
+    <button class="btn btn-success" onclick="downloadCSV()" style="margin-top:0.75rem;">⬇️ CSV ডাউনলোড</button>
+  </div>
+  <script>
+    var pdfFile=null,csvData=[];
+    document.addEventListener('DOMContentLoaded',function(){
+      initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});
+      if(!window.pdfjsLib){var s=document.createElement('script');s.src='../libs/pdf.min.js';document.head.appendChild(s);s.onload=function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc='../libs/pdf.worker.min.js';};}
+    });
+    async function loadFile(f){pdfFile=f;var buf=await readFileAsArrayBuffer(f);var doc=await pdfjsLib.getDocument({data:buf}).promise;document.getElementById('fileInfo').innerHTML='📄 <strong>'+f.name+'</strong> — '+doc.numPages+' পেজ';document.getElementById('settingsPanel').style.display='block';}
+    async function toCSV(){if(!pdfFile)return;showProgress('টেক্সট এক্সট্রাক্ট হচ্ছে...',10);
+      try{var buf=await readFileAsArrayBuffer(pdfFile);var doc=await pdfjsLib.getDocument({data:buf}).promise;csvData=[];
+        for(var i=1;i<=doc.numPages;i++){showProgress('পেজ '+i+'/'+doc.numPages,Math.round(i/doc.numPages*85));var page=await doc.getPage(i);var content=await page.getTextContent();
+          var rows={};content.items.forEach(function(item){var y=Math.round(item.transform[5]);if(!rows[y])rows[y]=[];rows[y].push({x:item.transform[4],text:item.str});});
+          var sortedRows=Object.keys(rows).sort(function(a,b){return b-a;});sortedRows.forEach(function(y){var items=rows[y].sort(function(a,b){return a.x-b.x;});csvData.push(items.map(function(it){return it.text;}));});
+          if(i<doc.numPages)csvData.push(['--- Page '+(i+1)+' ---']);}
+        var tbl=document.createElement('table');tbl.style.cssText='border-collapse:collapse;width:100%;';csvData.slice(0,30).forEach(function(row){var tr=document.createElement('tr');row.forEach(function(cell){var td=document.createElement('td');td.textContent=cell;td.style.cssText='border:1px solid rgba(255,255,255,0.1);padding:4px 8px;white-space:nowrap;font-family:NotoSansBengali,sans-serif;';tr.appendChild(td);});tbl.appendChild(tr);});
+        document.getElementById('previewTable').innerHTML='';document.getElementById('previewTable').appendChild(tbl);document.getElementById('previewPanel').style.display='block';hideProgress();toast('✅ '+csvData.length+' সারি পাওয়া গেছে','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+    function downloadCSV(){if(!csvData.length)return;var bom='﻿';var csv=csvData.map(function(row){return row.map(function(cell){return '"'+String(cell).replace(/"/g,'""')+'"';}).join(',');}).join('
+');downloadBlob(new Blob([bom+csv],{type:'text/csv;charset=utf-8;'}),pdfFile.name.replace('.pdf','')+'.csv');toast('✅ CSV ডাউনলোড হচ্ছে','success');}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

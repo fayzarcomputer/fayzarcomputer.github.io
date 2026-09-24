@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="bn" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>পিডিএফ টুলস — ফয়জার কম্পিউটার</title>
+  <meta name="description" content="পেশাদার পিডিএফ টুলস — কম্প্রেস, মার্জ, স্প্লিট, এডিট, ওসিআর এবং আরও অনেক কিছু। সম্পূর্ণ অফলাইনে কাজ করে।">
+  <link rel="stylesheet" href="css/pdf-tools.css">
+  <style>
+    @font-face { font-family: 'NotoSansBengali'; src: url('fonts/bangla/NotoSansBengali.ttf'); }
+    @font-face { font-family: 'SutonnyMJ'; src: url('fonts/bangla/SutonnyMJ-Regular.ttf'); }
+    @font-face { font-family: 'Inter'; src: url('fonts/english/Inter-Regular.woff2') format('woff2'); }
+  </style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+
+<!-- ===== Navigation ===== -->
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← মূল সাইট</a>
+  <span style="color:var(--pdf-glass-border)">|</span>
+  <a href="index.html" class="nav-brand">
+    <span class="icon">📄</span>
+    <div>
+      <div style="font-size:1rem;font-weight:700;">PDF Tools</div>
+      <div class="nav-title">ফয়জার কম্পিউটার</div>
+    </div>
+  </a>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn" title="থিম পরিবর্তন">🌙</button>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="pdf-hero">
+  <div class="pill">✨ সম্পূর্ণ অফলাইনে কাজ করে</div>
+  <h1>পেশাদার পিডিএফ টুলস</h1>
+  <p>এডিট, কম্প্রেস, মার্জ, স্প্লিট সহ ১৬টি শক্তিশালী টুলস — ইন্টারনেট ছাড়াই</p>
+</section>
+
+<!-- ===== Featured: PDF Editor ===== -->
+<div style="max-width:1200px;margin:0 auto 2rem;padding:0 1.5rem;">
+  <a href="editor.html" class="tool-card" style="flex-direction:row;align-items:center;gap:1.5rem;padding:2rem;--card-color:#6c63ff;--card-color2:#4f46e5;background:linear-gradient(135deg,rgba(108,99,255,0.15),rgba(79,70,229,0.08));border-color:rgba(108,99,255,0.4);">
+    <div class="card-icon" style="width:64px;height:64px;font-size:2rem;border-radius:16px;">✏️</div>
+    <div style="flex:1;">
+      <div style="font-size:0.8rem;color:var(--pdf-accent);font-weight:700;margin-bottom:0.4rem;">⭐ মূল ফিচার</div>
+      <div class="card-title" style="font-size:1.3rem;margin-bottom:0.4rem;">পেশাদার পিডিএফ এডিটর</div>
+      <div class="card-sub" style="font-size:0.88rem;">বাংলা ও ইংরেজি ডিরেক্ট টেক্সট এডিট • OCR • কাস্টম ফন্ট • হাইলাইট • ড্র • সেভ</div>
+    </div>
+    <div class="card-arrow" style="font-size:1.5rem;">→</div>
+  </a>
+</div>
+
+<!-- ===== Tools Grid ===== -->
+<div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;">
+  <div class="section-label">
+    <h2>সকল টুলস</h2>
+    <div class="line"></div>
+    <span style="color:var(--pdf-text-muted);font-size:0.8rem;white-space:nowrap;">১৫টি ইউটিলিটি</span>
+  </div>
+</div>
+
+<div class="tools-grid">
+
+  <a href="tools/compress.html" class="tool-card" style="--card-color:#10b981;--card-color2:#059669;">
+    <div class="card-icon">🗜️</div>
+    <div class="card-title">কম্প্রেস পিডিএফ</div>
+    <div class="card-sub">মান ঠিক রেখে ফাইল ছোট করুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/merge.html" class="tool-card" style="--card-color:#6c63ff;--card-color2:#4f46e5;">
+    <div class="card-icon">🔗</div>
+    <div class="card-title">মার্জ পিডিএফ</div>
+    <div class="card-sub">একাধিক PDF একত্র করুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/split.html" class="tool-card" style="--card-color:#f59e0b;--card-color2:#d97706;">
+    <div class="card-icon">✂️</div>
+    <div class="card-title">স্প্লিট পিডিএফ</div>
+    <div class="card-sub">বড় PDF ভেঙে আলাদা করুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/create.html" class="tool-card" style="--card-color:#8b5cf6;--card-color2:#7c3aed;">
+    <div class="card-icon">📝</div>
+    <div class="card-title">PDF তৈরি করুন</div>
+    <div class="card-sub">Word/ছবি থেকে নতুন PDF</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/to-image.html" class="tool-card" style="--card-color:#ec4899;--card-color2:#db2777;">
+    <div class="card-icon">🖼️</div>
+    <div class="card-title">PDF → ইমেজ</div>
+    <div class="card-sub">প্রতিটি পেজ PNG/JPG-এ রূপান্তর</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/lock-unlock.html" class="tool-card" style="--card-color:#ef4444;--card-color2:#dc2626;">
+    <div class="card-icon">🔐</div>
+    <div class="card-title">লক / আনলক</div>
+    <div class="card-sub">পাসওয়ার্ড যোগ বা সরান</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/rotate.html" class="tool-card" style="--card-color:#06b6d4;--card-color2:#0891b2;">
+    <div class="card-icon">🔄</div>
+    <div class="card-title">রোটেট পিডিএফ</div>
+    <div class="card-sub">উল্টো বা বাঁকা পেজ সোজা করুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/remove-pages.html" class="tool-card" style="--card-color:#f97316;--card-color2:#ea580c;">
+    <div class="card-icon">🗑️</div>
+    <div class="card-title">পেজ রিমুভ</div>
+    <div class="card-sub">অপ্রয়োজনীয় পৃষ্ঠা মুছুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/watermark.html" class="tool-card" style="--card-color:#a78bfa;--card-color2:#8b5cf6;">
+    <div class="card-icon">💧</div>
+    <div class="card-title">ওয়াটারমার্ক</div>
+    <div class="card-sub">নাম, সিল বা লোগো যোগ করুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/extract-images.html" class="tool-card" style="--card-color:#84cc16;--card-color2:#65a30d;">
+    <div class="card-icon">📸</div>
+    <div class="card-title">ইমেজ এক্সট্রাক্ট</div>
+    <div class="card-sub">PDF-এর সব ছবি বের করুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/permissions.html" class="tool-card" style="--card-color:#64748b;--card-color2:#475569;">
+    <div class="card-icon">🛡️</div>
+    <div class="card-title">পারমিশন কন্ট্রোল</div>
+    <div class="card-sub">প্রিন্ট/কপি ব্লক বা আনব্লক</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/resize.html" class="tool-card" style="--card-color:#0ea5e9;--card-color2:#0284c7;">
+    <div class="card-icon">📐</div>
+    <div class="card-title">রিসাইজ পিডিএফ</div>
+    <div class="card-sub">A4, Legal সহ যেকোনো মাপ</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/repair.html" class="tool-card" style="--card-color:#f43f5e;--card-color2:#e11d48;">
+    <div class="card-icon">🔧</div>
+    <div class="card-title">পিডিএফ রিপেয়ার</div>
+    <div class="card-sub">নষ্ট বা করাপ্ট PDF ঠিক করুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/crop.html" class="tool-card" style="--card-color:#d946ef;--card-color2:#c026d3;">
+    <div class="card-icon">✂️</div>
+    <div class="card-title">ক্রপ পিডিএফ</div>
+    <div class="card-sub">অপ্রয়োজনীয় মার্জিন কাটুন</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+  <a href="tools/to-excel.html" class="tool-card" style="--card-color:#22c55e;--card-color2:#16a34a;">
+    <div class="card-icon">📊</div>
+    <div class="card-title">PDF → Excel</div>
+    <div class="card-sub">টেবিল স্প্রেডশিটে রূপান্তর</div>
+    <div class="card-arrow">→</div>
+  </a>
+
+</div>
+
+<!-- ===== Info Footer ===== -->
+<div style="text-align:center;padding:2rem 1.5rem 3rem;color:var(--pdf-text-muted);font-family:var(--pdf-font-bn);font-size:0.82rem;">
+  <div style="margin-bottom:0.5rem;">🔒 সব ফাইল আপনার ব্রাউজারেই প্রসেস হয় — কোনো সার্ভারে আপলোড হয় না</div>
+  <div>ফয়জার কম্পিউটার এন্ড ফটোস্ট্যাট — সরকার অনুমোদিত ভূমিসেবা কেন্দ্র, ফুলবাড়ী</div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+  // Theme sync with main site
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeBtn').textContent = t === 'dark' ? '🌙' : '☀️';
+    localStorage.setItem('pdf-theme', t);
+  }
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  }
+  // Inherit from main site or default dark
+  const saved = localStorage.getItem('pdf-theme') || localStorage.getItem('fayzar-theme') || 'dark';
+  applyTheme(saved);
+</script>
+</body>
+</html>

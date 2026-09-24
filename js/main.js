@@ -2294,6 +2294,8 @@ function initUnifiedConverterEngine() {
   const wizardDlDocxBtn = document.getElementById('wizardDlDocxBtn');
   const wizardDlDocBtn = document.getElementById('wizardDlDocBtn');
   const wizardDlUnicodeDocxBtn = document.getElementById('wizardDlUnicodeDocxBtn');
+  const wizardStudioPreviewBtn = document.getElementById('wizardStudioPreviewBtn');
+  const wizardOpenStudioInlineBtn = document.getElementById('wizardOpenStudioInlineBtn');
   const wizardDlMdBtn = document.getElementById('wizardDlMdBtn');
   const wizardDlXlsxBtn = document.getElementById('wizardDlXlsxBtn');
   const wizardDlPptxBtn = document.getElementById('wizardDlPptxBtn');
@@ -2816,10 +2818,6 @@ function initUnifiedConverterEngine() {
   executeAiConversionBtn?.addEventListener('click', async () => {
     if (!currentScanResult || !currentScanResult.isAiOcr) return;
 
-    if (typeof FayzarOcrConfig !== 'undefined' && typeof FayzarOcrConfig.clearCooldowns === 'function') {
-      FayzarOcrConfig.clearCooldowns();
-    }
-
     step2Box?.classList.add('hidden');
     step3Box?.classList.remove('hidden');
     wizardProgressCard?.classList.remove('hidden');
@@ -2830,39 +2828,38 @@ function initUnifiedConverterEngine() {
     }
 
     try {
-      const targetFmt = selectedAiTargetFormat || 'doc';
       const res = await window.FayzarAiOcrEngine.startUnifiedOcr(
-        targetFmt,
-        (statusText, pct, stepNum) => {
+        'none',
+        (statusText, pct) => {
           const pt = document.getElementById('wizardProgressTitle') || wizardProgressTitle;
           if (pt) pt.textContent = statusText;
           if (wizardProgressPctText) wizardProgressPctText.textContent = `${pct}%`;
           if (wizardProgressBar) wizardProgressBar.style.width = `${pct}%`;
 
-          // Dynamic Pipeline Step Highlights (১. ফাইল আপলোড, ২. প্রমট সেন্ট, ৩. প্রসেসিং, ৪. ওয়েটিং ফর ফাইনাল আউটপুট)
-          const steps = [
-            document.getElementById('pipeStep1'),
-            document.getElementById('pipeStep2'),
-            document.getElementById('pipeStep3'),
-            document.getElementById('pipeStep4')
-          ];
+          // Dynamic Pipeline Step Highlights
+          const s1 = document.getElementById('pipeStep1');
+          const s2 = document.getElementById('pipeStep2');
+          const s3 = document.getElementById('pipeStep3');
+          const s4 = document.getElementById('pipeStep4');
 
-          let currentStep = stepNum || (pct >= 95 ? 4 : (pct >= 60 ? 3 : (pct >= 30 ? 2 : 1)));
-
-          steps.forEach((stepEl, idx) => {
-            if (!stepEl) return;
-            const stepIdx = idx + 1;
-            if (pct >= 100 || stepIdx < currentStep) {
-              // Completed step (Green with checkmark)
-              stepEl.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs font-bold transition-all text-center';
-            } else if (stepIdx === currentStep) {
-              // Active step (Pulsing high-tech indicator)
-              stepEl.className = 'p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-500 dark:border-indigo-400 flex items-center justify-center gap-1.5 shadow-sm font-black animate-pulse transition-all text-center';
-            } else {
-              // Upcoming step (Muted slate)
-              stepEl.className = 'p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5 font-medium transition-all text-center';
+          if (s1 && s2 && s3 && s4) {
+            if (pct >= 90) {
+              s1.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
+              s2.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
+              s3.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
+              s4.className = 'p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 flex items-center justify-center gap-1.5 shadow-2xs animate-pulse';
+            } else if (pct >= 60) {
+              s1.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
+              s2.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
+              s3.className = 'p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 flex items-center justify-center gap-1.5 shadow-2xs animate-pulse';
+              s4.className = 'p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5';
+            } else if (pct >= 30) {
+              s1.className = 'p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center gap-1.5 shadow-2xs';
+              s2.className = 'p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 flex items-center justify-center gap-1.5 shadow-2xs animate-pulse';
+              s3.className = 'p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5';
+              s4.className = 'p-2 rounded-xl bg-slate-100 dark:bg-[#1a263d] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5';
             }
-          });
+          }
         },
         (liveChunk) => {
           if (wizardPreviewContent) {
@@ -2871,11 +2868,6 @@ function initUnifiedConverterEngine() {
         }
       );
 
-      if (!res) {
-        // Conversion was cancelled by user or aborted
-        return;
-      }
-
       if (wizardPreviewContent) {
         wizardPreviewContent.value = (res && res.unicode) || (window.FayzarAiOcrEngine && window.FayzarAiOcrEngine.state && window.FayzarAiOcrEngine.state.unicodeText) || wizardPreviewContent.value || '';
       }
@@ -2883,7 +2875,7 @@ function initUnifiedConverterEngine() {
       wizardProgressCard?.classList.add('hidden');
       wizardResultCard?.classList.remove('hidden');
 
-      const baseName = (currentScanResult?.file?.name || 'Output').replace(/\.[^/.]+$/, '');
+      const baseName = currentScanResult.file.name.replace(/\.[^/.]+$/, '');
 
       if (wizardResultFileName) wizardResultFileName.textContent = `${baseName}_Converted`;
       if (wizardResultStatsBadge) wizardResultStatsBadge.textContent = `ডকুমেন্ট রূপান্তর সফলভাবে সম্পন্ন হয়েছে (৩টি ফরম্যাটেই প্রস্তুত)`;
@@ -2899,6 +2891,21 @@ function initUnifiedConverterEngine() {
       if (wizardDlUnicodeDocxBtn) {
         wizardDlUnicodeDocxBtn.classList.remove('hidden');
         wizardDlUnicodeDocxBtn.onclick = () => window.FayzarAiOcrEngine.downloadWordDocument('unicode_docx');
+      }
+      if (wizardStudioPreviewBtn) {
+        wizardStudioPreviewBtn.classList.remove('hidden');
+        wizardStudioPreviewBtn.onclick = () => {
+          if (window.FayzarAiOcrEngine && typeof window.FayzarAiOcrEngine.openStudioPreviewEditor === 'function') {
+            window.FayzarAiOcrEngine.openStudioPreviewEditor();
+          }
+        };
+      }
+      if (wizardOpenStudioInlineBtn) {
+        wizardOpenStudioInlineBtn.onclick = () => {
+          if (window.FayzarAiOcrEngine && typeof window.FayzarAiOcrEngine.openStudioPreviewEditor === 'function') {
+            window.FayzarAiOcrEngine.openStudioPreviewEditor();
+          }
+        };
       }
       if (wizardDlMdBtn) {
         wizardDlMdBtn.classList.remove('hidden');
@@ -2926,7 +2933,16 @@ function initUnifiedConverterEngine() {
 
     } catch (err) {
       console.error(err);
-      alert('AI রূপান্তর সম্পন্ন করা যায়নি: ' + err.message);
+      if (window.FayzarAiOcrEngine && window.FayzarAiOcrEngine.state) {
+        window.FayzarAiOcrEngine.state.isProcessing = false;
+      }
+      if (err.name === 'AbortError' || (err.message && (err.message.includes('বাতিল') || err.message.includes('aborted') || err.message.includes('abort')))) {
+        if (typeof window.showToastNotification === 'function') {
+          window.showToastNotification('রূপান্তর বাতিল করা হয়েছে', 'info');
+        }
+      } else {
+        alert('AI রূপান্তর সম্পন্ন করা যায়নি: ' + err.message);
+      }
       step2Box?.classList.remove('hidden');
       step3Box?.classList.add('hidden');
       wizardProgressCard?.classList.add('hidden');
@@ -3169,7 +3185,7 @@ function initUnifiedConverterEngine() {
     }
 
     // Download Buttons Setup
-    [wizardDlDocxBtn, wizardDlDocBtn, wizardDlUnicodeDocxBtn, wizardDlMdBtn, wizardDlXlsxBtn, wizardDlPptxBtn].forEach(b => b?.classList.add('hidden'));
+    [wizardDlDocxBtn, wizardDlDocBtn, wizardDlUnicodeDocxBtn, wizardDlXlsxBtn, wizardDlPptxBtn].forEach(b => b?.classList.add('hidden'));
 
     if (scan.isWord) {
       if (docxBlob && (!wizardOutputFormat || wizardOutputFormat.value !== 'doc')) {
@@ -3310,32 +3326,108 @@ function initUnifiedConverterEngine() {
 
   sourceTextArea?.addEventListener('input', performConvert);
 
-  // Direct DOCX download
+  // Helper to detect structured question/document layout in text
+  function hasLayoutStructure(str) {
+    if (!str) return false;
+    return /^[১-৯1-9]+[।\.]/m.test(str) ||
+           /^[ক-ঘa-d][\.\)]/m.test(str) ||
+           /\[[০-৯0-9]+\]/m.test(str) ||
+           /^#{1,4}\s+/m.test(str) ||
+           /^\|.+\|$/m.test(str);
+  }
+
+  // Direct DOCX download (with Smart Auto-Layout)
   downloadTextDocxBtn?.addEventListener('click', async () => {
     const isU2B = (currentTextMode === 'u2b') || (currentTextMode === 'auto' && BanglaConverter.hasBengaliText(sourceTextArea.value));
     const text = (isU2B && sourceTextArea && sourceTextArea.value.trim()) ? sourceTextArea.value : (targetTextArea ? targetTextArea.value : '');
-    if (!text.trim() || typeof DocxHandler === 'undefined') return;
+    if (!text.trim()) return;
     const fontName = isU2B ? 'SutonnyMJ' : 'Kalpurush';
     const pageSize = document.getElementById('ai-target-page-size')?.value || 'a4';
     const margin = document.getElementById('ai-target-page-margin')?.value || 'normal';
+
     try {
-      const docxBlob = await DocxHandler.createDocxFromText(text, { fontName, isBijoy: isU2B, pageSize, margin });
-      downloadBlob(docxBlob, `Text_${isU2B ? 'Bijoy_SutonnyMJ' : 'Unicode'}_${Date.now()}.docx`);
+      let docxBlob = null;
+      if (typeof MdLayoutParser !== 'undefined' && typeof DocxLayoutBuilder !== 'undefined' && hasLayoutStructure(text)) {
+        const detectFn = (t) => {
+          if (typeof MdLayoutParser !== 'undefined' && typeof MdLayoutParser.detectDocumentProfile === 'function') {
+            const prof = MdLayoutParser.detectDocumentProfile(t);
+            if (prof?.archetypeId === 'bengali_combined_exam_paper') return 'bengali_combined_exam_paper';
+            if (prof?.archetypeId === 'english_question_paper') return 'english_question_paper';
+          }
+          if (typeof detectDocumentLayout === 'function') return detectDocumentLayout(t);
+          if (window.FayzarAiOcrEngine?.detectDocumentLayout) return window.FayzarAiOcrEngine.detectDocumentLayout(t);
+          return 'question-2col';
+        };
+        const detectedLayout = detectFn(text);
+        const ast = MdLayoutParser.parse(text, { layout: detectedLayout, pageSize });
+        docxBlob = await DocxLayoutBuilder.build(ast, { font: fontName });
+      } else if (typeof DocxHandler !== 'undefined') {
+        docxBlob = await DocxHandler.createDocxFromText(text, { fontName, isBijoy: isU2B, pageSize, margin });
+      }
+
+      if (docxBlob) {
+        downloadBlob(docxBlob, `Text_${isU2B ? 'Bijoy_SutonnyMJ' : 'Unicode'}_${Date.now()}.docx`);
+        if (typeof window.showToastNotification === 'function') {
+          window.showToastNotification('DOCX ফাইল সফলভাবে প্রস্তুত হয়েছে!', 'success');
+        }
+      }
     } catch(err) {
-      console.error(err);
+      console.error('Text DOCX generation error', err);
     }
   });
 
-  // Direct Word 2003 DOC download
-  downloadTextDocBtn?.addEventListener('click', () => {
+  // Direct Word 2003 DOC download (with Smart Auto-Layout)
+  downloadTextDocBtn?.addEventListener('click', async () => {
     const isU2B = (currentTextMode === 'u2b') || (currentTextMode === 'auto' && BanglaConverter.hasBengaliText(sourceTextArea.value));
     const text = (isU2B && sourceTextArea && sourceTextArea.value.trim()) ? sourceTextArea.value : (targetTextArea ? targetTextArea.value : '');
-    if (!text.trim() || typeof DocxHandler === 'undefined') return;
+    if (!text.trim()) return;
     const fontName = isU2B ? 'SutonnyMJ' : 'Kalpurush';
     const pageSize = document.getElementById('ai-target-page-size')?.value || 'a4';
     const margin = document.getElementById('ai-target-page-margin')?.value || 'normal';
-    const docBlob = DocxHandler.createDocFromText(text, fontName, isU2B, 12, { pageSize, margin });
-    downloadBlob(docBlob, `Text_${isU2B ? 'SutonnyMJ' : 'Unicode'}_Word2003_${Date.now()}.doc`);
+
+    try {
+      let docBlob = null;
+      if (typeof MdLayoutParser !== 'undefined' && hasLayoutStructure(text)) {
+        const detectFn = (t) => {
+          if (typeof MdLayoutParser !== 'undefined' && typeof MdLayoutParser.detectDocumentProfile === 'function') {
+            const prof = MdLayoutParser.detectDocumentProfile(t);
+            if (prof?.archetypeId === 'bengali_combined_exam_paper') return 'bengali_combined_exam_paper';
+            if (prof?.archetypeId === 'english_question_paper') return 'english_question_paper';
+          }
+          if (typeof detectDocumentLayout === 'function') return detectDocumentLayout(t);
+          if (window.FayzarAiOcrEngine?.detectDocumentLayout) return window.FayzarAiOcrEngine.detectDocumentLayout(t);
+          return 'question-2col';
+        };
+        const detectedLayout = detectFn(text);
+        const ast = MdLayoutParser.parse(text, { layout: detectedLayout, pageSize });
+
+        // Native Word 2003 Layout Builder (prioritized for full multi-column layout fidelity)
+        if (typeof DocWord2003Builder !== 'undefined') {
+          docBlob = DocWord2003Builder.build(ast, { font: fontName });
+        } else if (typeof DocxLayoutBuilder !== 'undefined' && typeof DocxToDocConverter !== 'undefined') {
+          const docxBlob = await DocxLayoutBuilder.build(ast, { font: fontName });
+          const docxConverter = new DocxToDocConverter();
+          const docResult = await docxConverter.convertDocxToDoc(docxBlob, {
+            pageSize,
+            margin,
+            preserveSutonny: (fontName === 'SutonnyMJ'),
+            optimizeForQuestionPaper: true
+          });
+          docBlob = docResult.blob || docResult.convertedBlob;
+        }
+      } else if (typeof DocxHandler !== 'undefined') {
+        docBlob = DocxHandler.createDocFromText(text, fontName, isU2B, 12, { pageSize, margin });
+      }
+
+      if (docBlob) {
+        downloadBlob(docBlob, `Text_${isU2B ? 'SutonnyMJ' : 'Unicode'}_Word2003_${Date.now()}.doc`);
+        if (typeof window.showToastNotification === 'function') {
+          window.showToastNotification('Word 2003 (.doc) ফাইল প্রস্তুত হয়েছে!', 'success');
+        }
+      }
+    } catch(err) {
+      console.error('Text DOC generation error', err);
+    }
   });
 
   // Converter Feedback Form Handler

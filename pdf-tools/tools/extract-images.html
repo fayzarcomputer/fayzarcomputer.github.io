@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>ইমেজ এক্সট্রাক্ট — Fayzar Computer</title>
+  <link rel="stylesheet" href="../css/pdf-tools.css">
+  <style>@font-face{font-family:'NotoSansBengali';src:url('../fonts/bangla/NotoSansBengali.ttf');}@font-face{font-family:'SutonnyMJ';src:url('../fonts/bangla/SutonnyMJ-Regular.ttf');}</style>
+</head>
+<body>
+<div class="pdf-bg-canvas"></div>
+<nav class="pdf-nav">
+  <a href="../index.html" class="nav-back">← টুলস হোম</a>
+  <span style="border-left:1px solid rgba(255,255,255,0.1);margin:0 0.5rem;height:20px;"></span>
+  <span style="font-family:'NotoSansBengali',sans-serif;font-weight:700;">📸 ইমেজ এক্সট্রাক্ট</span>
+  <div class="spacer"></div>
+  <button onclick="toggleTheme()" class="btn btn-outline btn-sm" id="themeBtn">🌙</button>
+</nav>
+<div class="tool-page">
+  <div class="tool-page-header">
+    <div class="tool-page-icon" style="background:linear-gradient(135deg,#84cc16,#65a30d);">📸</div>
+    <div><h1>ইমেজ এক্সট্রাক্ট</h1><p>পিডিএফের প্রতিটি পেজ থেকে ছবি এক্সট্রাক্ট করুন</p></div>
+  </div>
+
+  <div class="panel">
+    <label class="upload-zone" for="fileIn" id="dropZone">
+      <div class="upload-icon">📸</div><h3>পিডিএফ ফাইল নির্বাচন করুন</h3>
+      <p>ড্র্যাগ ও ড্রপ অথবা ক্লিক করুন</p>
+      <input type="file" id="fileIn" accept=".pdf">
+    </label>
+  </div>
+  <div id="resultPanel" class="panel" style="display:none;">
+    <h3>📸 পেজ ইমেজ</h3>
+    <div id="imgGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem;margin-bottom:1rem;"></div>
+    <button class="btn btn-primary" onclick="downloadAll()">⬇️ সব ডাউনলোড করুন</button>
+  </div>
+  <script>
+    var pdfFile=null,pageCanvases=[];
+    document.addEventListener('DOMContentLoaded',function(){
+      initTheme();setupDropZone('dropZone','fileIn',function(f){loadFile(f[0]);});
+      if(!window.pdfjsLib){var s=document.createElement('script');s.src='../libs/pdf.min.js';document.head.appendChild(s);s.onload=function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc='../libs/pdf.worker.min.js';};}
+    });
+    async function loadFile(f){pdfFile=f;showProgress('পেজ রেন্ডার হচ্ছে...',10);
+      try{var buf=await readFileAsArrayBuffer(f);var doc=await pdfjsLib.getDocument({data:buf}).promise;var grid=document.getElementById('imgGrid');grid.innerHTML='';pageCanvases=[];
+        for(var i=1;i<=doc.numPages;i++){showProgress('পেজ '+i+'/'+doc.numPages,Math.round(i/doc.numPages*90));var page=await doc.getPage(i);var vp=page.getViewport({scale:1.5});
+          var canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;pageCanvases.push({canvas:canvas,name:'page_'+i+'.png'});
+          var wrap=document.createElement('div');wrap.style.cssText='border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;';
+          var img=document.createElement('img');img.src=canvas.toDataURL();img.style.cssText='width:100%;display:block;';
+          var btn=document.createElement('button');btn.className='btn btn-outline btn-sm';btn.style.cssText='width:100%;border-radius:0;font-size:0.75rem;';btn.textContent='⬇️ পেজ '+i;
+          (function(c,n){btn.onclick=function(){c.toBlob(function(b){downloadBlob(b,n);});};})(canvas,'page_'+i+'.png');
+          wrap.appendChild(img);wrap.appendChild(btn);grid.appendChild(wrap);}
+        hideProgress();document.getElementById('resultPanel').style.display='block';toast('✅ '+doc.numPages+'টি পেজ রেন্ডার হয়েছে','success');}
+      catch(e){hideProgress();toast('❌ '+e.message,'error');}}
+    function downloadAll(){if(!pageCanvases.length)return;pageCanvases.forEach(function(p,i){setTimeout(function(){p.canvas.toBlob(function(b){downloadBlob(b,p.name);});},i*200);});}
+  </script>
+
+</div>
+<div id="toast-container"></div>
+<div id="progressModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div class="panel" style="width:320px;text-align:center;"><div id="progressMsg" style="font-family:'NotoSansBengali',sans-serif;margin-bottom:1rem;">প্রসেস হচ্ছে...</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label"><span id="progressPct">0%</span></div></div>
+</div>
+<script src="../libs/pdf-lib.min.js"></script>
+<script src="../js/pdf-utils.js"></script>
+</body>
+</html>

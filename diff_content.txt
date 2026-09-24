@@ -1,0 +1,81 @@
+ const isDemo = (rawDemoSetting === 'true');
+ 
+ let savedModelSetting = localStorage.getItem(STORAGE_KEYS.SELECTED_MODEL) || 'auto';
+-if (savedModelSetting === 'gemini-3.8-flash' || savedModelSetting === 'gemini-2.5-flash' || savedModelSetting.includes('lite')) {
++if (savedModelSetting === 'gemini-3.8-flash' || savedModelSetting === 'gemini-2.5-flash' || savedModelSetting.includes('2.5') || savedModelSetting.includes('lite')) {
+ savedModelSetting = 'auto';
+ localStorage.setItem(STORAGE_KEYS.SELECTED_MODEL, 'auto');
+ }
+ const activePrompt = customPrompt || GEMINI_PROMPT;
+ 
+ const allActiveModels = [
+-'gemini-2.5-flash',         // #1: Ultra-fast, zero reasoning delay, 100% active
+-'gemini-3-flash-preview',   // #2: Deep reasoning Flash flagship
+-'gemini-2.5-pro'            // #3: Pro quality OCR
++'gemini-3-flash-preview',   // #1: ডিপ রিজনিং ফ্ল্যাগশিপ — শতভাগ কাঠামোগত নির্ভুল বাংলা ও টেবিল
++'gemini-3.8-flash',         // #2: গণিত ও বিজ্ঞান স্পেশালিস্ট — জটিল সমীকরণ ও LaTeX
++'gemini-3.1-pro-preview',   // #3: প্রো মডেল ডিপ রিজনিং — সর্বোচ্চ বুদ্ধিমত্তা ও জটিল বিশ্লেষণ
++'gemini-3.5-flash',         // #4: প্রমাণিত ও বিশ্বস্ত ক্লাসিক ফ্ল্যাগশিপ
++'gemini-3.6-flash',         // #5: উচ্চগতির ব্যালেন্সড সংস্করণ
++'gemini-3.7-flash',         // #6: হাইব্রিড ফ্ল্যাশ ব্যাকআপ
++'gemini-pro-latest',        // #7: প্রো লেটেস্ট ব্যাকআপ
++'gemini-flash-latest'       // #8: ফ্ল্যাশ লেটেস্ট ব্যাকআপ
+ ];
+ 
+ // Helper: Build optimal payload tailored per model (bypassing reasoning deliberation latency)
+ temperature: 0.2,
+ maxOutputTokens: isFallbackFormat ? 8192 : 65536
+ };
+-
+-// Only 2.5-flash confirmed to support thinkingBudget; 3.6-flash uses standard config
+-if (!isFallbackFormat && model === 'gemini-2.5-flash') {
+-genConfig.thinkingConfig = { thinkingBudget: 0 };
+-}
+ 
+ const safetySettings = [
+ { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+ }
+ 
+ let candidateModels;
+-if (state.selectedModel && state.selectedModel !== 'auto') {
++if (state.selectedModel && state.selectedModel !== 'auto' && state.selectedModel !== 'pro-bridge' && !state.selectedModel.includes('2.5-flash')) {
+ candidateModels = [state.selectedModel, ...allActiveModels.filter(m => m !== state.selectedModel)];
+ } else {
+-candidateModels = ['gemini-2.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-pro'];
++// কোয়ালিটি ও কাঠামোগত নির্ভুলতার পূর্ণাঙ্গ ৮-মডেল অগ্রাধিকার সিকোয়েন্স:
++candidateModels = [
++'gemini-3-flash-preview',
++'gemini-3.8-flash',
++'gemini-3.1-pro-preview',
++'gemini-3.5-flash',
++'gemini-3.6-flash',
++'gemini-3.7-flash',
++'gemini-pro-latest',
++'gemini-flash-latest'
++];
+ }
+ 
+ // ⚡ FAST PRE-FLIGHT MICRO-PROBE (সর্বোচ্চ ২ সেকেন্ডে সক্রিয় কি নির্বাচন)
+ if (fullStreamedText.includes('.......')) {
+ fullStreamedText = fullStreamedText.replace(/\.{8,}/g, '......');
+ }
++
++// 🛡️ রিপিটেশন লুপ ও অতিরিক্ত অক্ষরের ইনফিনিট স্ট্রিমিং প্রতিরোধ গার্ড
++if (fullStreamedText.length > 500) {
++const tail = fullStreamedText.slice(-300);
++const repeatMatch = tail.match(/(.{15,40}?)\1{3,}/);
++if (repeatMatch) {
++console.warn('⚠️ রিপিটেশন লুপ শনাক্ত! স্ট্রিমিং তাৎক্ষণিক বন্ধ করা হয়েছে।');
++try { reader.cancel(); } catch(e){}
++break;
++}
++}
++if (fullStreamedText.length > 35000) {
++console.warn('⚠️ নিরাপদ অক্ষর সীমা (৩৫,০০০) অতিক্রম! স্ট্রিমিং সম্পন্ন করা হলো।');
++try { reader.cancel(); } catch(e){}
++break;
++}
++
+ const cTime = Date.now();
+ if (cTime - lastChunkTime > 60 || fullStreamedText.length < 80) {
+ lastChunkTime = cTime;
